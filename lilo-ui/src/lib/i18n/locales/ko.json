@@ -162,6 +162,7 @@
 			"passwords": "암호",
 			"agentAccess": "Lilo를 사용하는 에이전트",
 			"agentClients": "Lilo를 사용할 수 있는 앱",
+			"agentActivity": "활동",
 			"lilo": "Lilo",
 			"tabsWindows": "탭 및 윈도우",
 			"sitePermissions": "사이트 권한",
@@ -506,6 +507,11 @@
 				"title": "다른 에이전트",
 				"description": "Lilo의 설정을 사용하는 다른 모든 MCP 클라이언트."
 			},
+			"agentActivity": {
+				"title": "최근 에이전트 호출",
+				"description": "각 앱의 최근 호출을 최신순으로 보여 줍니다. 이 페이지를 열거나 새로 고칠 때 읽습니다.",
+				"keywords": "에이전트 로그 기록 감사 동작 최근 호출 활동"
+			},
 			"autoplay": {
 				"title": "자동 재생",
 				"description": "지금부터 여는 페이지에 적용됩니다.",
@@ -650,6 +656,14 @@
 			},
 			"allowedSeen": "허용됨, 마지막 접속 {time}",
 			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다."
+		},
+		"agentActivity": {
+			"refresh": "새로 고침",
+			"open": "동작 로그 열기",
+			"off": "동작 로그가 꺼져 있습니다",
+			"offDescription": "Lilo가 에이전트 호출을 기록하지 않습니다. 켜면 여기에 표시됩니다.",
+			"empty": "기록된 호출이 아직 없습니다.",
+			"failed": "실패"
 		},
 		"navGroups": {
 			"tools": "도구"
