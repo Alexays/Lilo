@@ -21,6 +21,7 @@ import {
 	computeResults as _computeResults,
 	getLocalHostCompletion,
 	normalizeSearchSuggestions,
+	setActionResultsEnabled,
 	HISTORY_SEARCH_DEBOUNCE_MS,
 	forgetClosedTabActivations,
 	noteActiveTab,
@@ -156,6 +157,22 @@ export function applyCommandBarInitialState(): void {
 	dockOnBlankTab();
 }
 
+/** The bar in place, as on a blank tab, for a window that is nothing but the bar: the Little window's start view. */
+export function dockCommandBar(): void {
+	if (_open) return;
+	openCommandBar();
+	_docked = true;
+	computeResults();
+}
+
+let _allowedKeys: ResultKey[] | undefined;
+
+/** Narrows the bar to a window without tabs, Spaces or actions: only `keys` stay on a row, and no action is offered. */
+export function restrictCommandBar(keys: ResultKey[]): void {
+	_allowedKeys = keys;
+	setActionResultsEnabled(false);
+}
+
 function dockOnBlankTab(): void {
 	if (_open || !isBlankTab(getActiveTab())) return;
 	// Settling in place keeps the deferred close of the blank tab: it still goes once another tab is active.
@@ -253,6 +270,15 @@ export function setSelectedIndex(index: number): void {
 	_selectionMoved = true;
 }
 
+export function autocompleteSelected(): void {
+	const selected = _results[_selectedIndex];
+	if (selected?.kind === "terminal") {
+		setQuery(`${scopePrefix("terminal")}${selected.payload.command as string}`);
+	} else if (selected?.url && selected.kind !== "search") {
+		setQuery(selected.url);
+	}
+}
+
 export function setCommandBarScope(scope: CommandScope): void {
 	const parsed = getParsedInput();
 	const nextQuery =
@@ -279,6 +305,7 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 			archivedTabs: _archivedTabs,
 			spaces: getPagedSpaces(),
 			moveTabId: _moveTabId,
+			docked: _docked,
 			autofill: _autofill,
 			omnibox: {
 				active: !!_omniboxSessionId,
@@ -605,6 +632,12 @@ const WEB_URL = /^https?:\/\//i;
 
 /** The actions the selected row answers to beyond Enter, in footer order. */
 export function getSelectedResultKeys(): ResultKey[] {
+	const allowed = _allowedKeys;
+	const keys = allSelectedResultKeys();
+	return allowed ? keys.filter((key) => allowed.includes(key)) : keys;
+}
+
+function allSelectedResultKeys(): ResultKey[] {
 	const result = _results[_selectedIndex];
 	if (!result) return getParsedInput().query && !_moveTabId ? ["newTab"] : [];
 	const keys: ResultKey[] = [];
@@ -724,6 +757,10 @@ export function initCommandBarStore(): void {
 		_terminals = data.terminals;
 		computeResults({ pinSelection: true });
 	});
+	// After the conversations store took the list, whatever the listeners' order.
+	on("conversationsChanged", () => queueMicrotask(() => {
+		if (_docked) computeResults({ pinSelection: true });
+	}));
 	on("archivedTabs", (data) => {
 		keepFavicons(data.favicons);
 		if (!_open) return;

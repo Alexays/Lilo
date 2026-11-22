@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'The agent picker no longer overlaps its rows when many agents are installed: rows keep their height, the list scrolls, a search field appears for long lists, and featured agents come first'
+time: 2026-11-20T12:00:00.000000000Z

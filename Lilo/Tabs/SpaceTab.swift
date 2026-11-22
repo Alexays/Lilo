@@ -156,6 +156,12 @@ struct SpaceTab {
         finishContentMutation()
     }
 
+    mutating func setNeverSleep(_ tabId: UUID, _ neverSleep: Bool) {
+        guard storedTab(tabId)?.neverSleep != neverSleep,
+              updateTab(tabId, in: &state.tree, mutate: { $0.neverSleep = neverSleep }) else { return }
+        finishContentMutation()
+    }
+
     /// A folder created inside another lands first among its children, in the parent's section; a root one lands last.
     mutating func createFolder(_ folder: TabFolder, section: TabTreeItem.Section, parentFolderId: UUID? = nil) {
         guard section != .bookmarked, canNestFolder(height: 1, in: parentFolderId) else { return }
@@ -383,6 +389,15 @@ struct SpaceTab {
         }
         _ = updateFolder(folderId, in: &state.tree) { $0.splitLayout = arranged }
         finishMutation()
+    }
+
+    /// Takes a split pane's tab out of the split, back into the list just after it; repair
+    /// dissolves the split once a single pane remains.
+    mutating func unsplitTab(_ tabId: UUID) {
+        guard let folderId = index.parentFolderId(for: tabId),
+              folder(id: folderId)?.isSplit == true,
+              let section = section(of: tabId) else { return }
+        moveNode(tabId, toFolder: nil, section: section, insert: .anchored(fallbackIndex: .max, insertBeforeId: nil, insertAfterId: folderId))
     }
 
     mutating func removeTabForTransfer(_ tabId: UUID) -> StoredSidebarNode? {

@@ -601,6 +601,17 @@ export const startDemo = async (
     ],
     ["separateSplit", () => host.dispatch("closeSplitView", {})],
     [
+      "closeSplitPane",
+      () => {
+        const { activeTabId } = host.snapshot();
+
+        if (activeTabId) {
+          host.dispatch("unsplitTab", { tabId: activeTabId });
+        }
+      },
+    ],
+    ["maximizeSplitPane", () => host.dispatch("closeSplitView", {})],
+    [
       "mute",
       () => {
         const tab = host.activeTab();

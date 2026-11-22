@@ -24,6 +24,9 @@ final class ProfileManager {
     /// Per-profile data stores (cookies, cache, local storage).
     private var dataStores: [UUID: WKEngineDataStore] = [:]
     private var privateDataStores: [UUID: WKEngineDataStore] = [:]
+    /// A private space's tabs each browse in a store of their own, as in Safari: logins and site data are not
+    /// shared between private tabs. A page popup shares its opener's.
+    private var privateTabDataStores: [UUID: (spaceId: UUID, store: WKEngineDataStore)] = [:]
 
     weak var delegate: BrowserContext?
 
@@ -67,11 +70,38 @@ final class ProfileManager {
 
     func privateSpaceId(of store: WKWebsiteDataStore) -> UUID? {
         privateDataStores.first { $0.value.backingStore === store }?.key
+            ?? privateTabDataStores.values.first { $0.store.backingStore === store }?.spaceId
+    }
+
+    /// The store of private tab `tabId`, created on first use. Its content-controller key is its space's, so the
+    /// tabs of a space share one injected world.
+    func ephemeralDataStore(forTab tabId: UUID, in spaceId: UUID) -> WKEngineDataStore {
+        if let entry = privateTabDataStores[tabId] { return entry.store }
+        let store = engineFactory.createDataStore(persistent: false, identifier: spaceId.uuidString)
+        privateTabDataStores[tabId] = (spaceId, store)
+        return store
+    }
+
+    /// A popup's tab keeps its opener's store, which WebKit gave its configuration, so its session survives a sleep.
+    func adoptEphemeralDataStore(_ backingStore: WKWebsiteDataStore, forTab tabId: UUID, in spaceId: UUID) -> WKEngineDataStore {
+        if let entry = privateTabDataStores[tabId], entry.store.backingStore === backingStore { return entry.store }
+        let store = WKEngineDataStore(backingStore: backingStore, identifier: "ephemeral:\(spaceId.uuidString)")
+        privateTabDataStores[tabId] = (spaceId, store)
+        return store
+    }
+
+    /// The store goes once no tab or popup of it is left; the space's content controller stays for its other tabs.
+    func releaseEphemeralDataStore(forTab tabId: UUID) {
+        guard let entry = privateTabDataStores.removeValue(forKey: tabId) else { return }
+        engineFactory.releaseTrustExceptions(for: entry.store)
     }
 
     func releaseEphemeralDataStore(for spaceId: UUID) {
-        guard let store = privateDataStores.removeValue(forKey: spaceId) else { return }
-        engineFactory.releaseContentController(for: store)
+        let tabIds = privateTabDataStores.filter { $0.value.spaceId == spaceId }.keys
+        var stores = tabIds.compactMap { privateTabDataStores.removeValue(forKey: $0)?.store }
+        if let store = privateDataStores.removeValue(forKey: spaceId) { stores.append(store) }
+        // All of them share one controller key: releasing the first evicts it.
+        for store in stores { engineFactory.releaseContentController(for: store) }
     }
 
     @discardableResult

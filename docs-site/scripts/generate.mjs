@@ -14,7 +14,7 @@ export const read = (path) => readFileSync(`${repo}${path}`, "utf-8");
 export const SOURCES = {
   shortcuts: "Lilo/App/KeyboardShortcuts.swift",
   settings: "lilo-ui/src/components/settings/settingsPanelModel.ts",
-  tools: ["Lilo/Agent/AgentTools.swift", "Lilo/Agent/AgentInteractionTools.swift", "Lilo/Agent/AgentDevTools.swift", "Lilo/Agent/AgentBrowserConfig.swift"],
+  tools: ["Lilo/Agent/AgentTools.swift", "Lilo/Agent/AgentInteractionTools.swift", "Lilo/Agent/AgentDevTools.swift", "Lilo/Agent/AgentFlows.swift", "Lilo/Agent/AgentBrowserConfig.swift"],
   summaries: "docs-site/scripts/mcp-tools.json",
   compatibility: "COMPATIBILITY.md",
   catalog: (locale) => `lilo-ui/src/lib/i18n/locales/${locale}.json`,
@@ -282,7 +282,7 @@ function checkSchema(schema, where, file) {
   }
 }
 
-const COMPOSED = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentBrowserConfig.definitions";
+const COMPOSED = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentFlows.definitions + AgentBrowserConfig.definitions";
 
 /** The tools a file defines in its `static let …: [[String: Any]] = [ … ]` lists. */
 export function parseTools(source, file) {
@@ -337,7 +337,7 @@ function parameterRows(properties, required, prefix = "") {
   });
 }
 
-const GROUPS = { "Lilo/Agent/AgentTools.swift": "Tabs and pages", "Lilo/Agent/AgentInteractionTools.swift": "Interaction", "Lilo/Agent/AgentDevTools.swift": "Developer tools", "Lilo/Agent/AgentBrowserConfig.swift": "Lilo" };
+const GROUPS = { "Lilo/Agent/AgentTools.swift": "Tabs and pages", "Lilo/Agent/AgentInteractionTools.swift": "Interaction", "Lilo/Agent/AgentDevTools.swift": "Developer tools", "Lilo/Agent/AgentFlows.swift": "Flows", "Lilo/Agent/AgentBrowserConfig.swift": "Lilo" };
 
 export function mcpPartial(parsed, summaries) {
   const tools = parsed.flatMap((file) => file.tools);

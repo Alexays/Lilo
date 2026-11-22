@@ -259,6 +259,75 @@ final class AgentApprovalTests: AgentToolTestCase {
         }
     }
 
+    func testAnIconOnlySubmitOfAPaymentFormIsAskedInAnyLanguage() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form onsubmit="document.title = 'charged'; return false">
+            <input autocomplete="cc-number"><button aria-label="Confirmar la compra del carrito">\u{2192}</button></form></body>
+            """)
+
+        let reply = Task { try await click("Confirmar", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        let title = try await title(tab)
+        XCTAssertNotEqual(title, "charged")
+    }
+
+    func testASignInFormIsAskedWhateverItsButtonSays() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form onsubmit="document.title = 'in'; return false">
+            <input autocomplete="username"><input type="password"><button>Weiter</button></form></body>
+            """)
+
+        let reply = Task { try await click("Weiter", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+    }
+
+    func testAFormPostedToAnotherOriginIsAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form method="post" action="https://example.com/collect" target="_blank" onsubmit="return false">
+            <input name="q"><button>Continue</button></form></body>
+            """)
+
+        let reply = Task { try await click("Continue", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+    }
+
+    func testSavingAnOrderNoteIsNotAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form method="post" action="/orders" onsubmit="document.title = 'saved'; return false">
+            <input name="note"><button>Save order</button></form><a href="/orders">Order history</a></body>
+            """)
+
+        let reply = try await click("Save order", tab: tab)
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
+        let saved = await pollUntil(timeout: 5) { (try? await self.title(tab)) == "saved" }
+        XCTAssertTrue(saved)
+    }
+
+    func testAButtonThatSaysOnlyOrderIsAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button onclick="document.title = 'ordered'">Order</button></body>
+            """)
+
+        let reply = Task { try await click("Order", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        let title = try await title(tab)
+        XCTAssertNotEqual(title, "ordered")
+    }
+
     func testEnterInAFormThatSendsIsAsked() async throws {
         let tab = try await shopTab()
         _ = try await js("document.getElementById('message').focus(); 1", tab: tab)

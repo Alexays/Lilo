@@ -33,6 +33,8 @@ struct Tab: Sendable, Equatable {
     /// Pinned and bookmarked tabs: the user's name for the tab, shown in the sidebar and previews; the window title, history and
     /// extensions keep `title`.
     var customTitle: String?
+    /// The user asked to keep this tab loaded: lifecycle never freezes or discards it, and auto-archive skips it.
+    var neverSleep = false
     var isAudioPlaying: Bool = false
     var lastAudioStoppedAt: Date?
     /// Runtime only: paused from the sidebar media card, which keeps it there ready to play again.
@@ -216,6 +218,8 @@ struct Tab: Sendable, Equatable {
                 put(field, canGoForward)
             case .isPinned:
                 put(field, isPinned)
+            case .neverSleep:
+                put(field, neverSleep)
             case .isBookmarked:
                 put(field, isBookmarked)
             case .isClosed:

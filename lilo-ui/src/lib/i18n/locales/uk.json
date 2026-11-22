@@ -531,6 +531,11 @@
 				"description": "Змініть будь-яке скорочення або почніть із набору Arc.",
 				"keywords": "клавіатура скорочення гарячі клавіші команда"
 			},
+			"holdToQuit": {
+				"title": "Утримуйте сполучення виходу, щоб вийти",
+				"description": "Сполучення виходу показує підказку; Lilo завершує роботу, лише якщо утримувати клавіші.",
+				"keywords": "вийти завершити команда q випадково утримувати"
+			},
 			"newProfile": {
 				"title": "Новий профіль",
 				"description": "Профілі відокремлюють файли cookie, сеанси входу та розширення.",
@@ -840,6 +845,7 @@
 		"pinned": "Закріплена",
 		"loading": "Завантаження",
 		"muted": "Звук вимкнено",
+		"neverSleeps": "Не присипляється",
 		"playingAudio": "Відтворюється аудіо",
 		"terminalCommand": "Команда",
 		"terminalAwaitingFor": "{command} чекає на вас протягом {duration}",
@@ -847,6 +853,7 @@
 		"terminalFailedDetail": "{command} завершилася помилкою (код {code}) через {duration}",
 		"terminalSucceededDetail": "{command} завершилася за {duration}",
 		"closeTab": "Закрити вкладку",
+		"removeFromSplit": "Прибрати з розділеного перегляду",
 		"removePinnedTab": "Вилучити закріплену вкладку",
 		"tabName": "Назва вкладки",
 		"removeBookmark": "Вилучити закладку",
@@ -900,13 +907,22 @@
 		"bottom": "Відкрити знизу",
 		"replace": "Замінити"
 	},
+	"paneMove": {
+		"left": "Перемістити ліворуч",
+		"right": "Перемістити праворуч",
+		"top": "Перемістити вгору",
+		"bottom": "Перемістити вниз",
+		"replace": "Поміняти місцями"
+	},
 	"tabSection": {
 		"splitView": "Розділений перегляд",
 		"folderEmpty": "Папка порожня",
 		"newTab": "Нова вкладка",
+		"newTabShort": "Нова",
 		"newTerminal": "Новий термінал",
 		"clearUnpinnedTooltip": "Архівувати незакріплені вкладки",
 		"listOptions": "Сортування й групування",
+		"searchTabs": "Пошук у вкладках",
 		"pinnedTabs": "Закріплені вкладки",
 		"openTabs": "Відкриті вкладки",
 		"dropToPin": "Перетягніть сюди для закріплення",
@@ -1059,6 +1075,7 @@
 		"showFolder": "Показати папку завантажень",
 		"clearFinished": "Очистити завершені завантаження",
 		"dragFile": "Перетягнути файл",
+		"showInFinder": "Показати у Finder",
 		"announceDone": "{filename} завантажено",
 		"announceFailed": "Не вдалося завантажити {filename}"
 	},
@@ -1140,7 +1157,6 @@
 		"installed": "Встановлені"
 	},
 	"commandBar": {
-		"showDetails": "Показати сполучення клавіш",
 		"hintPeek": "Попередній перегляд",
 		"hintCopyLink": "Копіювати посилання",
 		"hintCloseTab": "Закрити вкладку",
@@ -1172,6 +1188,7 @@
 		"terminalProgram": "Програма",
 		"hintRun": "Виконати",
 		"hintSplit": "Розділити",
+		"splitFull": "Розділений перегляд заповнений (панелей: {count})",
 		"scopeTabs": "Вкладки",
 		"scopeBookmarks": "Закладки",
 		"scopeHistory": "Історія",
@@ -1207,6 +1224,8 @@
 		"sectionOpenTabs": "Відкриті вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавня історія",
+		"sectionFrequentSites": "Часто відвідувані сайти",
+		"sectionRecentConversations": "Недавні розмови",
 		"sectionHistory": "Історія",
 		"sectionSwitchToTab": "Перейти до вкладки",
 		"sectionGoTo": "Перейти до",
@@ -1402,6 +1421,15 @@
 		"title": "Прапорці WebKit",
 		"resetTitle": "Змінені прапорці",
 		"reloadNote": "Перезавантажте сторінку, щоб зміна набула чинності"
+	},
+	"little": {
+		"openIn": "Відкрити в {space}",
+		"openInMenu": "Відкрити в іншому просторі",
+		"copyLink": "Копіювати посилання",
+		"linkCopied": "Посилання скопійовано",
+		"placeholder": "Пошук або адреса...",
+		"emptyTitle": "Шукайте в інтернеті або введіть адресу",
+		"emptySubtitle": "Введіть /, щоб шукати серед відвіданих сторінок."
 	},
 	"urlToast": {
 		"pageActions": "Дії зі сторінкою",
@@ -2033,6 +2061,7 @@
 		"Hide Others": "Приховати інші",
 		"Show All": "Показати всі",
 		"Quit Lilo": "Вийти з Lilo",
+		"Hold %@ to Quit": "Утримуйте %@, щоб вийти",
 		"File": "Файл",
 		"New Tab": "Нова вкладка",
 		"Back to tab": "Повернутися до вкладки",
@@ -2078,9 +2107,18 @@
 		"New Split View": "Новий розділений перегляд",
 		"Split View": "Розділений перегляд",
 		"Separate Split View": "Відокремити вкладки",
+		"Close Split Pane": "Закрити панель розділеного перегляду",
+		"Maximize Split Pane": "Розгорнути панель розділеного перегляду",
+		"Move Pane": "Перемістити панель",
+		"Move Pane Left": "Перемістити панель розділеного перегляду ліворуч",
+		"Move Pane Right": "Перемістити панель розділеного перегляду праворуч",
+		"Move Pane Up": "Перемістити панель розділеного перегляду угору",
+		"Move Pane Down": "Перемістити панель розділеного перегляду униз",
 		"Open in Split View": "Відкрити в розділеному перегляді",
+		"Split view is full (%lld panes)": "Розділений перегляд заповнений (%lld панелі)",
 		"Hide Element…": "Приховати елемент…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Натисніть на елемент, щоб приховати його на цьому сайті. Натисніть Esc, щоб скасувати.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Натисніть на елемент або виділіть область. Стрілки змінюють елемент, Return робить знімок, Esc скасовує.",
 		"Picture in Picture": "Кадр у кадрі",
 		"Develop": "Розробка",
 		"Show Web Inspector": "Показати Вебінспектор",
@@ -2170,6 +2208,7 @@
 		"Sleep is back on": "Сон знову дозволено",
 		"The battery is below %d%%.": "Заряд батареї нижче %d%%.",
 		"The Mac is too hot.": "Mac надто нагрівся.",
+		"Never Sleep": "Не присипляти",
 		"Commands kept the Mac awake for the maximum duration.": "Досягнуто максимального часу без сну під час виконання команд.",
 		"While the lid was closed": "Поки кришка була закрита",
 		"%d commands finished": {"one": "Завершено %d команду", "few": "Завершено %d команди", "many": "Завершено %d команд", "other": "Завершено %d команди"},
@@ -2679,7 +2718,11 @@
 			"noFolder": "Без теки",
 			"noFolderDetail": "Агент працює у власній теці",
 			"backgroundHint": "{shortcut}, щоб залишити у фоні",
-			"start": "Почати"
+			"start": "Почати",
+			"searchAgents": "Пошук агентів",
+			"featuredAgents": "Рекомендовані",
+			"registryAgents": "Реєстр",
+			"noMatches": "Немає відповідних агентів"
 		},
 		"row": {
 			"untitled": "Нова розмова",

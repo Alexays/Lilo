@@ -94,6 +94,8 @@ final class ACPConnectionTests: XCTestCase {
             XCTAssertEqual(errors, "bye\n")
             exited.fulfill()
         }
+        // Python's first launch on a fresh CI runner takes seconds: an answer first keeps it out of the timed wait.
+        _ = try await connection.request("initialize", [:])
         connection.notify("exit", [:])
         await fulfillment(of: [exited], timeout: 5)
         do {

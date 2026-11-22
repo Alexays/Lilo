@@ -91,6 +91,39 @@ final class PageSnapshotServiceRegionSelectionTests: XCTestCase {
         XCTAssertEqual(result, .some(nil))
     }
 
+    func testAClickCapturesTheElementUnderThePointer() async throws {
+        let tab = try await makeShownTab(body: "<div id=\"card\" style=\"position:absolute;left:40px;top:50px;width:120px;height:80px\"><p id=\"inner\" style=\"margin:10px\">hi</p></div>")
+        defer { tab.teardown() }
+
+        var result: CGRect?? // outer optional = "not yet called"
+        tab.startRegionSelection { rect in result = rect }
+        drag(tab, from: NSPoint(x: 100, y: 120), to: NSPoint(x: 100, y: 120))
+
+        try await waitUntil { result != nil }
+        XCTAssertEqual(result, .some(CGRect(x: 40, y: 50, width: 120, height: 80)))
+    }
+
+    func testClickingTheBodyStillCancels() async throws {
+        let tab = try await makeShownTab(body: "<div style=\"width:50px;height:50px\"></div>")
+        defer { tab.teardown() }
+
+        var result: CGRect?? // outer optional = "not yet called"
+        tab.startRegionSelection { rect in result = rect }
+        drag(tab, from: NSPoint(x: 300, y: 250), to: NSPoint(x: 300, y: 250))
+
+        try await waitUntil { result != nil }
+        XCTAssertEqual(result, .some(nil))
+    }
+
+    func testTheElementRectIsScaledByZoomAndKeptInsideTheView() {
+        let bounds = CGRect(x: 0, y: 0, width: 400, height: 300)
+        XCTAssertEqual(ElementRegion.viewRect(fromCSS: [10, 20, 100, 50, 0], zoom: 2, in: bounds), CGRect(x: 20, y: 40, width: 200, height: 100))
+        XCTAssertEqual(ElementRegion.viewRect(fromCSS: [-50, 250, 100, 500, 0], zoom: 1, in: bounds), CGRect(x: 0, y: 250, width: 50, height: 50))
+        XCTAssertNil(ElementRegion.viewRect(fromCSS: [500, 10, 100, 100, 0], zoom: 1, in: bounds))
+        XCTAssertNil(ElementRegion.viewRect(fromCSS: [10, 10, 2, 100, 0], zoom: 1, in: bounds))
+        XCTAssertNil(ElementRegion.viewRect(fromCSS: [10, 10], zoom: 1, in: bounds))
+    }
+
     /// Switching tabs takes the web view out of the window or hides it: either ends the selection.
     func testLeavingTheWindowOrHidingCancels() async throws {
         let tab = try await makeShownTab()
