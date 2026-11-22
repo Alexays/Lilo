@@ -531,6 +531,11 @@
 				"description": "Wijzig elke sneltoets of begin met die van Arc.",
 				"keywords": "toetsenbord sneltoets toetsen command"
 			},
+			"holdToQuit": {
+				"title": "Houd de stopsneltoets ingedrukt om te stoppen",
+				"description": "De stopsneltoets toont een melding; Lilo stopt alleen als de toetsen ingedrukt blijven.",
+				"keywords": "stoppen afsluiten commando q per ongeluk houden"
+			},
 			"newProfile": {
 				"title": "Nieuw profiel",
 				"description": "Profielen houden cookies, aanmeldingen en extensies gescheiden.",
@@ -2037,6 +2042,7 @@
 		"Hide Others": "Verberg andere",
 		"Show All": "Toon alles",
 		"Quit Lilo": "Stop Lilo",
+		"Hold %@ to Quit": "Houd %@ ingedrukt om te stoppen",
 		"File": "Archief",
 		"New Tab": "Nieuw tabblad",
 		"Back to tab": "Terug naar tabblad",

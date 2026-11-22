@@ -531,6 +531,11 @@
 				"description": "Modifiez n'importe quel raccourci, ou partez de ceux d'Arc.",
 				"keywords": "clavier raccourci touches commande"
 			},
+			"holdToQuit": {
+				"title": "Maintenir le raccourci pour quitter",
+				"description": "Le raccourci pour quitter affiche une invite ; Lilo ne quitte que si les touches restent enfoncées.",
+				"keywords": "quitter fermer commande q accidentel maintenir"
+			},
 			"newProfile": {
 				"title": "Nouveau profil",
 				"description": "Les profils séparent cookies, connexions et extensions.",
@@ -2037,6 +2042,7 @@
 		"Hide Others": "Masquer les autres",
 		"Show All": "Tout afficher",
 		"Quit Lilo": "Quitter Lilo",
+		"Hold %@ to Quit": "Maintenez %@ pour quitter",
 		"File": "Fichier",
 		"New Tab": "Nouvel onglet",
 		"Back to tab": "Revenir à l'onglet",

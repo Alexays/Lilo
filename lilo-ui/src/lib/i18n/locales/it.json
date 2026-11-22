@@ -531,6 +531,11 @@
 				"description": "Modifica qualsiasi abbreviazione o parti da quelle di Arc.",
 				"keywords": "tastiera abbreviazione tasti comando"
 			},
+			"holdToQuit": {
+				"title": "Tieni premuta l'abbreviazione per uscire",
+				"description": "L'abbreviazione per uscire mostra un avviso; Lilo si chiude solo se i tasti restano premuti.",
+				"keywords": "esci chiudi comando q accidentale tieni"
+			},
 			"newProfile": {
 				"title": "Nuovo profilo",
 				"description": "I profili tengono separati cookie, accessi ed estensioni.",
@@ -2037,6 +2042,7 @@
 		"Hide Others": "Nascondi altre",
 		"Show All": "Mostra tutto",
 		"Quit Lilo": "Esci da Lilo",
+		"Hold %@ to Quit": "Tieni premuto %@ per uscire",
 		"File": "File",
 		"New Tab": "Nuova scheda",
 		"Back to tab": "Torna alla scheda",

@@ -531,6 +531,11 @@
 				"description": "更改任何快速鍵，或從 Arc 的配置開始。",
 				"keywords": "鍵盤 快速鍵 按鍵 command"
 			},
+			"holdToQuit": {
+				"title": "按住結束快速鍵以結束",
+				"description": "按下結束快速鍵會顯示提示；只有按住按鍵不放時 Lilo 才會結束。",
+				"keywords": "結束 關閉 指令 q 誤觸 按住"
+			},
 			"newProfile": {
 				"title": "新增個人檔案",
 				"description": "個人檔案可將 Cookie、登入狀態與延伸功能分開。",
@@ -2037,6 +2042,7 @@
 		"Hide Others": "隱藏其他",
 		"Show All": "全部顯示",
 		"Quit Lilo": "結束 Lilo",
+		"Hold %@ to Quit": "按住 %@ 以結束",
 		"File": "檔案",
 		"New Tab": "新增分頁",
 		"Back to tab": "返回分頁",

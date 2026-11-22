@@ -531,6 +531,11 @@
 				"description": "Zmień dowolny skrót lub zacznij od ustawień Arc.",
 				"keywords": "klawiatura skrót klawisz polecenie"
 			},
+			"holdToQuit": {
+				"title": "Przytrzymaj skrót zakończenia, aby zakończyć",
+				"description": "Skrót zakończenia pokazuje wskazówkę; Lilo kończy działanie tylko po przytrzymaniu klawiszy.",
+				"keywords": "zakończ wyjdź polecenie q przypadkowo przytrzymaj"
+			},
 			"newProfile": {
 				"title": "Nowy profil",
 				"description": "Profile oddzielają pliki cookie, logowania i rozszerzenia.",
@@ -2037,6 +2042,7 @@
 		"Hide Others": "Ukryj inne",
 		"Show All": "Pokaż wszystkie",
 		"Quit Lilo": "Zakończ Lilo",
+		"Hold %@ to Quit": "Przytrzymaj %@, aby zakończyć",
 		"File": "Plik",
 		"New Tab": "Nowa karta",
 		"Back to tab": "Wróć do karty",
