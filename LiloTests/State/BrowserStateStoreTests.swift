@@ -3177,6 +3177,47 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(frozen)
     }
 
+    /// Past the frozen-engine cap, a routine trim discards the least recently active engine instead of freezing it.
+    func testTrimInactiveEnginesFreezeModeDiscardsOldestPastFrozenCap() async {
+        let activeSpaceId = UUID()
+        let hiddenSpaceId = UUID()
+        let base = Date(timeIntervalSince1970: 1000)
+        let tabs = (0...LifecyclePolicyConfig.maxFrozenEngines).map { index in
+            var tab = Tab(id: UUID(), url: URL(string: "https://example.com/\(index)"), title: "Example", spaceId: hiddenSpaceId)
+            tab.lastActiveAt = base.addingTimeInterval(TimeInterval(index))
+            return tab
+        }
+        let engines = Dictionary(uniqueKeysWithValues: tabs.map { ($0.id, WKWebViewTab(configuration: WKWebViewConfiguration())) })
+        let store = BrowserStateStore()
+        var discarded: [WKWebViewTab] = []
+
+        store.cacheInactiveSpaceRuntime(
+            id: hiddenSpaceId,
+            runtime: TabRuntimeSnapshot(tabs: tabs, engines: engines, savedInteractionStates: [:], restoringTabIds: [:], activeTabId: tabs.last?.id),
+            folders: [],
+            treeItems: []
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+
+        store.trimInactiveEngines(
+            excluding: nil,
+            policy: .foreground,
+            maxRetainedEnginesPerHiddenSpace: 0,
+            maxHiddenSpacesWithRetainedEngines: 0,
+            discardEngine: { discarded.append($0); return nil },
+            freezesExcessEngines: true
+        )
+
+        let oldest = tabs[0].id
+        XCTAssertEqual(discarded.count, 1)
+        XCTAssertTrue(discarded.first === engines[oldest])
+        XCTAssertNil(store.space(id: hiddenSpaceId)?.engines[oldest])
+        let rest = tabs.dropFirst().compactMap { engines[$0.id] }
+        XCTAssertEqual(store.space(id: hiddenSpaceId)?.engines.count, rest.count)
+        let frozen = await pollUntil(timeout: 10) { rest.allSatisfy(\.isFrozen) }
+        XCTAssertTrue(frozen)
+    }
+
     /// The same routine trim spares an unsaved-form engine as a discard would: the budget never
     /// suspends it, only the idle sweep does once it has been idle long enough.
     func testTrimInactiveEnginesFreezeModeKeepsUnsavedFormEngineLive() async throws {

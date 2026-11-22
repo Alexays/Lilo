@@ -162,6 +162,19 @@ extension TabManager {
             """)
 
         if freezesExcessEngines {
+            // Past LifecyclePolicyConfig.maxFrozenEngines, the least recently active suspended engines are discarded:
+            // a frozen page keeps its memory.
+            let overflow = frozenEngineIds.count + toDiscard.count - LifecyclePolicyConfig.maxFrozenEngines
+            if overflow > 0 {
+                var candidates = frozenEngineIds.subtracting(coordinator.discardProtectedEngineIds(
+                    tabs: tabs, availableEngineIds: frozenEngineIds, restoringTabIds: engineHost.restoringTabIds
+                ))
+                candidates.subtract([activeTabId].compactMap { $0 } + (activeSplit?.layout.paneIds ?? []))
+                candidates = candidates.filter { engineHost.engine(for: $0)?.isExtensionDebugged != true }.union(toDiscard)
+                let oldest = Set(candidates.sorted { (lastActiveAt[$0] ?? .distantPast) < (lastActiveAt[$1] ?? .distantPast) }.prefix(overflow))
+                discardEngines(oldest)
+                toDiscard.subtract(oldest)
+            }
             for id in toDiscard {
                 // A frozen Web Lock holder stalls every peer waiting for the lock, so the freeze waits
                 // for the page's answer like the idle sweep does; the guards re-run in the reply, where a tab

@@ -788,6 +788,51 @@ final class BrowserStateStore {
         }
     }
 
+    /// Freezes `toFreeze`, but discards the least recently active hidden-space engines, frozen or about to be, past
+    /// `LifecyclePolicyConfig.maxFrozenEngines`. Discard-protected and inspected engines are never taken.
+    private func freezeParkedEnginesWithinCap(
+        _ toFreeze: [(spaceId: UUID, tabId: UUID)],
+        tabsBySpace: [UUID: [Tab]],
+        coordinator: TabLifecycleCoordinator,
+        discardEngine: (WKWebViewTab) -> Any?,
+        now: Date
+    ) {
+        let pending = Set(toFreeze.map(\.tabId))
+        var suspendedCount = 0
+        var candidates: [(spaceId: UUID, tabId: UUID, lastActiveAt: Date)] = []
+        for (spaceId, tabs) in tabsBySpace {
+            guard let snapshot = spaces[spaceId] else { continue }
+            let suspended = snapshot.engines.filter { $0.value.isFrozen || pending.contains($0.key) }
+            guard !suspended.isEmpty else { continue }
+            suspendedCount += suspended.count
+            let protectedTabIds = coordinator.discardProtectedEngineIds(
+                tabs: tabs,
+                availableEngineIds: Set(suspended.keys),
+                restoringTabIds: snapshot.restoringTabIds,
+                now: now
+            ).union(inspectedEngineIds(in: suspended))
+            var lastActiveByTab: [UUID: Date] = [:]
+            for tab in tabs { if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last } }
+            for (tabId, engine) in suspended where !protectedTabIds.contains(tabId) {
+                candidates.append((spaceId, tabId, lastActiveByTab[tabId] ?? engine.createdAt))
+            }
+        }
+        var discarded: Set<UUID> = []
+        let overflow = suspendedCount - LifecyclePolicyConfig.maxFrozenEngines
+        if overflow > 0 {
+            for candidate in candidates.sorted(by: { $0.lastActiveAt < $1.lastActiveAt }).prefix(overflow) {
+                guard var snapshot = spaces[candidate.spaceId], let engine = snapshot.engines[candidate.tabId] else { continue }
+                applyEngineDiscard(tabId: candidate.tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
+                spaces[candidate.spaceId] = snapshot
+                discarded.insert(candidate.tabId)
+            }
+        }
+        for (spaceId, tabId) in toFreeze where !discarded.contains(tabId) {
+            guard let engine = spaces[spaceId]?.engines[tabId] else { continue }
+            freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
+        }
+    }
+
     /// Freezes every live engine of every Space but agent tabs, calls and PiP videos, visible ones included, for a closed lid.
     /// Returns only the engines this call froze, so a resume leaves the idle-frozen ones frozen.
     func freezeAllEngines() -> [WKWebViewTab] {
@@ -848,6 +893,7 @@ final class BrowserStateStore {
             protectedSpaceId: protectedSpaceId,
             now: now
         )
+        var toFreeze: [(spaceId: UUID, tabId: UUID)] = []
 
         for spaceId in evictedSpaceIds {
             guard var snapshot = spaces[spaceId] else { continue }
@@ -862,7 +908,7 @@ final class BrowserStateStore {
             for tabId in evictedEngines {
                 guard let engine = snapshot.engines[tabId] else { continue }
                 if freezesExcessEngines {
-                    freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
+                    toFreeze.append((spaceId, tabId))
                 } else {
                     applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
                 }
@@ -889,13 +935,16 @@ final class BrowserStateStore {
             var budgetChanged = false
             for (tabId, engine) in snapshot.engines where live.contains(tabId) && !retained.contains(tabId) {
                 if freezesExcessEngines {
-                    freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
+                    toFreeze.append((spaceId, tabId))
                 } else {
                     applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
                 }
                 budgetChanged = true
             }
             if budgetChanged { spaces[spaceId] = snapshot }
+        }
+        if !toFreeze.isEmpty {
+            freezeParkedEnginesWithinCap(toFreeze, tabsBySpace: projectedTabsBySpace, coordinator: coordinator, discardEngine: discardEngine, now: now)
         }
 
         // Idle-eviction pass: engines in spaces that *survived* the LRU budget are still eligible
