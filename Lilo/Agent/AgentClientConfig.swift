@@ -1,22 +1,9 @@
 import AppKit
 import Foundation
 
-/// Registers `lilo-mcp` with the agents people run, each in its own configuration file.
+/// Registers `lilo-mcp` with the agents people run, each in its own configuration file, as `HarnessDefinition` says.
 enum AgentClientConfig {
-    enum Client: String, CaseIterable {
-        case claudeCode, claudeDesktop, codex, cursor
-
-        /// The client behind the name an agent gives when it connects ("claude-ai" is Claude Desktop).
-        init?(clientName: String) {
-            switch clientName.lowercased() {
-            case "claude-code": self = .claudeCode
-            case let name where name == "claude-ai" || name.hasPrefix("local-agent-mode-"): self = .claudeDesktop
-            case "codex", "codex-mcp-client": self = .codex
-            case "cursor", "cursor-vscode": self = .cursor
-            default: return nil
-            }
-        }
-    }
+    typealias Client = HarnessDefinition
 
     /// The MCP server the agents launch: a pipe to Lilo's agent socket, shipped next to Lilo's own binary.
     static var helperPath: String {
@@ -29,29 +16,41 @@ enum AgentClientConfig {
 
     /// Writes the client's configuration and says what it did, for the settings page.
     static func connect(_ client: Client, home: URL) async throws -> String {
-        switch client {
-        case .claudeCode:
+        switch client.config {
+        case .claudeCLI:
             // Its installers' places first: Lilo, started from the Finder, has no terminal PATH, and a login
             // shell leaves out what .zshrc adds (~/.local/bin included).
-            let installed = binary("claude", home: home, extra: [home.appending(path: ".claude/local/claude").path])
-            let found = installed == nil ? await run("/bin/zsh", ["-lc", "command -v claude"], timeout: 5).output : installed
-            guard let claude = found?.trimmingCharacters(in: .whitespacesAndNewlines), !claude.isEmpty else {
+            guard let claude = await claudeBinary(client, home: home) else {
                 throw unsafe AgentToolError(String(format: "Claude Code is not installed. Once it is, run: %@".localized, "claude mcp add --scope user lilo -- \(helperPath)"))
             }
             // `add` refuses a name already taken, by this Lilo or one that moved.
             _ = await run(claude, ["mcp", "remove", "--scope", "user", "lilo"], timeout: 15)
             let added = await run(claude, ["mcp", "add", "--scope", "user", "lilo", "--", helperPath], timeout: 15)
             guard added.status == 0 else { throw unsafe AgentToolError(String(format: "Claude Code refused the server: %@".localized, added.output ?? "")) }
-            return "Added Lilo to Claude Code".localized
-        case .claudeDesktop:
-            try mergeServer(into: claudeDesktopConfig(home: home))
-            return "Added Lilo to Claude Desktop: quit and reopen Claude to load it".localized
-        case .cursor:
-            try mergeServer(into: cursorConfig(home: home))
-            return "Added Lilo to Cursor".localized
-        case .codex:
-            try writeCodexTable(codexConfig(home: home))
-            return "Added Lilo to Codex".localized
+        case .json, .toml:
+            try register(client, home: home)
+        }
+        return client.added()
+    }
+
+    /// Takes Lilo's server out of the client's configuration, leaving its other servers and keys. Nothing to do
+    /// when it was never there.
+    static func remove(_ client: Client, home: URL) async throws {
+        switch client.config {
+        case .claudeCLI:
+            guard let claude = await claudeBinary(client, home: home) else { return }
+            _ = await run(claude, ["mcp", "remove", "--scope", "user", "lilo"], timeout: 15)
+        case .json(let path):
+            let url = home.appending(path: path)
+            var config = readJSON(url)
+            guard var servers = config["mcpServers"] as? [String: Any], servers.removeValue(forKey: "lilo") != nil else { return }
+            config["mcpServers"] = servers
+            try write(Data(json(config).utf8), to: url)
+        case .toml(let path):
+            let url = home.appending(path: path)
+            guard var text = try? String(contentsOf: url, encoding: .utf8), let range = liloTable(in: text) else { return }
+            text.removeSubrange(range)
+            try write(Data(text.utf8), to: url)
         }
     }
 
@@ -59,37 +58,21 @@ enum AgentClientConfig {
     /// clients it fixed. Claude Code keeps its own store, which only its CLI edits.
     @discardableResult
     static func repairMovedConfigs(home: URL) -> [Client] {
-        var repaired: [Client] = []
-        for (client, url) in [(Client.claudeDesktop, claudeDesktopConfig(home: home)), (.cursor, cursorConfig(home: home))] {
-            guard let command = ((readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String,
-                  command != helperPath, !FileManager.default.fileExists(atPath: command) else { continue }
-            if (try? mergeServer(into: url)) != nil { repaired.append(client) }
+        Client.all.filter { client in
+            guard let command = serverCommand(of: client, home: home), command != helperPath,
+                  !FileManager.default.fileExists(atPath: command) else { return false }
+            return (try? register(client, home: home)) != nil
         }
-        let codex = codexConfig(home: home)
-        if let text = try? String(contentsOf: codex, encoding: .utf8), let range = codexTable(in: text),
-           let command = text[range].split(separator: "\n").first(where: { $0.hasPrefix("command") })?
-            .split(separator: "\"").dropFirst().first.map(String.init),
-           command != helperPath, !FileManager.default.fileExists(atPath: command),
-           (try? writeCodexTable(codex)) != nil {
-            repaired.append(.codex)
-        }
-        return repaired
     }
 
     /// The clients whose configuration names Lilo's server. Reads their files, so off the main thread.
     static func connectedClients(home: URL) -> [Client] {
-        Client.allCases.filter { client in
-            let config: URL
-            switch client {
-            case .codex:
-                let text = try? String(contentsOf: codexConfig(home: home), encoding: .utf8)
-                return text.flatMap(codexTable(in:)) != nil
-            // `claude mcp add --scope user` keeps its servers in ~/.claude.json.
-            case .claudeCode: config = home.appending(path: ".claude.json")
-            case .claudeDesktop: config = claudeDesktopConfig(home: home)
-            case .cursor: config = cursorConfig(home: home)
+        Client.all.filter { client in
+            let url = home.appending(path: client.config.path)
+            if case .toml = client.config {
+                return (try? String(contentsOf: url, encoding: .utf8)).flatMap { liloTable(in: $0) } != nil
             }
-            return (readJSON(config)["mcpServers"] as? [String: Any])?["lilo"] != nil
+            return (readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] != nil
         }
     }
 
@@ -97,33 +80,47 @@ enum AgentClientConfig {
     /// the client does not look installed; a tool installed elsewhere still left its folder in the home.
     static func iconApp(of client: Client, home: URL) -> URL? {
         let workspace = NSWorkspace.shared
-        let terminal = { workspace.urlForApplication(withBundleIdentifier: "com.apple.Terminal") }
-        switch client {
-        case .claudeDesktop: return workspace.urlForApplication(withBundleIdentifier: "com.anthropic.claudefordesktop")
-        case .cursor: return workspace.urlForApplication(withBundleIdentifier: "com.todesktop.230313mzl4w4u92")
-        case .claudeCode:
-            let found = binary("claude", home: home, extra: [home.appending(path: ".claude/local/claude").path]) != nil
-                || FileManager.default.fileExists(atPath: home.appending(path: ".claude").path)
-            return found ? terminal() : nil
-        case .codex:
-            if let app = workspace.urlForApplication(withBundleIdentifier: "com.openai.codex") { return app }
-            let found = binary("codex", home: home, extra: []) != nil || FileManager.default.fileExists(atPath: home.appending(path: ".codex").path)
-            return found ? terminal() : nil
-        }
+        let detect = client.detect
+        if let id = detect.bundleID, let app = workspace.urlForApplication(withBundleIdentifier: id) { return app }
+        let found = detect.binary.flatMap { binary($0, home: home, extra: detect.binaryExtra) } != nil
+            || detect.folders.contains { FileManager.default.fileExists(atPath: home.appending(path: $0).path) }
+        return found ? workspace.urlForApplication(withBundleIdentifier: "com.apple.Terminal") : nil
+    }
+
+    private static func claudeBinary(_ client: Client, home: URL) async -> String? {
+        guard let name = client.detect.binary else { return nil }
+        let installed = binary(name, home: home, extra: client.detect.binaryExtra)
+        let found = installed == nil ? await run("/bin/zsh", ["-lc", "command -v \(name)"], timeout: 5).output : installed
+        return found.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.flatMap { $0.isEmpty ? nil : $0 }
     }
 
     private static func binary(_ name: String, home: URL, extra: [String]) -> String? {
-        ([home.appending(path: ".local/bin/\(name)").path] + extra + ["/opt/homebrew/bin/\(name)", "/usr/local/bin/\(name)"])
+        ([home.appending(path: ".local/bin/\(name)").path] + extra.map { home.appending(path: $0).path }
+            + ["/opt/homebrew/bin/\(name)", "/usr/local/bin/\(name)"])
             .first(where: FileManager.default.isExecutableFile(atPath:))
     }
 
-    private static func claudeDesktopConfig(home: URL) -> URL {
-        home.appending(path: "Library/Application Support/Claude/claude_desktop_config.json")
+    /// Adds or replaces Lilo's entry in a client that keeps it in a file Lilo writes.
+    private static func register(_ client: Client, home: URL) throws {
+        switch client.config {
+        case .claudeCLI: break
+        case .json(let path): try mergeServer(into: home.appending(path: path))
+        case .toml(let path): try writeTable(home.appending(path: path))
+        }
     }
 
-    private static func cursorConfig(home: URL) -> URL { home.appending(path: ".cursor/mcp.json") }
-
-    private static func codexConfig(home: URL) -> URL { home.appending(path: ".codex/config.toml") }
+    /// The `command` a client has for Lilo's server in a file Lilo writes, nil for Claude Code, whose store
+    /// only its CLI edits.
+    private static func serverCommand(of client: Client, home: URL) -> String? {
+        let url = home.appending(path: client.config.path)
+        if case .claudeCLI = client.config { return nil }
+        if case .toml = client.config {
+            guard let text = try? String(contentsOf: url, encoding: .utf8), let range = liloTable(in: text) else { return nil }
+            return text[range].split(separator: "\n").first(where: { $0.hasPrefix("command") })?
+                .split(separator: "\"").dropFirst().first.map(String.init)
+        }
+        return ((readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String
+    }
 
     /// Sets `mcpServers.lilo`, keeping every other key of the file. A file that exists but cannot be read or
     /// is no plain JSON (comments, a trailing comma) is left alone: rewriting it would drop the user's other servers.
@@ -156,7 +153,7 @@ enum AgentClientConfig {
 
     /// Replaces the `[mcp_servers.lilo]` table in place, or appends it: the rest of the file is left
     /// byte for byte, comments included, which a TOML round trip would not keep.
-    private static func writeCodexTable(_ url: URL) throws {
+    private static func writeTable(_ url: URL) throws {
         let table = "[mcp_servers.lilo]\ncommand = \"\(helperPath)\"\n"
         var text = ""
         if FileManager.default.fileExists(atPath: url.path) {
@@ -165,7 +162,7 @@ enum AgentClientConfig {
             }
             text = existing
         }
-        if let range = codexTable(in: text) {
+        if let range = liloTable(in: text) {
             text.replaceSubrange(range, with: table)
         } else {
             if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
@@ -175,7 +172,7 @@ enum AgentClientConfig {
     }
 
     /// From the table header to the next header or the end of the file.
-    private static func codexTable(in text: String) -> Range<String.Index>? {
+    private static func liloTable(in text: String) -> Range<String.Index>? {
         guard let header = text.range(of: "[mcp_servers.lilo]\n") ?? text.range(of: "[mcp_servers.lilo]") else { return nil }
         let rest = text[header.upperBound...]
         let end = rest.range(of: "\n[").map { text.index(after: $0.lowerBound) } ?? text.endIndex
