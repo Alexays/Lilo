@@ -906,6 +906,13 @@
 		"bottom": "下に開く",
 		"replace": "置き換える"
 	},
+	"paneMove": {
+		"left": "左に移動",
+		"right": "右に移動",
+		"top": "上に移動",
+		"bottom": "下に移動",
+		"replace": "入れ替え"
+	},
 	"tabSection": {
 		"splitView": "分割表示",
 		"folderEmpty": "空のフォルダ",
@@ -2090,6 +2097,11 @@
 		"Separate Split View": "分割表示を解除",
 		"Close Split Pane": "分割ペインを閉じる",
 		"Maximize Split Pane": "分割ペインを最大化",
+		"Move Pane": "ペインを移動",
+		"Move Pane Left": "分割ペインを左に移動",
+		"Move Pane Right": "分割ペインを右に移動",
+		"Move Pane Up": "分割ペインを上に移動",
+		"Move Pane Down": "分割ペインを下に移動",
 		"Open in Split View": "分割表示で開く",
 		"Split view is full (%lld panes)": "分割表示はいっぱいです（%lld ペイン）",
 		"Hide Element…": "要素を非表示…",

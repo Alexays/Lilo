@@ -21,6 +21,33 @@ final class SplitPaneFrameTests: XCTestCase {
         result.cuts.values.reduce(result.panes.values.reduce(NSRect.null) { $0.union($1) }) { $0.union($1.divider) }
     }
 
+    func testNeighborPaneFindsTheAbuttingPaneOnEachSide() {
+        // Shares of a 2x2 grid, y counting from the top as sendPaneFrames reports.
+        let frames: [UUID: NSRect] = [
+            a: NSRect(x: 0, y: 0, width: 0.5, height: 0.5),
+            b: NSRect(x: 0.5, y: 0, width: 0.5, height: 0.5),
+            c: NSRect(x: 0, y: 0.5, width: 0.5, height: 0.5)
+        ]
+        XCTAssertEqual(SplitPanesController.neighborPane(of: a, in: frames, direction: .right), b)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: a, in: frames, direction: .down), c)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: b, in: frames, direction: .left), a)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: b, in: frames, direction: .up), nil)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: c, in: frames, direction: .up), a)
+    }
+
+    func testNeighborPaneSkipsPanesThatDoNotShareTheEdge() {
+        // a is a full-height left column; b and c stack on its right.
+        let frames: [UUID: NSRect] = [
+            a: NSRect(x: 0, y: 0, width: 0.5, height: 1),
+            b: NSRect(x: 0.5, y: 0, width: 0.5, height: 0.5),
+            c: NSRect(x: 0.5, y: 0.5, width: 0.5, height: 1)
+        ]
+        XCTAssertEqual(SplitPanesController.neighborPane(of: a, in: frames, direction: .right), b)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: c, in: frames, direction: .up), b)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: b, in: frames, direction: .left), a)
+        XCTAssertEqual(SplitPanesController.neighborPane(of: a, in: frames, direction: .up), nil)
+    }
+
     func testASideBySideSplitLeavesTheGapToTheDivider() {
         let rect = NSRect(x: 4, y: 4, width: 400, height: 300)
         let (panes, cuts) = tile(

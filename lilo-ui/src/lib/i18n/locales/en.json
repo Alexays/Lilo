@@ -906,6 +906,13 @@
 		"bottom": "Open below",
 		"replace": "Replace"
 	},
+	"paneMove": {
+		"left": "Move left",
+		"right": "Move right",
+		"top": "Move above",
+		"bottom": "Move below",
+		"replace": "Swap"
+	},
 	"tabSection": {
 		"splitView": "Split view",
 		"folderEmpty": "Folder empty",
@@ -2090,6 +2097,11 @@
 		"Separate Split View": "Separate Split View",
 		"Close Split Pane": "Close Split Pane",
 		"Maximize Split Pane": "Maximize Split Pane",
+		"Move Pane": "Move Pane",
+		"Move Pane Left": "Move Pane Left",
+		"Move Pane Right": "Move Pane Right",
+		"Move Pane Up": "Move Pane Up",
+		"Move Pane Down": "Move Pane Down",
 		"Open in Split View": "Open in Split View",
 		"Split view is full (%lld panes)": "Split view is full (%lld panes)",
 		"Hide Element…": "Hide Element…",

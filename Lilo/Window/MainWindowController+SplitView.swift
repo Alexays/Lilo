@@ -211,8 +211,13 @@ final class SplitPaneHandleView: NSView {
 
     var onClose: (() -> Void)?
     var onMaximize: (() -> Void)?
+    /// Dragging the pill moves the pane inside the split; the events carry the window point.
+    var onDragStart: (() -> Void)?
+    var onDragMove: ((NSEvent) -> Void)?
+    var onDragEnd: ((NSEvent) -> Void)?
 
     private var revealed = false
+    private var isDragging = false
     /// Opaque, as a tab's modal panel: a translucent material vanished over dark pages.
     private let pill = NSBox()
     private let closeButton = NSButton()
@@ -257,15 +262,45 @@ final class SplitPaneHandleView: NSView {
         }
     }
 
-    /// Only the buttons take clicks; the strip and the pill's own pixels fall through to the page.
+    /// The buttons take clicks and the pill around them is the pane's drag grip; the rest of the
+    /// strip falls through to the page.
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard revealed, let hit = super.hitTest(point) else { return nil }
-        return hit is NSButton ? hit : nil
+        if hit is NSButton { return hit }
+        return hit.isDescendant(of: pill) ? self : nil
+    }
+
+    /// The grip shows the grab hand: the pill's pixels outside the two buttons (its 5pt edges and
+    /// the 8pt gap between them).
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        guard revealed else { return }
+        let pill = pill.frame
+        for (x, width) in [(CGFloat(0), CGFloat(5)), (29, 8), (61, 5)] {
+            addCursorRect(NSRect(x: pill.minX + x, y: pill.minY, width: width, height: pill.height), cursor: .openHand)
+        }
+    }
+
+    override func cursorUpdate(with event: NSEvent) { (isDragging ? NSCursor.closedHand : NSCursor.openHand).set() }
+
+    override func mouseDragged(with event: NSEvent) {
+        if !isDragging {
+            isDragging = true
+            onDragStart?()
+        }
+        NSCursor.closedHand.set()
+        onDragMove?(event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if isDragging { onDragEnd?(event) }
+        isDragging = false
     }
 
     func setRevealed(_ revealed: Bool) {
         guard revealed != self.revealed else { return }
         self.revealed = revealed
+        unsafe window?.invalidateCursorRects(for: self)
         // A fade, so Reduce motion keeps it; a plain alphaValue set on a layer-backed view would not animate.
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Self.fadeDuration
@@ -428,6 +463,7 @@ final class SplitPanesController {
 
     /// Takes the dividers and the ring off screen; the panes are the controller's to remove.
     func clear() {
+        cancelPaneDrag()
         split = nil
         liveLayout = nil
         dividers.values.forEach { $0.removeFromSuperview() }
@@ -489,8 +525,59 @@ final class SplitPanesController {
         let handle = SplitPaneHandleView(frame: .zero)
         handle.onClose = { [weak self] in self?.controller.unsplitTab(tabId) }
         handle.onMaximize = { [weak self] in self?.controller.maximizeSplitPane(tabId) }
+        handle.onDragStart = { [weak self] in self?.beginPaneDrag(tabId) }
+        handle.onDragMove = { [weak self] in self?.updatePaneDrag($0) }
+        handle.onDragEnd = { [weak self] in self?.endPaneDrag($0) }
         handles[tabId] = handle
         return handle
+    }
+
+    /// A pane picked up by its pill. The chrome draws the drop targets and applies the drop;
+    /// this side only streams the pointer as content-area shares, the same space as `sentPaneFrames`.
+    private var paneDragTabId: UUID?
+    private var paneDragKeyMonitor: Any?
+
+    private func beginPaneDrag(_ tabId: UUID) {
+        paneDragTabId = tabId
+        paneDragKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.paneDragTabId != nil, event.keyCode == 53 else { return event }
+            self.cancelPaneDrag()
+            return nil
+        }
+    }
+
+    private func paneDragShare(_ windowPoint: NSPoint) -> (x: Double, y: Double)? {
+        let container = controller.contentContainerView
+        guard container.bounds.width > 0, container.bounds.height > 0 else { return nil }
+        let local = container.convert(windowPoint, from: nil)
+        let y = container.isFlipped ? local.y : container.bounds.height - local.y
+        return (Double(local.x / container.bounds.width), Double(y / container.bounds.height))
+    }
+
+    private func sendPaneDrag(_ phase: String, windowPoint: NSPoint? = nil) {
+        guard let tabId = paneDragTabId else { return }
+        let share = windowPoint.flatMap(paneDragShare) ?? (x: 0, y: 0)
+        controller.bridgeRouter.send(event: "splitPaneDrag", data: [
+            "tabId": tabId.uuidString, "phase": phase, "x": share.x, "y": share.y
+        ])
+    }
+
+    private func updatePaneDrag(_ event: NSEvent) { sendPaneDrag("move", windowPoint: event.locationInWindow) }
+
+    private func endPaneDrag(_ event: NSEvent) {
+        sendPaneDrag("end", windowPoint: event.locationInWindow)
+        finishPaneDrag()
+    }
+
+    private func cancelPaneDrag() {
+        sendPaneDrag("cancel")
+        finishPaneDrag()
+    }
+
+    private func finishPaneDrag() {
+        paneDragTabId = nil
+        if let monitor = paneDragKeyMonitor { NSEvent.removeMonitor(monitor) }
+        paneDragKeyMonitor = nil
     }
 
     /// The handle's strip: the top of the pane, inside it so it never covers a divider.
@@ -638,6 +725,38 @@ final class SplitPanesController {
         }])
     }
 
+    /// The pane abutting `tabId`'s frame on `direction`'s side, in the top-left-origin
+    /// shares `sentPaneFrames` uses. Used by the menu's pane moves; a drag aims by edge instead.
+    static func neighborPane(of tabId: UUID, in frames: [UUID: NSRect], direction: SplitPaneDirection) -> UUID? {
+        guard let frame = frames[tabId] else { return nil }
+        var best: (id: UUID, edge: CGFloat, cross: CGFloat)?
+        for (id, cand) in frames where id != tabId {
+            let overlap: CGFloat, edge: CGFloat, cross: CGFloat, reaches: Bool
+            switch direction {
+            case .left:
+                overlap = min(frame.maxY, cand.maxY) - max(frame.minY, cand.minY)
+                edge = cand.maxX; cross = cand.minY
+                reaches = cand.maxX <= frame.minX + 0.002
+            case .right:
+                overlap = min(frame.maxY, cand.maxY) - max(frame.minY, cand.minY)
+                edge = -cand.minX; cross = cand.minY
+                reaches = cand.minX >= frame.maxX - 0.002
+            case .up:
+                overlap = min(frame.maxX, cand.maxX) - max(frame.minX, cand.minX)
+                edge = cand.maxY; cross = cand.minX
+                reaches = cand.maxY <= frame.minY + 0.002
+            case .down:
+                overlap = min(frame.maxX, cand.maxX) - max(frame.minX, cand.minX)
+                edge = -cand.minY; cross = cand.minX
+                reaches = cand.minY >= frame.maxY - 0.002
+            }
+            guard overlap > 0, reaches else { continue }
+            if let current = best, edge < current.edge || (edge == current.edge && cross >= current.cross) { continue }
+            best = (id, edge, cross)
+        }
+        return best?.id
+    }
+
     /// The split views that must survive an activation inside the same split.
     func retainedViews(forTabId id: UUID) -> [NSView] {
         let tabManager = controller.tabManager
@@ -690,6 +809,11 @@ final class SplitPanesController {
     /// The pointer monitor's every-move feed: reveals the handle whose strip holds the pointer and
     /// the divider under it. Nil (the pointer on the chrome) and any point off the panes hide them.
     func updateHover(atWindowPoint point: NSPoint?) {
+        guard paneDragTabId == nil else {
+            // A pane drag owns the pointer: no pill trails it across the panes.
+            for handle in handles.values { handle.setRevealed(false) }
+            return
+        }
         guard split != nil else { return }
         let container = controller.contentContainerView
         guard let point, case let local = container.convert(point, from: nil), container.bounds.contains(local),
@@ -967,6 +1091,21 @@ extension MainWindowController {
         guard let id = tabManager.activeOpenTabId else { return }
         maximizeSplitPane(id)
     }
+
+    /// Trades the focused pane's place with the pane on `direction`'s side: the menu's
+    /// keyboard alternative to dragging the pane onto another's edge or center.
+    @objc func moveSplitPane(_ sender: NSMenuItem) {
+        guard let id = tabManager.activeOpenTabId,
+              let direction = SplitPaneDirection(rawValue: sender.tag) else { return }
+        guard let target = SplitPanesController.neighborPane(of: id, in: splitPanes.sentPaneFrames, direction: direction)
+        else { return NSSound.beep() }
+        replaceSplitPane(target, with: id)
+    }
+}
+
+/// A pane move's direction, as the menu item's tag carries it.
+enum SplitPaneDirection: Int {
+    case left, right, up, down
 }
 
 /// Where a tab dropped on the page lands: on one edge of a pane, or in its place.

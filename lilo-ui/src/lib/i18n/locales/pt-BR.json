@@ -906,6 +906,13 @@
 		"bottom": "Abrir abaixo",
 		"replace": "Substituir"
 	},
+	"paneMove": {
+		"left": "Mover à esquerda",
+		"right": "Mover à direita",
+		"top": "Mover acima",
+		"bottom": "Mover abaixo",
+		"replace": "Trocar"
+	},
 	"tabSection": {
 		"splitView": "Visualização dividida",
 		"folderEmpty": "Pasta vazia",
@@ -2090,6 +2097,11 @@
 		"Separate Split View": "Separar visualização dividida",
 		"Close Split Pane": "Fechar painel dividido",
 		"Maximize Split Pane": "Maximizar painel dividido",
+		"Move Pane": "Mover painel",
+		"Move Pane Left": "Mover painel dividido para a esquerda",
+		"Move Pane Right": "Mover painel dividido para a direita",
+		"Move Pane Up": "Mover painel dividido para cima",
+		"Move Pane Down": "Mover painel dividido para baixo",
 		"Open in Split View": "Abrir em visualização dividida",
 		"Split view is full (%lld panes)": "A visualização dividida está cheia (%lld painéis)",
 		"Hide Element…": "Ocultar elemento…",

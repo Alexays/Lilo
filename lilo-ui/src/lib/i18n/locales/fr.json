@@ -906,6 +906,13 @@
 		"bottom": "Ouvrir en bas",
 		"replace": "Remplacer"
 	},
+	"paneMove": {
+		"left": "Déplacer à gauche",
+		"right": "Déplacer à droite",
+		"top": "Déplacer au-dessus",
+		"bottom": "Déplacer en dessous",
+		"replace": "Échanger"
+	},
 	"tabSection": {
 		"splitView": "Vue partagée",
 		"folderEmpty": "Dossier vide",
@@ -2090,6 +2097,11 @@
 		"Separate Split View": "Séparer la vue partagée",
 		"Close Split Pane": "Fermer le volet fractionné",
 		"Maximize Split Pane": "Agrandir le volet fractionné",
+		"Move Pane": "Déplacer le volet",
+		"Move Pane Left": "Déplacer le volet fractionné à gauche",
+		"Move Pane Right": "Déplacer le volet fractionné à droite",
+		"Move Pane Up": "Déplacer le volet fractionné vers le haut",
+		"Move Pane Down": "Déplacer le volet fractionné vers le bas",
 		"Open in Split View": "Ouvrir en vue partagée",
 		"Split view is full (%lld panes)": "Vue partagée pleine (%lld volets)",
 		"Hide Element…": "Masquer l'élément…",
