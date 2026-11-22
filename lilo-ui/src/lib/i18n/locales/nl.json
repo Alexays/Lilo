@@ -2088,6 +2088,7 @@
 		"Split view is full (%lld panes)": "Gesplitste weergave is vol (%lld deelvensters)",
 		"Hide Element…": "Element verbergen…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Klik op een element om het op deze site te verbergen. Druk op Esc om te annuleren.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Klik op een element of sleep een gebied. Met de pijltjestoetsen wijzig je het element, Return legt vast, Esc annuleert.",
 		"Picture in Picture": "Beeld in beeld",
 		"Develop": "Ontwikkel",
 		"Show Web Inspector": "Toon webinfovenster",

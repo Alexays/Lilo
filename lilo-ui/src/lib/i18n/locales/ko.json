@@ -2088,6 +2088,7 @@
 		"Split view is full (%lld panes)": "분할 보기가 가득 찼습니다(%lld개 패널)",
 		"Hide Element…": "요소 가리기…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "이 사이트에서 가릴 요소를 클릭하세요. 취소하려면 Esc 키를 누르세요.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "요소를 클릭하거나 영역을 드래그하세요. 화살표 키로 요소를 바꾸고, Return으로 캡처하고, Esc로 취소합니다.",
 		"Picture in Picture": "화면 속 화면",
 		"Develop": "개발자용",
 		"Show Web Inspector": "웹 속성 보기",

@@ -2088,6 +2088,7 @@
 		"Split view is full (%lld panes)": "La vista dividida está llena (%lld paneles)",
 		"Hide Element…": "Ocultar elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Haz clic en un elemento para ocultarlo en este sitio. Pulsa Esc para cancelar.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Haz clic en un elemento o arrastra un área. Las flechas cambian el elemento, Intro captura y Esc cancela.",
 		"Picture in Picture": "Imagen dentro de imagen",
 		"Develop": "Desarrollo",
 		"Show Web Inspector": "Mostrar inspector web",
