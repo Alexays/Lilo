@@ -66,7 +66,7 @@ test("every setting is listed once, in both locales", async () => {
 test("every tool is read with its parameters", () => {
   const declared = SOURCES.tools.reduce((count, file) => count + read(file).match(/^\s*(?:AgentTools\.)?tool\("/gmu).length, 0);
   assert.equal(Object.keys(byName).length, declared);
-  assert.equal(declared, 30);
+  assert.equal(declared, 33);
   assert.deepEqual(byName.navigate.required, ["url", "tabId"]);
   assert.deepEqual(byName.read_page.properties.filter.enum, ["interactive", "all"]);
   assert.deepEqual(byName.browser_batch.properties.actions.items.required, ["name", "input"]);
@@ -154,10 +154,10 @@ test("a tool list the reader would only partly read fails", () => {
   const sources = Object.fromEntries(SOURCES.tools.map((name) => [name, read(name)]));
   assert.doesNotThrow(() => checkToolCount(tools, sources));
   const more = { ...sources, "Lilo/Agent/AgentMoreTools.swift": 'enum AgentMoreTools {\n    static let definitions: [ToolDefinition] = [\n        AgentTools.tool("new_tool", "x", [:]),\n    ]\n}\n' };
-  assert.throws(() => checkToolCount(tools, more), /Lilo\/Agent: 31 tool\(…\) definitions are in the code but the generator read 30 .+SOURCES\.tools/u);
+  assert.throws(() => checkToolCount(tools, more), /Lilo\/Agent: 34 tool\(…\) definitions are in the code but the generator read 33 .+SOURCES\.tools/u);
   // Mid-line and one-line lists count too; a tool named in a description's text does not.
   const inline = { ...sources, "Lilo/Agent/AgentMoreTools.swift": 'let more = [Self.tool("a", "Calls tool(\\"b\\", x).", [:]), tool("c", """\n    Calls tool("d").\n    """, [:])]\n' };
-  assert.throws(() => checkToolCount(tools, inline), /Lilo\/Agent: 32 tool\(…\) definitions are in the code but the generator read 30/u);
+  assert.throws(() => checkToolCount(tools, inline), /Lilo\/Agent: 35 tool\(…\) definitions are in the code but the generator read 33/u);
   const twice = source.replace("static let definitions: [[String: Any]] = [", 'static let definitions: [[String: Any]] = [\n        AgentTools.tool("navigate", "dup", [:]),');
   assert.throws(() => mcpPartial([tools[0], tools[1], parseTools(twice, file)], summaries), /two tools are named "navigate"/u);
 });
@@ -177,7 +177,7 @@ test("a compatibility heading written twice fails instead of dropping the second
 test("an enum value or parameter name with a pipe stays in its cell", () => {
   const file = SOURCES.tools[0];
   const odd = read(file).replace('"enum": ["interactive", "all"]', '"enum": ["inter|active", "all"]').replace('"filter": [', '"fil|ter": [');
-  const markdown = mcpPartial([parseTools(odd, file), tools[1], tools[2]], summaries);
+  const markdown = mcpPartial([parseTools(odd, file), tools[1], tools[2], tools[3]], summaries);
   assert.match(markdown, /^\| `fil\\\|ter` \| `string`: `inter\\\|active`, `all` \| no \|/mu);
 });
 

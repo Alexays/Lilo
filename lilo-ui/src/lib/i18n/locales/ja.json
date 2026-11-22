@@ -531,6 +531,11 @@
 				"description": "すべてのショートカットを変更でき、Arc の設定から始めることもできます。",
 				"keywords": "キーボード ショートカット ホットキー キー コマンド"
 			},
+			"holdToQuit": {
+				"title": "終了ショートカットを長押しで終了",
+				"description": "終了ショートカットを押すと確認が表示され、キーを押し続けた場合のみ Lilo を終了します。",
+				"keywords": "終了 閉じる q 誤操作 長押し"
+			},
 			"newProfile": {
 				"title": "新規プロファイル",
 				"description": "プロファイルごとに Cookie、サインイン、機能拡張を分けられます。",
@@ -847,6 +852,7 @@
 		"terminalFailedDetail": "{command}が{duration}後に失敗しました（終了コード{code}）",
 		"terminalSucceededDetail": "{command}が{duration}で完了しました",
 		"closeTab": "タブを閉じる",
+		"removeFromSplit": "分割ビューから削除",
 		"removePinnedTab": "固定タブを取り除く",
 		"tabName": "タブ名",
 		"removeBookmark": "ブックマークを取り除く",
@@ -907,6 +913,7 @@
 		"newTerminal": "新規ターミナル",
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"listOptions": "並べ替えとグループ化",
+		"searchTabs": "タブを検索",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
 		"dropToPin": "ドロップして固定",
@@ -1172,6 +1179,7 @@
 		"terminalProgram": "プログラム",
 		"hintRun": "実行",
 		"hintSplit": "分割",
+		"splitFull": "分割表示はいっぱいです（{count} ペイン）",
 		"scopeTabs": "タブ",
 		"scopeBookmarks": "ブックマーク",
 		"scopeHistory": "履歴",
@@ -2035,6 +2043,7 @@
 		"Hide Others": "ほかを非表示",
 		"Show All": "すべてを表示",
 		"Quit Lilo": "Lilo を終了",
+		"Hold %@ to Quit": "%@ を長押しで終了",
 		"File": "ファイル",
 		"New Tab": "新規タブ",
 		"Back to tab": "タブに戻る",
@@ -2080,9 +2089,13 @@
 		"New Split View": "新規分割表示",
 		"Split View": "分割表示",
 		"Separate Split View": "分割表示を解除",
+		"Close Split Pane": "分割ペインを閉じる",
+		"Maximize Split Pane": "分割ペインを最大化",
 		"Open in Split View": "分割表示で開く",
+		"Split view is full (%lld panes)": "分割表示はいっぱいです（%lld ペイン）",
 		"Hide Element…": "要素を非表示…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "このサイトで非表示にする要素をクリックしてください。キャンセルするにはEscキーを押します。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "要素をクリックするか、範囲をドラッグします。矢印キーで要素を変更し、Returnでキャプチャ、Escでキャンセルします。",
 		"Picture in Picture": "ピクチャ・イン・ピクチャ",
 		"Develop": "開発",
 		"Show Web Inspector": "Web インスペクタを表示",
@@ -2681,7 +2694,11 @@
 			"noFolder": "フォルダなし",
 			"noFolderDetail": "エージェントは専用のフォルダで作業します",
 			"backgroundHint": "{shortcut} でバックグラウンドのままにする",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "エージェントを検索",
+			"featuredAgents": "注目",
+			"registryAgents": "レジストリ",
+			"noMatches": "一致するエージェントがありません"
 		},
 		"row": {
 			"untitled": "新しい会話",

@@ -24,26 +24,42 @@
   import { portal } from "../../lib/actions/portal";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { popoverOut } from "../../lib/motion/restingTransitions";
+  import { tooltip } from "../../lib/tooltip";
   import AgentTile from "./AgentTile.svelte";
   import Icon from "../ui/Icon.svelte";
+  import UiSearchField from "../ui/UiSearchField.svelte";
 
   interface Props {
     value: string;
     options: MenuOption[];
     ariaLabel: string;
     onchange: (value: string) => void;
+    /** Placeholder of the filter field shown once the list is longer than SEARCH_MIN_OPTIONS. */
+    searchPlaceholder?: string;
+    /** Shown when the filter leaves no option. */
+    searchEmptyLabel?: string;
     children: Snippet;
   }
 
-  let { value, options, ariaLabel, onchange, children }: Props = $props();
+  let { value, options, ariaLabel, onchange, searchPlaceholder, searchEmptyLabel, children }: Props = $props();
 
   const MARGIN = 8;
+  // A filter field only helps a list that can get long, per docs/DESIGN.md.
+  const SEARCH_MIN_OPTIONS = 20;
   const menuId = $props.id();
   let open = $state(false);
   let buttonEl: HTMLButtonElement | undefined = $state();
   let menuEl: HTMLDivElement | undefined = $state();
+  let query = $state("");
   // Read when it opens: above the button when there is no room below, as at the composer.
   let position = $state({ left: 0, top: 0, bottom: 0, up: false });
+
+  const searchable = $derived(!!searchPlaceholder && options.length > SEARCH_MIN_OPTIONS);
+  const filtered = $derived.by(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return options;
+    return options.filter((option) => option.label.toLowerCase().includes(needle) || option.detail?.toLowerCase().includes(needle));
+  });
 
   function toggle(): void {
     if (!open && buttonEl) {
@@ -55,12 +71,19 @@
         bottom: window.innerHeight - rect.top + 6,
         up,
       };
+      query = "";
     }
     open = !open;
   }
 
+  const filterField = () => menuEl?.querySelector<HTMLInputElement>("input[type='search']");
+
   $effect(() => {
     if (!menuEl) return;
+    if (searchable) {
+      filterField()?.focus();
+      return;
+    }
     (menuEl.querySelector<HTMLElement>("[aria-checked='true']") ?? menuEl.querySelector<HTMLElement>("[role='menuitemradio']"))?.focus();
   });
 
@@ -73,12 +96,43 @@
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key === "Escape") {
       event.preventDefault();
+      if (query) {
+        query = "";
+        return;
+      }
       open = false;
       buttonEl?.focus();
       return;
     }
     const rows = Array.from(menuEl?.querySelectorAll<HTMLElement>("[role='menuitemradio']") ?? []);
-    const index = rows.indexOf(document.activeElement as HTMLElement);
+    const active = document.activeElement as HTMLElement;
+    if (searchable && active?.tagName === "INPUT") {
+      const first = filtered[0];
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        (event.key === "ArrowDown" ? rows[0] : rows[rows.length - 1])?.focus();
+      } else if (event.key === "Enter" && first) {
+        event.preventDefault();
+        choose(first);
+      }
+      return;
+    }
+    // Type-ahead, like a native menu: a character typed on a row goes to the filter field.
+    if (searchable && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      if (event.key.length === 1) {
+        event.preventDefault();
+        query += event.key;
+        filterField()?.focus();
+        return;
+      }
+      if (event.key === "Backspace" && query) {
+        event.preventDefault();
+        query = query.slice(0, -1);
+        filterField()?.focus();
+        return;
+      }
+    }
+    const index = rows.indexOf(active);
     const next =
       event.key === "ArrowDown" ? (index + 1) % rows.length
       : event.key === "ArrowUp" ? (index - 1 + rows.length) % rows.length
@@ -140,20 +194,35 @@
     onkeydown={handleKeydown}
     {@attach dismissable({ onDismiss: () => (open = false), ignore: `[data-menu-picker="${menuId}"]`, returnFocus: buttonEl })}
   >
-    {#each options as option, index (option.value)}
-      {#if option.group && option.group !== options[index - 1]?.group}
-        <div class="group">{option.group}</div>
-      {/if}
-      {@const checked = option.checked ?? option.value === value}
-      <button type="button" class="float-row item" role="menuitemradio" aria-checked={checked} onclick={() => choose(option)}>
-        {#if option.logo || option.agentId || option.icon}<span class="glyph">{@render glyph(option)}</span>{/if}
-        <span class="text">
-          <span class="name">{option.label}</span>
-          {#if option.detail}<span class="detail">{option.detail}</span>{/if}
-        </span>
-        {#if checked}<span class="check"><Icon name="check" size={12} /></span>{/if}
-      </button>
-    {/each}
+    {#if searchable}
+      <UiSearchField value={query} onchange={(next) => (query = next)} placeholder={searchPlaceholder} ariaLabel={searchPlaceholder} />
+    {/if}
+    <div class="list">
+      {#each filtered as option, index (option.value)}
+        {#if !query && option.group && option.group !== filtered[index - 1]?.group}
+          <div class="group">{option.group}</div>
+        {/if}
+        {@const checked = option.checked ?? option.value === value}
+        <button
+          type="button"
+          class="float-row item"
+          class:detailed={!!option.detail}
+          role="menuitemradio"
+          aria-checked={checked}
+          use:tooltip={{ text: option.label, subtitle: option.detail, placement: "right", disabled: !option.detail }}
+          onclick={() => choose(option)}
+        >
+          {#if option.logo || option.agentId || option.icon}<span class="glyph">{@render glyph(option)}</span>{/if}
+          <span class="text">
+            <span class="name">{option.label}</span>
+            {#if option.detail}<span class="detail">{option.detail}</span>{/if}
+          </span>
+          {#if checked}<span class="check"><Icon name="check" size={12} /></span>{/if}
+        </button>
+      {:else}
+        {#if query && searchEmptyLabel}<p class="empty">{searchEmptyLabel}</p>{/if}
+      {/each}
+    </div>
   </div>
 {/if}
 
@@ -205,7 +274,7 @@
     min-width: 200px;
     max-width: 260px;
     max-height: 60vh;
-    overflow-y: auto;
+    overflow: hidden;
     transform-origin: top left;
   }
 
@@ -213,7 +282,18 @@
     transform-origin: bottom left;
   }
 
+  /* The list scrolls on its own: rows never shrink below their height and collide. */
+  .list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
   .group {
+    flex: none;
     padding: var(--space-6) var(--space-8) var(--space-2);
     color: var(--float-text-muted);
     font-size: var(--font-size-xs);
@@ -221,12 +301,18 @@
   }
 
   .item {
+    flex: none;
     border: none;
     background: transparent;
     color: var(--float-text);
     font: inherit;
     text-align: left;
     cursor: pointer;
+  }
+
+  /* A name over a one-line detail, at one height for every such row. */
+  .item.detailed {
+    height: 40px;
   }
 
   .item:hover,
@@ -264,11 +350,20 @@
     font-size: var(--font-size-md);
   }
 
-  /* Wraps rather than truncates: a cut-off description hides what the choice does. */
+  /* One line; the whole text is the row's tooltip. */
   .detail {
-    text-wrap: pretty;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--float-text-muted);
     font-size: var(--font-size-xs);
+  }
+
+  .empty {
+    margin: 0;
+    padding: var(--space-8);
+    color: var(--float-text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .check {

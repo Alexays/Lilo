@@ -531,6 +531,11 @@
 				"description": "Modifiez n'importe quel raccourci, ou partez de ceux d'Arc.",
 				"keywords": "clavier raccourci touches commande"
 			},
+			"holdToQuit": {
+				"title": "Maintenir le raccourci pour quitter",
+				"description": "Le raccourci pour quitter affiche une invite ; Lilo ne quitte que si les touches restent enfoncées.",
+				"keywords": "quitter fermer commande q accidentel maintenir"
+			},
 			"newProfile": {
 				"title": "Nouveau profil",
 				"description": "Les profils séparent cookies, connexions et extensions.",
@@ -847,6 +852,7 @@
 		"terminalFailedDetail": "{command} a échoué (code {code}) après {duration}",
 		"terminalSucceededDetail": "{command} terminée en {duration}",
 		"closeTab": "Fermer l'onglet",
+		"removeFromSplit": "Retirer de la vue fractionnée",
 		"removePinnedTab": "Retirer l'onglet épinglé",
 		"tabName": "Nom de l'onglet",
 		"removeBookmark": "Retirer le favori",
@@ -907,6 +913,7 @@
 		"newTerminal": "Nouveau terminal",
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"listOptions": "Trier et regrouper",
+		"searchTabs": "Rechercher dans les onglets",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
 		"dropToPin": "Déposer pour épingler",
@@ -1172,6 +1179,7 @@
 		"terminalProgram": "Programme",
 		"hintRun": "Exécuter",
 		"hintSplit": "Côte à côte",
+		"splitFull": "Vue partagée pleine ({count} volets)",
 		"scopeTabs": "Onglets",
 		"scopeBookmarks": "Favoris",
 		"scopeHistory": "Historique",
@@ -2035,6 +2043,7 @@
 		"Hide Others": "Masquer les autres",
 		"Show All": "Tout afficher",
 		"Quit Lilo": "Quitter Lilo",
+		"Hold %@ to Quit": "Maintenez %@ pour quitter",
 		"File": "Fichier",
 		"New Tab": "Nouvel onglet",
 		"Back to tab": "Revenir à l'onglet",
@@ -2080,9 +2089,13 @@
 		"New Split View": "Nouvelle vue partagée",
 		"Split View": "Vue partagée",
 		"Separate Split View": "Séparer la vue partagée",
+		"Close Split Pane": "Fermer le volet fractionné",
+		"Maximize Split Pane": "Agrandir le volet fractionné",
 		"Open in Split View": "Ouvrir en vue partagée",
+		"Split view is full (%lld panes)": "Vue partagée pleine (%lld volets)",
 		"Hide Element…": "Masquer l'élément…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Cliquez sur un élément pour le masquer sur ce site. Appuyez sur Échap pour annuler.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Cliquez sur un élément ou faites glisser une zone. Les flèches changent d'élément, Retour capture, Échap annule.",
 		"Picture in Picture": "Image dans l'image",
 		"Develop": "Développement",
 		"Show Web Inspector": "Afficher l'inspecteur web",
@@ -2673,7 +2686,11 @@
 			"noFolder": "Aucun dossier",
 			"noFolderDetail": "L'agent travaille dans son propre dossier",
 			"backgroundHint": "{shortcut} pour le garder en arrière-plan",
-			"start": "Démarrer"
+			"start": "Démarrer",
+			"searchAgents": "Rechercher des agents",
+			"featuredAgents": "À la une",
+			"registryAgents": "Registre",
+			"noMatches": "Aucun agent correspondant"
 		},
 		"row": {
 			"untitled": "Nouvelle conversation",

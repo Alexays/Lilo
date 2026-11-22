@@ -46,7 +46,9 @@
   import { isDesignSystemShellOpen, isHistoryShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
   import { getOnboarding } from "../../stores/onboarding.svelte";
   import { getSetting } from "../../stores/settings.svelte";
+  import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getTabs } from "../../stores/tabs.svelte";
+  import { MAX_SPLIT_PANES } from "../../lib/bridge/protocol";
   import type { CommandResult } from "../../stores/commandBarSearch.svelte";
   import { buildTabFaviconLookup, LINE_ICONS, resolveResultIcon } from "./commandBarIcons";
 
@@ -129,6 +131,8 @@
   const selectedIndex = $derived(getSelectedIndex());
   const selectedResult = $derived(getSelectedResult());
   const selectedKeys = $derived(getSelectedResultKeys());
+  // The displayed split takes no more panes: its hint says so instead of offering the shortcut.
+  const splitFull = $derived(getSplitPanes().length >= MAX_SPLIT_PANES);
   const primaryActionLabel = $derived.by(() => {
     const result = selectedResult;
     const opensURL = result?.url && ["navigate", "search", "history", "bookmark"].includes(result.kind) &&
@@ -738,8 +742,13 @@
           <span class="footer-hints">
             <span class="key-hint key-hint-default"><span>{primaryActionLabel}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
             {#each selectedKeys as key (key)}
+              {@const isSplitHint = key === "split" || (key === "newTab" && activeScope === "terminal")}
               <span class="key-hint">
-                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
+                {#if isSplitHint && splitFull}
+                  <span>{t("commandBar.splitFull", { count: MAX_SPLIT_PANES })}</span>
+                {:else}
+                  <span>{t(isSplitHint ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
+                {/if}
               </span>
             {/each}
           </span>

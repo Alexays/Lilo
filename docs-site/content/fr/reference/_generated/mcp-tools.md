@@ -46,6 +46,7 @@ Renvoie l'arbre d'accessibilité de la page, chaque élément avec une ref que l
 | `ref_id` | `string` | non | Lire uniquement le sous-arbre de cet élément. |
 | `depth` | `number` | non | Profondeur maximale de l'arbre (15 par défaut). |
 | `max_chars` | `number` | non | Nombre maximal de caractères en sortie (50000 par défaut). |
+| `viewport` | `boolean` | non | Uniquement les éléments situés sur le bord de l'écran ou à moins de 100 px de celui-ci, chaque ligne se terminant par box="x,y,w,h" en pixels de la zone d'affichage. |
 
 ### `find` [#find]
 
@@ -356,10 +357,33 @@ Mesure un onglet : métriques de chargement et d'affichage et mémoire, un prof
 | `className` | `string` | non | heap\_snapshot : lister ce qui retient les objets de cette classe, et un chemin vers l'un d'eux depuis une racine. |
 | `tabId` | `number` | oui | L'onglet. |
 
-## Sélection du navigateur [#browser-selection]
+## Flux [#flows]
 
-| Outil | Paramètres | Résumé |
-| --- | --- | --- |
-| `list_connected_browsers` | aucun | Liste les navigateurs que ce serveur peut piloter, c'est-à-dire uniquement le Lilo en cours d'exécution. |
-| `select_browser` | `deviceId` | Sélectionne le navigateur à piloter ; Lilo est le seul. |
-| `switch_browser` | aucun | Se connecte à un navigateur ; Lilo est déjà connecté. |
+### `flow_start` [#flow_start]
+
+Commence à enregistrer les appels de l'agent sous forme de flux : chaque appel qui modifie quelque chose devient une étape dotée d'un localisateur stable, jusqu'à ce que flow\_save l'écrive sous un nom.
+
+| Paramètre | Type | Requis | Description |
+| --- | --- | --- | --- |
+| `tabId` | `number` | non | L'onglet où démarre l'enregistrement, pour vos notes ; l'enregistrement couvre chaque onglet sur lequel vous agissez. |
+| `name` | `string` | non | Le nom que flow\_save utilisera si vous n'en donnez pas. |
+
+### `flow_save` [#flow_save]
+
+Arrête l'enregistrement et sauvegarde le flux sous un nom dans Agents/Flows, en transformant les étapes que vous nommez en paramètres d'exécution.
+
+| Paramètre | Type | Requis | Description |
+| --- | --- | --- | --- |
+| `name` | `string` | oui | Lettres, chiffres et tirets. |
+| `params` | `object` | non | Chaque nom de paramètre associé au numéro d'étape (ou aux numéros) dont la valeur le devient, par exemple \{"phone": 3\}. |
+
+### `flow_run` [#flow_run]
+
+Rejoue un flux enregistré dans un onglet par le même acheminement qu'un appel direct, en s'arrêtant à la première étape dont le localisateur ou le consentement échoue.
+
+| Paramètre | Type | Requis | Description |
+| --- | --- | --- | --- |
+| `name` | `string` | oui | Le nom du flux enregistré. |
+| `tabId` | `number` | oui | L'onglet dans lequel rejouer. |
+| `params` | `object` | non | Chaque paramètre que le flux déclare, par nom. |
+| `from` | `number` | non | L'étape, numérotée à partir de 1, où reprendre, 1 par défaut. |
