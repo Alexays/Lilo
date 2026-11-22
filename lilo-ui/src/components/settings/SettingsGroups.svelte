@@ -6,6 +6,7 @@
   import { getSpaces } from "../../stores/spaces.svelte";
   import SettingRow from "./SettingRow.svelte";
   import { isToggleOn, parseBlockerSites, SETTINGS, type SettingId, sectionGroups } from "./settingsPanelModel";
+  import SettingsAgentActivity from "./SettingsAgentActivity.svelte";
   import SettingsAgentRows from "./SettingsAgentRows.svelte";
   import SettingsProfiles from "./SettingsProfiles.svelte";
   import SettingsSpaceRow from "./SettingsSpaceRow.svelte";
@@ -57,6 +58,8 @@
     </UiInsetList>
   {:else if group.groupKey === "settings.groups.agentClients"}
     <SettingsAgentRows title={t(group.groupKey)} />
+  {:else if group.groupKey === "settings.groups.agentActivity"}
+    <SettingsAgentActivity title={t(group.groupKey)} />
   {:else}
     <UiInsetList title={t(group.groupKey)}>
       {#if group.groupKey === "settings.groups.spaces"}

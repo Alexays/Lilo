@@ -162,6 +162,7 @@
 			"passwords": "パスワード",
 			"agentAccess": "Lilo を使うエージェント",
 			"agentClients": "Lilo を使えるアプリ",
+			"agentActivity": "アクティビティ",
 			"lilo": "Lilo",
 			"tabsWindows": "タブとウインドウ",
 			"sitePermissions": "サイトのアクセス権",
@@ -506,6 +507,11 @@
 				"title": "その他のエージェント",
 				"description": "Lilo の構成を使用する、その他の MCP クライアント。"
 			},
+			"agentActivity": {
+				"title": "最近のエージェントの呼び出し",
+				"description": "各アプリの直近の呼び出しを新しい順に表示します。このページを開いたとき、または更新したときに読み込みます。",
+				"keywords": "エージェント ログ 履歴 監査 操作 最近 呼び出し アクティビティ"
+			},
 			"autoplay": {
 				"title": "自動再生",
 				"description": "これから開くページに適用します。",
@@ -696,6 +702,14 @@
 				"removeSite": "{site}を削除",
 				"floor": "サインイン、支払い、購入、削除、公開、他のサイトへのデータ送信は、どのエージェントでも必ず確認します。"
 			}
+		},
+		"agentActivity": {
+			"refresh": "更新",
+			"open": "操作ログを開く",
+			"off": "操作ログはオフです",
+			"offDescription": "Lilo はエージェントの呼び出しを記録していません。オンにするとここに表示されます。",
+			"empty": "記録された呼び出しはまだありません。",
+			"failed": "失敗"
 		},
 		"navGroups": {
 			"tools": "ツール"

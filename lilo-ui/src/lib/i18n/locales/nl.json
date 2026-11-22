@@ -162,6 +162,7 @@
 			"passwords": "Wachtwoorden",
 			"agentAccess": "Agents die Lilo gebruiken",
 			"agentClients": "Apps die Lilo kunnen gebruiken",
+			"agentActivity": "Activiteit",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabbladen en vensters",
 			"sitePermissions": "Websitebevoegdheden",
@@ -506,6 +507,11 @@
 				"title": "Andere agents",
 				"description": "Elke andere MCP-client, met de configuratie van Lilo."
 			},
+			"agentActivity": {
+				"title": "Recente agentaanroepen",
+				"description": "De laatste aanroepen van elke app, nieuwste eerst. Gelezen bij het openen van deze pagina of bij verversen.",
+				"keywords": "agent logboek geschiedenis audit acties recente aanroepen activiteit"
+			},
 			"autoplay": {
 				"title": "Automatisch afspelen",
 				"description": "Geldt voor pagina's die vanaf nu worden geopend.",
@@ -696,6 +702,14 @@
 				"removeSite": "{site} verwijderen",
 				"floor": "Inloggen, betalen, kopen, verwijderen, publiceren en gegevens naar een andere site sturen vragen altijd, voor elke agent."
 			}
+		},
+		"agentActivity": {
+			"refresh": "Ververs",
+			"open": "Open actielogboek",
+			"off": "Het actielogboek staat uit",
+			"offDescription": "Lilo legt geen agentaanroepen vast. Zet het aan om ze hier te zien.",
+			"empty": "Nog geen aanroepen vastgelegd.",
+			"failed": "Mislukt"
 		},
 		"navGroups": {
 			"tools": "Hulpmiddelen"

@@ -162,6 +162,7 @@
 			"passwords": "Passwords",
 			"agentAccess": "Agents using Lilo",
 			"agentClients": "Apps that can use Lilo",
+			"agentActivity": "Activity",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabs and windows",
 			"sitePermissions": "Site permissions",
@@ -506,6 +507,11 @@
 				"title": "Other agents",
 				"description": "Any other MCP client, with Lilo's configuration."
 			},
+			"agentActivity": {
+				"title": "Recent agent calls",
+				"description": "The latest calls each app made, newest first. Read when you open this page or refresh.",
+				"keywords": "agent log history audit actions recent calls activity"
+			},
 			"autoplay": {
 				"title": "Autoplay",
 				"description": "Applies to pages opened from now on.",
@@ -696,6 +702,14 @@
 				"removeSite": "Remove {site}",
 				"floor": "Signing in, paying, buying, deleting, publishing and sending data to another site always ask, for every agent."
 			}
+		},
+		"agentActivity": {
+			"refresh": "Refresh",
+			"open": "Open Action Log",
+			"off": "The action log is off",
+			"offDescription": "Lilo is not recording agent calls. Turn it on to see them here.",
+			"empty": "No calls recorded yet.",
+			"failed": "Failed"
 		},
 		"navGroups": {
 			"tools": "Tools"

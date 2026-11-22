@@ -250,6 +250,8 @@ export const settingsActions = {
 	loadAgentClients: emitEmpty("getAgentClients"),
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
 	setAgentClientPermission: (key: string, permission: BridgeAgentPermission): void => emit("setAgentClientPermission", { key, ...permission }),
+	loadAgentActionLog: emitEmpty("getAgentActionLog"),
+	openAgentActionLog: emitEmpty("openAgentActionLog"),
 	loadUpdaterStatus: emitEmpty("getUpdaterStatus"),
 	checkForUpdates: emitEmpty("checkForUpdates"),
 	installUpdate: emitEmpty("installUpdate"),
