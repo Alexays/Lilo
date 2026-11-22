@@ -39,6 +39,9 @@ struct LifecyclePolicyConfig: Sendable, Equatable {
     /// Share of one core a background engine's content process may hold on two consecutive idle
     /// sweeps before it is discarded, ahead of `discardThreshold`.
     static let busyEngineCPUPercent: Double = 30
+    /// Frozen engines a routine trim may leave in hidden spaces, and in each window's active space, before it discards the least
+    /// recently active: a frozen page keeps its memory. Balanced's hidden live budget (2 spaces x 6 engines).
+    static let maxFrozenEngines = 12
     /// Sustained constrained power (Low Power Mode, serious thermal) required before it is adopted, absorbing thermal flapping on a loaded
     /// laptop; leaving constrained power applies immediately, since relaxing is safe.
     var constrainedPowerGracePeriod: TimeInterval = 30

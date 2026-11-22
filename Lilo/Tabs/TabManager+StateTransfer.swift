@@ -118,12 +118,18 @@ extension TabManager {
         return discardedTabs
     }
 
-    /// Discards the active space's LRU engines, keeping the active, protected and most recent tabs up to the caller-owned `maxLiveEngines`;
-    /// interaction state is stashed for a silent restore. Returns whether anything was discarded.
+    /// Trims the active space's LRU engines, keeping the active, protected and most recent tabs up to the caller-owned `maxLiveEngines`;
+    /// interaction state is stashed for a silent restore on a discard. `freezesExcessEngines` suspends the
+    /// excess instead: the page keeps its state and resumes in place, and frozen engines leave the budget.
+    /// Returns whether anything was discarded or frozen.
     @discardableResult
-    func trimActiveSpaceEngines(maxLiveEngines: Int, discardThreshold: TimeInterval = .infinity) -> Bool {
+    func trimActiveSpaceEngines(maxLiveEngines: Int, discardThreshold: TimeInterval = .infinity, freezesExcessEngines: Bool = false) -> Bool {
         guard let spaceId = currentSpaceId else { return false }
-        let availableEngineIds = engineHost.liveEngineIds
+        // Frozen engines are already handled: they leave the live-engine budget rather than counting toward it.
+        let frozenEngineIds = freezesExcessEngines
+            ? Set(engineHost.liveEngineIds.filter { engineHost.engine(for: $0)?.isFrozen == true })
+            : []
+        let availableEngineIds = engineHost.liveEngineIds.subtracting(frozenEngineIds)
         guard !availableEngineIds.isEmpty else { return false }
         let tabs = openTabs
         guard !tabs.isEmpty else { return false }
@@ -150,12 +156,39 @@ extension TabManager {
         guard !toDiscard.isEmpty else { return false }
 
         Self.logger.info("""
-            active-space trim discards=\(toDiscard.count, privacy: .public) \
+            active-space trim \(freezesExcessEngines ? "freezes" : "discards")=\(toDiscard.count, privacy: .public) \
             budget=\(maxLiveEngines, privacy: .public) live=\(availableEngineIds.count, privacy: .public) \
             hosts=\(toDiscard.compactMap { self.engineHost.engine(for: $0)?.currentURL?.host }.joined(separator: ","), privacy: .private)
             """)
 
-        discardEngines(toDiscard)
+        if freezesExcessEngines {
+            // Past LifecyclePolicyConfig.maxFrozenEngines, the least recently active suspended engines are discarded:
+            // a frozen page keeps its memory.
+            let overflow = frozenEngineIds.count + toDiscard.count - LifecyclePolicyConfig.maxFrozenEngines
+            if overflow > 0 {
+                var candidates = frozenEngineIds.subtracting(coordinator.discardProtectedEngineIds(
+                    tabs: tabs, availableEngineIds: frozenEngineIds, restoringTabIds: engineHost.restoringTabIds
+                ))
+                candidates.subtract([activeTabId].compactMap { $0 } + (activeSplit?.layout.paneIds ?? []))
+                candidates = candidates.filter { engineHost.engine(for: $0)?.isExtensionDebugged != true }.union(toDiscard)
+                let oldest = Set(candidates.sorted { (lastActiveAt[$0] ?? .distantPast) < (lastActiveAt[$1] ?? .distantPast) }.prefix(overflow))
+                discardEngines(oldest)
+                toDiscard.subtract(oldest)
+            }
+            for id in toDiscard {
+                // A frozen Web Lock holder stalls every peer waiting for the lock, so the freeze waits
+                // for the page's answer like the idle sweep does; the guards re-run in the reply, where a tab
+                // shown meanwhile has already been resumed and must stay live.
+                guard let engine = engineHost.engine(for: id) else { continue }
+                WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self, weak engine] error in
+                    guard error == nil, let self, let engine, self.engineHost.engine(for: id) === engine, !engine.isLoading,
+                          self.activeTabId != id, self.activeSplit?.layout.paneIds.contains(id) != true else { return }
+                    engine.freeze()
+                }
+            }
+        } else {
+            discardEngines(toDiscard)
+        }
         return true
     }
 

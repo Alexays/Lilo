@@ -92,6 +92,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
     private struct RecordedTrim: Equatable {
         let policy: TabLifecycleCoordinator.Policy
         let cap: Int?
+        var freezes = false
     }
 
     func testWarningMemoryPressureCapsEveryTrimUntilNormal() {
@@ -104,7 +105,9 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: config,
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, cap in recorded.append(RecordedTrim(policy: policy, cap: cap)); trimFired?.fulfill() }
+            trimActiveSpaceEngines: { policy, cap, freezes in
+                recorded.append(RecordedTrim(policy: policy, cap: cap, freezes: freezes)); trimFired?.fulfill()
+            }
         )
         controller.handleDidBecomeActive()
 
@@ -124,7 +127,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
         trimFired = expectation(description: "relaxed trim")
         controller.scheduleActiveSpaceTrim(delay: 0)
         wait(for: [trimFired!], timeout: 1.0)
-        XCTAssertEqual(recorded, [RecordedTrim(policy: .foreground, cap: nil)])
+        XCTAssertEqual(recorded, [RecordedTrim(policy: .foreground, cap: nil, freezes: true)], "a routine trim freezes instead of discarding")
     }
 
     func testCriticalMemoryPressureCollapsesEveryTrim() {
@@ -135,7 +138,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: .config(for: .balanced),
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, cap in recorded.append(RecordedTrim(policy: policy, cap: cap)); trimFired?.fulfill() }
+            trimActiveSpaceEngines: { policy, cap, _ in recorded.append(RecordedTrim(policy: policy, cap: cap)); trimFired?.fulfill() }
         )
         controller.handleDidBecomeActive()
 
@@ -406,7 +409,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: shortGraceConservativeConfig(),
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, _ in recorded.append(policy) },
+            trimActiveSpaceEngines: { policy, _, _ in recorded.append(policy) },
             isPowerConstrained: { true }
         )
         controller.handleDidBecomeActive()          // foreground + visible
@@ -533,7 +536,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: config,
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, cap in recorded.append(RecordedTrim(policy: policy, cap: cap)) },
+            trimActiveSpaceEngines: { policy, cap, _ in recorded.append(RecordedTrim(policy: policy, cap: cap)) },
             // 4 TB per engine and no hidden space: the whole excess sits in the visible space.
             footprintSampler: { engines in engines.mapValues { _ in UInt64(1) << 42 } }
         )
@@ -555,7 +558,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: shortGraceConservativeConfig(),
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, cap in
+            trimActiveSpaceEngines: { policy, cap, _ in
                 recorded.append((policy, cap)); trimFired.fulfill()
             },
             isPowerConstrained: { true }
@@ -581,7 +584,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: config,
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { _, _ in noTrim.fulfill() },
+            trimActiveSpaceEngines: { _, _, _ in noTrim.fulfill() },
             isPowerConstrained: { powerConstrained }
         )
         controller.onConstrainedPowerChange = { changes.append($0) }
