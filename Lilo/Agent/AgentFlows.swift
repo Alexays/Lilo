@@ -36,7 +36,7 @@ enum AgentFlows {
             cannot express (javascript_tool, coordinate clicks, uploads) are not recorded. A value the user \
             must supply at each run, like a phone number or a password, is a parameter: pass "flowParam" with \
             its name on the call that types it, or declare it at flow_save. For a password, card or one-time \
-            code field the value always becomes a parameter, never stored. Calling flow_start again while a
+            code field the value always becomes a parameter, never stored. Calling flow_start again while a \
             recording is open keeps it and reports the steps so far; it does not restart.
             """, [
                 "tabId": AgentTools.prop("number", "The tab the recording starts on, for your notes; recording covers every tab you act on."),
