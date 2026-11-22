@@ -34,7 +34,6 @@ final class AgentBrowserConfigTests: AgentToolTestCase {
     func testEveryAllowlistedKeySerializes() async throws {
         context.settingsStore!.set(AgentControl.asksBeforeActionsKey, value: "false")
         context.settingsStore!.set(AgentActionLog.settingKey, value: "false")
-        context.settingsStore!.set(AgentControl.alwaysAllowedSitesKey, value: #"["example.com","shop.example.org"]"#)
         context.settingsStore!.set("contentBlockerEnabled", value: "false")
         context.settingsStore!.set("defaultZoom", value: "1.25")
 
@@ -48,8 +47,7 @@ final class AgentBrowserConfigTests: AgentToolTestCase {
             "features.defaultZoom": 1.25,
             "agent.profile": "Agents",
             "agent.askBeforeActions": false,
-            "agent.actionLog": false,
-            "agent.allowedSites": ["example.com", "shop.example.org"]
+            "agent.actionLog": false
         ]
         XCTAssertEqual(Set(AgentBrowserConfig.allowlist), Set(expected.keys), "the test's table must cover the whole allowlist")
         for key in AgentBrowserConfig.allowlist {
@@ -61,9 +59,11 @@ final class AgentBrowserConfigTests: AgentToolTestCase {
     func testNoKeyOutsideTheAllowlistIsExposed() async throws {
         // Keys an agent must not read stay unreadable even when the store holds them.
         context.settingsStore!.set("customAgent", value: #"{"executable":"/secret/path/agent"}"#)
+        context.settingsStore!.set(AgentControl.alwaysAllowedSitesKey, value: #"["example.com"]"#)
         let object = try await snapshot()
         XCTAssertEqual(paths(object), Set(AgentBrowserConfig.allowlist))
         XCTAssertNil(resolve("agent.customAgent", in: object))
+        XCTAssertFalse(AgentTools.json(object).contains("example.com"), "the always-allowed sites never show")
     }
 
     func testTheToolHasNoWritePath() async throws {

@@ -392,6 +392,6 @@ Rejoue un flux enregistré dans un onglet par le même acheminement qu'un appel 
 
 ### `browser_config` [#browser_config]
 
-Renvoie un instantané en lecture seule de Lilo lui-même : sa version, l'état du bloqueur de contenu, le zoom de page par défaut, et l'état des autorisations de l'agent (son profil, s'il demande avant d'agir, si les appels sont consignés, et les sites où les actions sont toujours autorisées). Rien ne peut être modifié.
+Renvoie un instantané en lecture seule de Lilo lui-même : sa version, l'état du bloqueur de contenu, le zoom de page par défaut, et l'état des autorisations de l'agent (son profil, s'il demande avant d'agir, et si les appels sont consignés). Rien ne peut être modifié.
 
 Aucun paramètre.
