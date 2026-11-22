@@ -40,10 +40,10 @@ enum AgentInput {
         send(mouse(.mouseMoved, webView, point), to: webView)
     }
 
-    /// Presses at `start`, moves to `end` and releases. Mouse events alone never start a drag the page sees through
-    /// its destination: WebKit hands that to an AppKit drag session, which follows the hardware mouse and never
-    /// begins for sent events. Once the page starts a drag (it wrote the drag pasteboard), the session's own half
-    /// is played through the web view's drag destination instead, so `dragenter`, `dragover`, `drop` and `dragend` fire.
+    /// Presses at `start`, moves to `end` and releases. Once the page starts a drag (it wrote the drag pasteboard),
+    /// `PageWebView` keeps WebKit from handing it to an AppKit session — that session tracks the hardware mouse in
+    /// a modal loop, freezing the app until a real click. The session's own half is played through the web view's
+    /// drag destination instead, so `dragenter`, `dragover`, `drop` and `dragend` fire.
     static func drag(_ webView: WKWebView, from start: CGPoint, to end: CGPoint) async {
         let pasteboard = NSPasteboard(name: .drag)
         let before = pasteboard.changeCount
@@ -256,6 +256,10 @@ enum AgentInput {
     /// each one only until the page has handled it.
     static let sentKeyDowns = NSHashTable<NSEvent>(options: [.weakMemory, .objectPointerPersonality])
 
+    /// The mouse events sent to a web view, by which `PageWebView` tells a drag the agent started — one
+    /// whose AppKit session must not begin — from a user's, which keeps the native session.
+    static let sentMouseEvents = NSHashTable<NSEvent>(options: [.weakMemory, .objectPointerPersonality])
+
     /// Shortcuts AppKit runs from the menu bar, which never sees a key sent straight to an agent tab.
     private static let menuCommands: [String: Selector] = [
         "a": #selector(NSText.selectAll(_:)), "c": #selector(NSText.copy(_:)), "x": #selector(NSText.cut(_:)),
@@ -425,6 +429,7 @@ enum AgentInput {
 
     private static func send(_ event: NSEvent?, to webView: WKWebView) {
         guard let event else { return }
+        sentMouseEvents.add(event)
         // WebKit reads an event's `buttons` from `NSEvent.pressedMouseButtons`, the hardware state: unless the
         // button reads as held there, a sent press or drag reaches the page with no button down.
         let held = switch event.type {
