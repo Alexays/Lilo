@@ -123,4 +123,21 @@ final class SplitPanesControllerTests: XCTestCase {
         XCTAssertEqual(controller.tabManager.activeOpenTabId, second)
         for id in [first, second, third] { XCTAssertNotNil(controller.tabManager.tab(for: id)) }
     }
+
+    func testPanesKeepAMarginOffTheContainerEdges() throws {
+        let left = try openTab("left"), right = try openTab("right")
+        controller.activateTabStateFirst(id: left)
+        controller.dropTab(right, at: nil, side: .edge(vertical: false, before: false))
+        let bounds = controller.contentContainerView.bounds
+        let inner = bounds.insetBy(dx: SplitMarginView.width, dy: SplitMarginView.width)
+
+        var tiled = try XCTUnwrap(controller.splitPanes.dividers.values.first?.frame)
+        for id in [left, right] { tiled = tiled.union(try view(id).frame) }
+        XCTAssertEqual(tiled, inner, "the panes and the divider tile the container inside the margin")
+
+        controller.closeSplitView(nil)
+
+        let active = try XCTUnwrap(controller.tabManager.activeOpenTabId)
+        XCTAssertEqual(try view(active).frame, bounds, "a single page keeps the whole container")
+    }
 }

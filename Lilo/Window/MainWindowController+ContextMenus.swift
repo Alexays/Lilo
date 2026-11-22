@@ -144,10 +144,22 @@ extension MainWindowController {
                 self.applyContextMenuStateCommands([.deleteFolder(spaceId: folder.spaceId, folderId: groupId)])
             }
         } else if !tab.isClosed, !tab.isBookmarked, let active = tabManager.activeTab, active.id != uuid {
-            menu.addItem("Open in Split View".localized, icon: .openInSplit) { self.splitTab(uuid, at: nil, vertical: false, before: false) }
+            // A full split refuses a new pane: show the action greyed with the reason as its tooltip.
+            let splitIsFull = (tabManager.activeSplit?.layout.paneIds.count ?? 0) >= SplitLayout.maxPanes
+            let item = menu.addItem("Open in Split View".localized, icon: .openInSplit) { self.splitTab(uuid, at: nil, vertical: false, before: false) }
+            if splitIsFull {
+                item.action = nil
+                item.toolTip = unsafe String(format: "Split view is full (%lld panes)".localized, SplitLayout.maxPanes)
+            }
         }
         if tab.kind == .web {
             menu.addItem((tab.isMuted ? "Unmute Tab" : "Mute Tab").localized, icon: tab.isMuted ? .unmute : .mute) { self.tabManager.setTabMuted(id: uuid, muted: !tab.isMuted) }
+        }
+        if tab.kind == .web {
+            let neverSleep = menu.addItem("Never Sleep".localized, icon: .neverSleep) {
+                self.applyContextMenuStateCommands([.setNeverSleep(spaceId: spaceId, tabId: uuid, neverSleep: !tab.neverSleep)])
+            }
+            neverSleep.state = tab.neverSleep ? .on : .off
         }
         // An item without an action is greyed out.
         let duplicate = menu.addItem("Duplicate Tab".localized, icon: .duplicate) { self.duplicateTab(tab) }

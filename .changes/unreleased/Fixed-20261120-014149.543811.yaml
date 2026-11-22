@@ -1,0 +1,3 @@
+kind: Fixed
+body: Split panes keep a small margin from the window frame and the toolbar over the page instead of touching them
+time: 2026-11-20T01:41:49.543811-08:00

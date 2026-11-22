@@ -351,8 +351,7 @@ html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='right'] {
 /* The sidebar viewport is --sidebar-width plus the 8 px inset: under a 203 px sidebar, the close and
    sound buttons wait behind the row's fade so the titles keep their room. */
 @container sidebar (width < 211px) {
-  .tab-item .tab-actions,
-  .new-tab-line :is(.new-terminal-button, .new-agents-slot) {
+  .tab-item .tab-actions {
     display: none;
   }
 }

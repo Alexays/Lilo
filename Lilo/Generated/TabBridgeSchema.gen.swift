@@ -15,6 +15,7 @@ enum TabBridgeField: String, CaseIterable {
 	case canGoBack = "canGoBack"
 	case canGoForward = "canGoForward"
 	case isPinned = "isPinned"
+	case neverSleep = "neverSleep"
 	case isBookmarked = "isBookmarked"
 	case isClosed = "isClosed"
 	case isAudioPlaying = "isAudioPlaying"

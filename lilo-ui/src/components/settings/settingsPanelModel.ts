@@ -62,6 +62,7 @@ export type SettingId =
   | "appUpdates"
   | "autoUpdate"
   | "shortcuts"
+  | "holdToQuit"
   | "theme"
   | "tabPosition"
   | "addressPlacement"
@@ -143,6 +144,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   dockCallsInSidebar: { key: "dockCallsInSidebar", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
+  holdToQuit: { key: "holdToQuit", fallback: false },
   emptyWindowOnLaunch: { key: "emptyWindowOnLaunch", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
@@ -197,6 +199,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },
   { id: "autoUpdate", section: "general", groupKey: "settings.groups.lilo" },
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
+  { id: "holdToQuit", section: "general", groupKey: "settings.groups.lilo" },
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },

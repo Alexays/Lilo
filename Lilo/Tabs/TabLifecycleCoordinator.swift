@@ -283,7 +283,7 @@ struct TabLifecycleCoordinator {
     private func shouldRetainProtected(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date, freezing: Bool = false) -> Bool {
         // Unsaved form input vetoes freezing as well as discarding: a frozen page cannot autosave
         // and sees its visibility forced hidden mid-edit.
-        tab.isAgentControlled || tab.isInPictureInPicture || tab.hasUnsavedFormData ||
+        tab.isAgentControlled || tab.isInPictureInPicture || tab.neverSleep || tab.hasUnsavedFormData ||
             shouldRetainForAudio(tab, now: now, freezing: freezing) ||
             shouldRetainForCapture(tab, now: now) ||
             shouldRetainForRestoration(tab, restoringTabIds: restoringTabIds, now: now)

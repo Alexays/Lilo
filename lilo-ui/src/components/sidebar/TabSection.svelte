@@ -620,6 +620,33 @@
     if (showNewTabRow) newTabRowExiting = false;
   });
 
+  // The New Tab label shows the longest of its forms that fits its room, else none: the row's
+  // buttons never give way. Each form is measured once, on the label's own font. A locale with no
+  // shorter form repeats the full one as its short form.
+  let newTabLabelEl: HTMLElement | undefined = $state();
+  let newTabLabelRoom = $state(0);
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a cache: a text's width never changes
+  const newTabLabelWidths = new Map<string, number>();
+  let newTabLabelContext: CanvasRenderingContext2D | null = null;
+  function newTabLabelFits(text: string): boolean {
+    let width = newTabLabelWidths.get(text);
+    if (width === undefined && newTabLabelEl) {
+      newTabLabelContext ??= document.createElement("canvas").getContext("2d");
+      if (!newTabLabelContext) return true;
+      const style = getComputedStyle(newTabLabelEl);
+      newTabLabelContext.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      width = newTabLabelContext.measureText(text).width;
+      newTabLabelWidths.set(text, width);
+    }
+    return width === undefined || width <= newTabLabelRoom;
+  }
+  const newTabLabel = $derived.by(() => {
+    const full = t("tabSection.newTab");
+    if (!newTabLabelRoom || newTabLabelFits(full)) return full;
+    const short = t("tabSection.newTabShort");
+    return newTabLabelFits(short) ? short : "";
+  });
+
   // A closing row leaves the flow at once (Svelte fixes outroing rows of an animated each), so the
   // new tab row below the list follows the FLIPped rows with its own FLIP instead of jumping.
   let newTabLineEl: HTMLElement | undefined = $state();
@@ -1418,7 +1445,7 @@
       <path d="M6 1.5v9M1.5 6h9" />
     </svg>
   </span>
-  <span class="new-tab-label">{t("tabSection.newTab")}</span>
+  <span class="new-tab-label" bind:this={newTabLabelEl} bind:clientWidth={newTabLabelRoom}>{newTabLabel}</span>
 {/snippet}
 
 {#snippet newTabRow()}
@@ -1433,6 +1460,7 @@
       <div class="new-tab-line" bind:this={newTabLineEl}>
         <button
           class="new-tab-row"
+          aria-label={t("tabSection.newTab")}
           disabled={!interactive}
           use:tooltip={{ text: t("tabSection.newTab"), shortcut: shortcutKeys("tab.new") }}
           onclick={toggleNewTab}
@@ -1760,6 +1788,17 @@
             aria-hidden="true"
           ></div>
           {#if !dragActive && !pinnedDividerHidden}
+            <button
+              class="divider-action search-tabs"
+              disabled={!interactive}
+              use:tooltip={{ text: t("tabSection.searchTabs") }}
+              aria-label={t("tabSection.searchTabs")}
+              onclick={() => openCommandBar("@")}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M7 2.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0-9zM10.25 10.25l3.25 3.25" />
+              </svg>
+            </button>
             <button
               class="divider-action list-options"
               disabled={!interactive}
@@ -2361,6 +2400,7 @@
   }
 
   .new-tab-label {
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -2531,9 +2571,13 @@
       color var(--transition-fast);
   }
 
-  /* Centered on the rows' 16px favicons, 8px into the row. */
-  .list-options {
+  /* The leftmost sits centered on the rows' 16px favicons, 8px into the row. */
+  .search-tabs {
     left: 6px;
+  }
+
+  .list-options {
+    left: 26px;
   }
 
   .clear-unpinned {
@@ -2594,12 +2638,12 @@
 
   .tab-list-shell:hover .with-actions .pinned-tab-divider,
   .with-actions:focus-within .pinned-tab-divider {
-    clip-path: inset(0 0 0 24px);
+    clip-path: inset(0 0 0 44px);
   }
 
   .tab-list-shell:hover .with-actions.with-clear .pinned-tab-divider,
   .with-actions.with-clear:focus-within .pinned-tab-divider {
-    clip-path: inset(0 24px);
+    clip-path: inset(0 24px 0 44px);
   }
 
   @media (prefers-reduced-motion: reduce) {
