@@ -39,6 +39,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         "getTerminalOptions",
         "importTerminalTheme",
         "connectAgentClient",
+        "previewAgentClient",
+        "removeAgentClient",
         "getAgentClients",
         "revokeAgentClient",
         "getAgentActionLog",
@@ -243,6 +245,32 @@ final class SettingsBridgeHandler: BridgeHandler {
             } else {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(AgentClientConfig.genericConfigJSON, forType: .string)
+            }
+            bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "connectAgentClient", message: text, level: level)
+            await publishAgentClients()
+
+        case "previewAgentClient":
+            if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
+                let home = FileManager.default.homeDirectoryForCurrentUser
+                let remove = message.bool("remove")
+                let preview = await Task.detached { AgentClientConfig.preview(client, home: home, remove: remove) }.value
+                bridgeRouter?.send(event: "agentClientPreview", data: [
+                    "client": client.rawValue, "remove": remove, "path": preview.path,
+                    "command": preview.command ?? NSNull(), "snippet": preview.snippet, "blocked": preview.blocked ?? NSNull(),
+                    "lines": preview.lines.map { ["number": $0.number, "removed": $0.removed, "text": $0.text] as [String: Any] }
+                ])
+            }
+
+        case "removeAgentClient":
+            var text = "Removed Lilo".localized
+            var level = "info"
+            if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
+                do {
+                    try await AgentClientConfig.remove(client, home: FileManager.default.homeDirectoryForCurrentUser)
+                } catch {
+                    text = error.localizedDescription
+                    level = "error"
+                }
             }
             bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "connectAgentClient", message: text, level: level)
             await publishAgentClients()
@@ -541,13 +569,14 @@ final class SettingsBridgeHandler: BridgeHandler {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let found = await Task.detached {
             let connected = AgentClientConfig.connectedClients(home: home)
-            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, URL?)? in
+            let stale = AgentClientConfig.staleClients(home: home)
+            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, Bool, URL?)? in
                 let app = AgentClientConfig.iconApp(of: client, home: home)
-                return app != nil || connected.contains(client) ? (client, connected.contains(client), app) : nil
+                return app != nil || connected.contains(client) ? (client, connected.contains(client), stale.contains(client), app) : nil
             }
         }.value
-        let clients = found.map { client, configured, app in
-            ["id": client.rawValue, "configured": configured, "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
+        let clients = found.map { client, configured, stale, app in
+            ["id": client.rawValue, "configured": configured, "stale": stale, "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
         }
         let control = context?.agentControl
         let lastSeen = control?.lastSeen ?? [:]

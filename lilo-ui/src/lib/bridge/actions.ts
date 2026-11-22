@@ -242,6 +242,8 @@ export const settingsActions = {
 	loadTerminalOptions: emitEmpty("getTerminalOptions"),
 	importTerminalTheme: emitEmpty("importTerminalTheme"),
 	connectAgentClient: (client: string): void => emit("connectAgentClient", { client }),
+	previewAgentClient: (client: string, remove: boolean): void => emit("previewAgentClient", { client, remove }),
+	removeAgentClient: (client: string): void => emit("removeAgentClient", { client }),
 	loadAgentClients: emitEmpty("getAgentClients"),
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
 	loadAgentActionLog: emitEmpty("getAgentActionLog"),

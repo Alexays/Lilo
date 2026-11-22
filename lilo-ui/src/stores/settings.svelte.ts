@@ -1,6 +1,7 @@
 import { on } from "../lib/bridge";
 import { featureFlagsActions, settingsActions } from "../lib/bridge/actions";
 import type {
+	BridgeAgentClientPreview,
 	BridgeAgentClientsSnapshot,
 	BridgeBrowsingDataSizes,
 	BridgeContentBlockerStatus,
@@ -35,6 +36,9 @@ let _terminalOptions = $state.raw<BridgeTerminalOptions | null>(null);
 let _status = $state<BridgeSettingsActionStatusPayload | null>(null);
 let _appIcons = $state.raw<{ id: string; dataURL: string; seasonalDataURL?: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
+// What the open connect sheet shows: native answers the preview, and the sheet opens on it.
+let _agentPreview = $state.raw<BridgeAgentClientPreview | null>(null);
+let _previewingAgentClient = $state<string | null>(null);
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
 let _readyUpdate = $state<string | null>(null);
 let _restartingForUpdate = $state(false);
@@ -95,6 +99,11 @@ export function initSettingsStore(): void {
 	on("agentClientsLoaded", (data) => {
 		_agentClients = data;
 	});
+	on("agentClientPreview", (data) => {
+		// An answer to a Connect the user has already left is dropped.
+		if (_previewingAgentClient === data.client) _agentPreview = data;
+		_previewingAgentClient = null;
+	});
 	on("updaterStatus", (data) => {
 		_updater = data;
 	});
@@ -119,7 +128,11 @@ export function initSettingsStore(): void {
 		_shortcutConflict = data;
 	});
 	on("settingsActionCompleted", (data) => {
-		if (data.action === "connectAgentClient") _connectingAgentClients = [];
+		if (data.action === "connectAgentClient") {
+			_connectingAgentClients = [];
+			// Written, removed or refused: the sheet has done its job, and the status line says how it went.
+			_agentPreview = null;
+		}
 		_status = data;
 		if (statusTimer) clearTimeout(statusTimer);
 		statusTimer = setTimeout(() => {
@@ -232,6 +245,27 @@ export function connectAgentClient(client: string): void {
 	if (_connectingAgentClients.includes(client)) return;
 	_connectingAgentClients = [..._connectingAgentClients, client];
 	settingsActions.connectAgentClient(client);
+}
+
+/** Opens the sheet that shows what Connect (or Remove) writes, once native has worked it out. */
+export function previewAgentClient(client: string, remove = false): void {
+	if (_previewingAgentClient) return;
+	_previewingAgentClient = client;
+	settingsActions.previewAgentClient(client, remove);
+}
+
+export function getAgentPreview(): BridgeAgentClientPreview | null {
+	return _agentPreview;
+}
+
+export function closeAgentPreview(): void {
+	_agentPreview = null;
+}
+
+export function removeAgentClient(client: string): void {
+	if (_connectingAgentClients.includes(client)) return;
+	_connectingAgentClients = [..._connectingAgentClients, client];
+	settingsActions.removeAgentClient(client);
 }
 
 export function isConnectingAgentClient(client: string): boolean {

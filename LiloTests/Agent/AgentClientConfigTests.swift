@@ -161,16 +161,13 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(((cursor["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String, "/bin/sh")
     }
 
-    /// What each client's file holds right after Connect on an empty home: the refactor of the writers into
-    /// a table must keep these bytes.
+    /// What each client's file holds right after Connect on an empty home.
     func testGoldenOutputOfEveryClient() async throws {
         let helper = AgentClientConfig.helperPath
-        // JSONSerialization escapes slashes.
-        let escaped = helper.replacingOccurrences(of: "/", with: "\\/")
-        let jsonEntry = "{\n  \"mcpServers\" : {\n    \"lilo\" : {\n      \"command\" : \"\(escaped)\"\n    }\n  }\n}"
+        let jsonEntry = "{\n  \"mcpServers\": {\n    \"lilo\": {\n      \"command\": \"\(helper)\"\n    }\n  }\n}"
         let files = [
-            ("Library/Application Support/Claude/claude_desktop_config.json", jsonEntry, AgentClientConfig.Client.claudeDesktop),
-            (".cursor/mcp.json", jsonEntry, .cursor),
+            ("Library/Application Support/Claude/claude_desktop_config.json", jsonEntry + "\n", AgentClientConfig.Client.claudeDesktop),
+            (".cursor/mcp.json", jsonEntry + "\n", .cursor),
             (".codex/config.toml", "[mcp_servers.lilo]\ncommand = \"\(helper)\"\n", .codex)
         ]
         for (path, golden, client) in files {
@@ -208,7 +205,7 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(Set((cursor["mcpServers"] as? [String: Any] ?? [:]).keys), ["other"])
         XCTAssertEqual(cursor["theme"] as? String, "dark")
         let codex = try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8)
-        XCTAssertEqual(codex, "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n\n")
+        XCTAssertEqual(codex, "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n")
     }
 
     func testRemoveWithoutAConfigDoesNothing() async throws {
@@ -223,5 +220,203 @@ final class AgentClientConfigTests: XCTestCase {
 
         XCTAssertEqual(try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8),
                        "[mcp_servers.lilo]\ncommand = \"\(AgentClientConfig.helperPath)\"\n")
+    }
+
+    /// The preview is made by the code that writes: what it says the file becomes is the file, byte for byte,
+    /// for every client of the table that Lilo writes itself.
+    func testPreviewIsWhatConnectWritesForEveryClient() async throws {
+        let seeds: [(AgentClientConfig.Client, String)] = [
+            (.claudeDesktop, #"{"mcpServers": {"other": {"command": "/bin/other"}}, "theme": "dark"}"#),
+            (.cursor, ""),
+            (.codex, "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n")
+        ]
+        for (client, seed) in seeds {
+            if !seed.isEmpty { try write(seed, to: client.config.path) }
+            let preview = AgentClientConfig.preview(client, home: home)
+            XCTAssertNil(preview.blocked, client.id)
+            XCTAssertEqual(preview.path, "~/" + client.config.path)
+            XCTAssertFalse(preview.lines.isEmpty, client.id)
+
+            _ = try await AgentClientConfig.connect(client, home: home)
+
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), preview.after, client.id)
+            XCTAssertTrue(AgentClientConfig.preview(client, home: home).lines.isEmpty, "connected again: nothing left to change")
+        }
+    }
+
+    func testPreviewOfAnEmptyHomeIsTheWholeEntry() {
+        let preview = AgentClientConfig.preview(.codex, home: home)
+        XCTAssertEqual(preview.lines.map(\.text), ["[mcp_servers.lilo]", "command = \"\(AgentClientConfig.helperPath)\"", ""])
+        XCTAssertEqual(preview.lines.map(\.number), [1, 2, 3])
+        XCTAssertTrue(preview.lines.allSatisfy { !$0.removed })
+        XCTAssertEqual(preview.snippet, "[mcp_servers.lilo]\ncommand = \"\(AgentClientConfig.helperPath)\"\n")
+    }
+
+    func testPreviewShowsOnlyTheChangedLines() throws {
+        try write("{\n  \"mcpServers\": {\n    \"other\": {\n      \"command\": \"/bin/other\",\n      \"env\": {\n        \"KEY\": \"secret\"\n      }\n    }\n  }\n}\n", to: ".cursor/mcp.json")
+
+        let preview = AgentClientConfig.preview(.cursor, home: home)
+
+        XCTAssertEqual(preview.lines.map { "\($0.removed ? "-" : "+")\($0.number) \($0.text)" }, [
+            "+8     },", "+9     \"lilo\": {", "+10       \"command\": \"\(AgentClientConfig.helperPath)\""
+        ], "the old closing brace now closes Lilo's entry")
+    }
+
+    func testPreviewOfARepairShowsTheOldPathReplaced() throws {
+        try write("[mcp_servers.lilo]\ncommand = \"/gone/lilo-mcp\"\n", to: ".codex/config.toml")
+
+        let preview = AgentClientConfig.preview(.codex, home: home)
+
+        XCTAssertEqual(preview.lines.map(\.removed), [true, false])
+        XCTAssertEqual(preview.lines.map(\.text), ["command = \"/gone/lilo-mcp\"", "command = \"\(AgentClientConfig.helperPath)\""])
+        XCTAssertEqual(AgentClientConfig.staleClients(home: home), [.codex])
+    }
+
+    func testPreviewOfARemoveIsWhatRemoveWrites() async throws {
+        try write("{\n  \"mcpServers\": {\n    \"other\": {\"command\": \"/bin/other\"}\n  }\n}\n", to: ".cursor/mcp.json")
+        try write("# mine\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n", to: ".codex/config.toml")
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+        _ = try await AgentClientConfig.connect(.codex, home: home)
+
+        for client in [AgentClientConfig.Client.cursor, .codex] {
+            let preview = AgentClientConfig.preview(client, home: home, remove: true)
+            XCTAssertFalse(preview.lines.isEmpty, client.id)
+            XCTAssertLessThanOrEqual(preview.lines.filter { !$0.removed }.count, 1, "a removal only takes lines away, and a neighbour's comma: \(client.id)")
+
+            try await AgentClientConfig.remove(client, home: home)
+
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), preview.after, client.id)
+        }
+        XCTAssertTrue(AgentClientConfig.preview(.cursor, home: home, remove: true).lines.isEmpty, "nothing left to remove")
+    }
+
+    func testPreviewOfAnUnreadableFileSaysWhyAndWritesNothing() throws {
+        try write("// mine\n{\"mcpServers\": {},}", to: ".cursor/mcp.json")
+
+        let preview = AgentClientConfig.preview(.cursor, home: home)
+
+        XCTAssertNotNil(preview.blocked)
+        XCTAssertTrue(preview.lines.isEmpty)
+        XCTAssertEqual(preview.snippet, AgentClientConfig.genericConfigJSON)
+        XCTAssertNil(AgentClientConfig.preview(.cursor, home: home, remove: true).blocked, "leaving a file it cannot read is not an error")
+    }
+
+    func testPreviewOfClaudeCodeIsTheCommandItRuns() {
+        let add = AgentClientConfig.preview(.claudeCode, home: home)
+        XCTAssertEqual(add.command, "claude mcp add --scope user lilo -- \(AgentClientConfig.helperPath)")
+        XCTAssertTrue(add.lines.isEmpty)
+        XCTAssertEqual(AgentClientConfig.preview(.claudeCode, home: home, remove: true).command, "claude mcp remove --scope user lilo")
+    }
+
+    func testRemoveRunsClaudeCodesOwnCommand() async throws {
+        let log = home.appending(path: "claude-args.txt")
+        try write("#!/bin/sh\necho \"$@\" >> '\(log.path)'\n", to: ".local/bin/claude")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: home.appending(path: ".local/bin/claude").path)
+
+        try await AgentClientConfig.remove(.claudeCode, home: home)
+
+        XCTAssertEqual(try String(contentsOf: log, encoding: .utf8), "mcp remove --scope user lilo\n")
+    }
+
+    func testLineDiffKeepsMatchingLinesAndOrdersChanges() {
+        let lines = AgentClientConfig.diff("a\nb\nc\nd", "a\nB\nc\nd\ne")
+        XCTAssertEqual(lines.map { "\($0.removed ? "-" : "+")\($0.number) \($0.text)" }, ["-2 b", "+2 B", "+5 e"])
+    }
+
+    /// Made-up files as people keep them: Connect changes only Lilo's lines, and Remove gives back every byte.
+    func testConnectThenRemoveGivesBackTheFileByteForByte() async throws {
+        let helper = AgentClientConfig.helperPath
+        let json = [
+            // Key order, spacing and escapes the writer would not choose, another server's env, nested objects.
+            "{\n  \"theme\": \"dark\",\n  \"mcpServers\": {\n    \"files\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"files-mcp\", \"~\\/notes\"],\n      \"env\": {\"TOKEN\": \"example-token\", \"N\": 1.50}\n    }\n  },\n  \"window\": {\"size\": [800, 600], \"nested\": {\"a\": {\"b\": null}}}\n}\n",
+            // CRLF, tabs, no final newline.
+            "{\r\n\t\"mcpServers\": {\r\n\t\t\"other\": {\"command\": \"/bin/other\"}\r\n\t}\r\n}",
+            // Everything on one line.
+            #"{"mcpServers":{"a":{"command":"/bin/a"},"b":{"command":"/bin/b"}}}"#,
+            // Servers still empty, as an app leaves the file.
+            "{\n  \"mcpServers\": {}\n}\n"
+        ]
+        let toml = [
+            "# settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\nenv = { KEY = \"example\" }\n",
+            "model = \"o3\"\r\n\r\n[mcp_servers.other]\r\ncommand = \"/bin/other\"",
+            "model = \"o3\"\n\n\n",
+            ""
+        ]
+        for (client, seeds) in [(AgentClientConfig.Client.cursor, json), (.codex, toml)] {
+            for seed in seeds {
+                try write(seed, to: client.config.path)
+                let url = home.appending(path: client.config.path)
+
+                _ = try await AgentClientConfig.connect(client, home: home)
+                let connected = try String(contentsOf: url, encoding: .utf8)
+                XCTAssertTrue(connected.contains("\"\(helper)\""), connected)
+                XCTAssertEqual(AgentClientConfig.connectedClients(home: home).contains(client), true, seed)
+                XCTAssertEqual(AgentClientConfig.diff(seed, connected).filter(\.removed).count <= 1, true, "only a comma at most: \(seed)")
+
+                try await AgentClientConfig.remove(client, home: home)
+                XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), seed, "byte for byte: \(client.id)")
+            }
+        }
+    }
+
+    func testConnectMatchesTheFilesLayout() async throws {
+        let helper = AgentClientConfig.helperPath
+        try write("{\r\n\t\"mcpServers\": {\r\n\t\t\"other\": {\"command\": \"/bin/other\"}\r\n\t}\r\n}", to: ".cursor/mcp.json")
+        try write(#"{"mcpServers":{"a":{"command":"/bin/a"}}}"#, to: "Library/Application Support/Claude/claude_desktop_config.json")
+
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+        _ = try await AgentClientConfig.connect(.claudeDesktop, home: home)
+
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8),
+                       "{\r\n\t\"mcpServers\": {\r\n\t\t\"other\": {\"command\": \"/bin/other\"},\r\n\t\t\"lilo\": {\r\n\t\t\t\"command\": \"\(helper)\"\r\n\t\t}\r\n\t}\r\n}")
+        XCTAssertEqual(try String(contentsOf: home.appending(path: "Library/Application Support/Claude/claude_desktop_config.json"), encoding: .utf8),
+                       #"{"mcpServers":{"a":{"command":"/bin/a"}, "lilo":{"command":"\#(helper)"}}}"#)
+    }
+
+    func testFilesWithoutServersGetThemAndKeepTheRest() async throws {
+        let helper = AgentClientConfig.helperPath
+        try write("{\n  \"theme\": \"dark\"\n}\n", to: ".cursor/mcp.json")
+        try write("", to: "Library/Application Support/Claude/claude_desktop_config.json")
+
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+        _ = try await AgentClientConfig.connect(.claudeDesktop, home: home)
+        _ = try await AgentClientConfig.connect(.codex, home: home)
+
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8),
+                       "{\n  \"theme\": \"dark\",\n  \"mcpServers\": {\n    \"lilo\": {\n      \"command\": \"\(helper)\"\n    }\n  }\n}\n")
+        XCTAssertEqual(try String(contentsOf: home.appending(path: "Library/Application Support/Claude/claude_desktop_config.json"), encoding: .utf8),
+                       AgentClientConfig.genericConfigJSON + "\n")
+
+        // Removing leaves the servers object empty rather than guessing whether the user wrote it.
+        try await AgentClientConfig.remove(.cursor, home: home)
+        try await AgentClientConfig.remove(.codex, home: home)
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8),
+                       "{\n  \"theme\": \"dark\",\n  \"mcpServers\": {}\n}\n")
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8), "")
+    }
+
+    func testAServersValueThatIsNoObjectBlocksTheWrite() {
+        let original = #"{"mcpServers": ["not", "an", "object"]}"#
+        XCTAssertNoThrow(try write(original, to: ".cursor/mcp.json"))
+
+        XCTAssertNotNil(AgentClientConfig.preview(.cursor, home: home).blocked)
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8), original)
+    }
+
+    func testLiloFirstAmongServersIsRemovedWithItsComma() async throws {
+        let rest = "    \"other\": {\"command\": \"/bin/other\"}\n  }\n}\n"
+        try write("{\n  \"mcpServers\": {\n    \"lilo\": {\"command\": \"/x/lilo-mcp\"},\n" + rest, to: ".cursor/mcp.json")
+
+        try await AgentClientConfig.remove(.cursor, home: home)
+
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8), "{\n  \"mcpServers\": {\n" + rest)
+    }
+
+    func testCodexSubTablesGoWithLilosTable() async throws {
+        try write("[mcp_servers.lilo]\ncommand = \"/x/lilo-mcp\"\n\n[mcp_servers.lilo.env]\nKEY = \"example\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n", to: ".codex/config.toml")
+
+        try await AgentClientConfig.remove(.codex, home: home)
+
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8), "\n[mcp_servers.other]\ncommand = \"/bin/other\"\n")
     }
 }
