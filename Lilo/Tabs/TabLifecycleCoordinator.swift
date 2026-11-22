@@ -257,10 +257,10 @@ struct TabLifecycleCoordinator {
         })
     }
 
-    /// Every discard spares a tab still loading: a pending navigation, POST or in-flight page
-    /// state is lost if its engine goes before the first commit.
+    /// The stored `isLoading` flag can outlive its engine (a stale spinner), so it must not shield a tab from
+    /// discard for good: a load really in flight is spared by the live `engine.isLoading` check at the discard sites.
     private func shouldRetainFromDiscard(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date) -> Bool {
-        shouldRetainProtected(tab, restoringTabIds: restoringTabIds, now: now) || tab.isLoading
+        shouldRetainProtected(tab, restoringTabIds: restoringTabIds, now: now)
     }
 
     /// Idle discard also spares pinned tabs. They can still be frozen and stay subject to budget, LRU

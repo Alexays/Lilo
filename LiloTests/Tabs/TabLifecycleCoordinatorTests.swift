@@ -417,7 +417,7 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         let cases: [Case] = [
             Case(name: "plain", mutate: { _ in }, freezeProtected: false, discardProtected: false, idleDiscardProtected: false),
             Case(name: "unsaved form", mutate: { $0.hasUnsavedFormData = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
-            Case(name: "loading", mutate: { $0.isLoading = true }, freezeProtected: false, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "stored loading flag alone", mutate: { $0.isLoading = true }, freezeProtected: false, discardProtected: false, idleDiscardProtected: false),
             Case(name: "agent controlled", mutate: { $0.isAgentControlled = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "picture in picture", mutate: { $0.isInPictureInPicture = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "microphone", mutate: { $0.isMicrophoneActive = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
