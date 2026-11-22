@@ -20,7 +20,7 @@ CHANGIE_ARCH := $(shell uname -m | sed -e 's/^x86_64$$/amd64/' -e 's/^aarch64$$/
 CHANGIE_ARCHIVE := changie_$(CHANGIE_VERSION)_$(CHANGIE_OS)_$(CHANGIE_ARCH).tar.gz
 # Pinned so a new release's rules or project output never break validate or the xcodeproj sync check.
 SWIFTLINT_VERSION := 0.65.0
-# Linux takes the static build: it needs no Swift toolchain, but skips the two rules that need SourceKit.
+# Linux takes the static build: it needs no Swift toolchain, but cannot run the two rules that need SourceKit.
 ifeq ($(CHANGIE_OS),linux)
 SWIFTLINT_ZIP := swiftlint_linux_amd64.zip
 SWIFTLINT_SHA256 := 79306a34e5c7cc55a220cd108cbb861dcad5f10138dcdf261e2624ae8b0a486b
@@ -171,12 +171,13 @@ $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 ## Run the CI UI validation sequence (lint + test + build)
 validate-ui: ui-lint ui-test ui-build
 
-## Run the checks that need no Xcode (what a Linux box can run): UI, website, docs, bridge, hooks, release tooling and Swift lint
-linux-checks: ui-lint ui-test site-check site-test docs-check docs-test hooks-test perf-summary-test ext-bridge-test swiftlint release-status release-test release-media-test
+## Run the checks that need no Xcode (what a Linux box can run): validate's check list plus the release tests
+linux-checks: $(LINUX_CHECKS)
 
 ## Run Swift lint only
 swiftlint: $(SWIFTLINT)
 	@'$(SWIFTLINT)' lint --config .swiftlint.yml --strict
+	@[ '$(CHANGIE_OS)' != linux ] || echo 'note: the static Linux build cannot run statement_position or vertical_whitespace_closing_braces (they need SourceKit); the macOS CI job lints with all rules'
 
 ## Regenerate Lilo.xcodeproj from project.yml
 project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(XCODEGEN)

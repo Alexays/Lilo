@@ -21,8 +21,9 @@ Measured on Debian 13 (6 cores, 11 GB) against `c24fc63c`:
 
 These also pass on Linux but sit outside `linux-checks` because they are heavier or need a browser or network download: `e2e` (run `npx playwright install --only-shell chromium` first, as CI does), `site-e2e`, `site-deploy-check`, `docs-deploy-check`, `bridge-gen`, `ui-build` and `vt-build`.
 
-`make swiftlint` on Linux downloads the static `swiftlint_linux_amd64.zip` (pinned checksum in the Makefile) and runs the same rules as macOS except `statement_position` and `vertical_whitespace_closing_braces`, which need SourceKit: it prints a warning and skips them.
-The macOS CI job runs all of them.
+`make swiftlint` on Linux downloads the static `swiftlint_linux_amd64.zip` (pinned checksum in the Makefile, cached in CI so PRs do not pay the 66.7 MB download) and runs the same `.swiftlint.yml` as macOS.
+Two rules need SourceKit, which needs a Swift toolchain Linux does not have here: the static build cannot run `statement_position` or `vertical_whitespace_closing_braces`, and the target says so after the lint.
+The macOS CI job lints the same config with all rules, so a violation of either still fails the gate; a Linux agent's last word on a Swift change is that job.
 The dynamic binary in the same zip covers both rules but crashes without a Swift toolchain, so it is not the default.
 The Linux download is amd64 only; on arm64 the target stops with `Unsupported SwiftLint platform`.
 
