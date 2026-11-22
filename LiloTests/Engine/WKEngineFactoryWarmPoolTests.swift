@@ -5,34 +5,44 @@ import XCTest
 @MainActor
 final class WKEngineFactoryWarmPoolTests: XCTestCase {
 
-    /// Persistent and ephemeral warm views coexist, so alternating normal and private tabs never
-    /// misses the pool or wastes a speculative build.
-    func testWarmPoolHoldsOneSlotPerStoreKind() async {
+    /// Two profiles' warm views coexist, so alternating between their spaces never misses the pool.
+    func testWarmPoolHoldsOneSlotPerStore() async {
         let factory = WKEngineFactory()
         await warm(factory, factory.defaultDataStore())
         XCTAssertEqual(factory.test_warmPoolCount, 1)
 
-        await warm(factory, factory.createDataStore(persistent: false, identifier: nil))
-        XCTAssertEqual(factory.test_warmPoolCount, 2, "an ephemeral warm view must not evict the persistent one")
+        await warm(factory, factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString))
+        XCTAssertEqual(factory.test_warmPoolCount, 2, "another profile's warm view must not evict the first one")
     }
 
     func testCreateTabConsumesMatchingWarmSlotOnly() async {
         let factory = WKEngineFactory()
         let persistent = factory.defaultDataStore()
-        let ephemeral = factory.createDataStore(persistent: false, identifier: nil)
+        let other = factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)
         await warm(factory, persistent)
-        await warm(factory, ephemeral)
+        await warm(factory, other)
 
-        _ = factory.createTab(configuration: .init(dataStore: ephemeral))
+        _ = factory.createTab(configuration: .init(dataStore: other))
 
         XCTAssertEqual(factory.test_warmPoolCount, 1,
-                       "consuming the ephemeral slot must leave the persistent slot warm (refill is deferred)")
+                       "consuming one slot must leave the other warm (refill is deferred)")
+    }
+
+    /// Each private tab browses in a store of its own, which a warm view bound to another store cannot serve.
+    func testAPrivateStoreIsNeverWarmed() async {
+        let factory = WKEngineFactory()
+        let ephemeral = factory.createDataStore(persistent: false, identifier: nil)
+        factory.rearmWarmPool(dataStore: ephemeral, profileId: nil)
+        _ = factory.createTab(configuration: .init(dataStore: ephemeral))
+        // A refill lands 300 ms after the request: waiting past it shows none came.
+        let warmed = await pollUntil(timeout: 1) { factory.test_warmPoolCount != 0 }
+        XCTAssertFalse(warmed)
     }
 
     /// Only a tab the user opens predicts another: a restored tab coming back, as at launch, builds no warm view.
     func testOnlyAnOpenedTabRefillsThePool() async {
         let factory = WKEngineFactory()
-        let opened = factory.createDataStore(persistent: false, identifier: nil)
+        let opened = factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)
         _ = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore(), refillsWarmPool: false))
         // Scheduled after any refill the restored tab could have asked for, so it lands after it too.
         _ = factory.createTab(configuration: .init(dataStore: opened))
@@ -48,7 +58,7 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
         let oldest = factory.defaultDataStore()
         let newest = factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)
         await warm(factory, oldest)
-        await warm(factory, factory.createDataStore(persistent: false, identifier: nil))
+        await warm(factory, factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString))
         factory.rearmWarmPool(dataStore: newest, profileId: nil)
 
         // The count holds at capacity: only a tab taking the newest view shows it landed.
@@ -194,7 +204,7 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
     func testSuppressWarmPoolDropsAllSlots() async {
         let factory = WKEngineFactory()
         await warm(factory, factory.defaultDataStore())
-        await warm(factory, factory.createDataStore(persistent: false, identifier: nil))
+        await warm(factory, factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString))
 
         factory.suppressWarmPool = true
         XCTAssertEqual(factory.test_warmPoolCount, 0)

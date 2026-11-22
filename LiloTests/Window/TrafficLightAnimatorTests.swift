@@ -99,6 +99,25 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
     }
 
+    func testTheLightsKeepTheirPlaceOverTheSidebarDownToItsNarrowest() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        window.setContentSize(NSSize(width: 1200, height: 800))
+        controller.window?.contentView?.addSubview(controller.contentContainerView)
+        defer { controller.pendingSidebarWidthPersistWork?.cancel() }
+        let corner = try closeButtonFrame(controller, layout: .default)
+        controller.syncTrafficLights(animated: false)
+
+        // The header's buttons give way under 203 pt; the lights never fade or move.
+        for width: CGFloat in [202, 170, MainWindowController.sidebarWidthRange.lowerBound] {
+            controller.updateSidebarWidth(width)
+            XCTAssertEqual(controller.sidebarWidth, width)
+            XCTAssertTrue(controller.areTrafficLightsVisible(), "\(width)")
+            XCTAssertEqual(controller.lastSentTrafficLightsVisible, true)
+            XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner, "\(width)")
+        }
+    }
+
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {
         let controller = MainWindowController(context: browserContext.context)
         let buttons = try [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].map {

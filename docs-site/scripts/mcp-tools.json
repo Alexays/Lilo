@@ -28,5 +28,8 @@
   "network_response": "Returns a tab's requests in full, with headers, bodies, timings and sizes, or saves them as a HAR file.",
   "cookies": "Reads and changes the cookies of a tab's profile, HttpOnly ones included; reading and deleting reach only the cookies of the sites the agent's tabs show.",
   "emulate": "Makes a tab look like another environment: user agent, pixel ratio, color scheme, reduced motion, contrast, media type, JavaScript, images, cache, extra headers, a script run before each page, text replacement and freezing.",
-  "performance": "Measures a tab: load and paint metrics and memory, a timeline profile with a summary, heap snapshots and garbage collection."
+  "performance": "Measures a tab: load and paint metrics and memory, a timeline profile with a summary, heap snapshots and garbage collection.",
+  "flow_start": "Starts recording the agent's calls as a flow: each mutating call becomes a step with a stable locator, until flow_save writes it under a name.",
+  "flow_save": "Stops recording and saves the flow under a name in Agents/Flows, turning steps it names into run-time parameters.",
+  "flow_run": "Replays a saved flow in a tab through the same dispatch as a live call, stopping at the first step whose locator or consent fails."
 }
