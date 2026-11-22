@@ -530,7 +530,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let found = await Task.detached {
             let connected = AgentClientConfig.connectedClients(home: home)
-            return AgentClientConfig.Client.allCases.compactMap { client -> (AgentClientConfig.Client, Bool, URL?)? in
+            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, URL?)? in
                 let app = AgentClientConfig.iconApp(of: client, home: home)
                 return app != nil || connected.contains(client) ? (client, connected.contains(client), app) : nil
             }
