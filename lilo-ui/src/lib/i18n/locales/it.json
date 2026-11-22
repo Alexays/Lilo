@@ -1420,6 +1420,15 @@
 		"resetTitle": "Opzioni modificate",
 		"reloadNote": "Ricarica una pagina perché la modifica abbia effetto"
 	},
+	"little": {
+		"openIn": "Apri in {space}",
+		"openInMenu": "Apri in un altro Spazio",
+		"copyLink": "Copia link",
+		"linkCopied": "Link copiato",
+		"placeholder": "Cerca o inserisci un URL...",
+		"emptyTitle": "Cerca sul web o inserisci un URL",
+		"emptySubtitle": "Scrivi / per cercare tra le pagine visitate."
+	},
 	"urlToast": {
 		"pageActions": "Azioni della pagina",
 		"reEnableBlocking": "Riattiva il blocco su questo sito",

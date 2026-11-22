@@ -1420,6 +1420,15 @@
 		"resetTitle": "已更改的开关",
 		"reloadNote": "重新载入页面以使更改生效"
 	},
+	"little": {
+		"openIn": "在 {space} 中打开",
+		"openInMenu": "在其他空间中打开",
+		"copyLink": "拷贝链接",
+		"linkCopied": "链接已拷贝",
+		"placeholder": "搜索或输入网址...",
+		"emptyTitle": "搜索网页或输入网址",
+		"emptySubtitle": "输入 / 可搜索你访问过的页面。"
+	},
 	"urlToast": {
 		"pageActions": "页面操作",
 		"reEnableBlocking": "重新启用此网站的拦截",

@@ -702,6 +702,12 @@ export interface BridgeCommandPayloadMap {
 	dismissFind: EmptyPayload;
 	/** A chrome bar closed: the keyboard goes back to the page. */
 	focusPage: EmptyPayload;
+	/** The Little window's chrome is up and wants its state. */
+	littleReady: EmptyPayload;
+	/** Files the Little window's page as a tab: of `spaceId`, else of the Space the window was opened for. */
+	littleOpenInSpace: { spaceId?: string };
+	littleCopyLink: EmptyPayload;
+	littleClose: EmptyPayload;
 	screenshotPage: { mode: "full" | "viewport" | "region" };
 	/** Opens the editor on a copied capture, which it holds from then on. */
 	editCapture: { captureId: string };
@@ -1008,6 +1014,7 @@ export interface BridgeEventPayloadMap {
 	/** A drag entered the chrome: its links (file URLs included), else its text. */
 	linkDrag: { urls: string[]; text: string };
 	openCommandBar: { createOnSubmit?: boolean; newTab?: boolean; prefill?: string; selectAll?: boolean };
+	littleState: BridgeLittleState;
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
 	openHistory: { query?: string; host?: string; openedFrom?: string };
 	closeCommandBarAfterNavigation: EmptyPayload;
@@ -1274,6 +1281,19 @@ export interface BridgeEventPayloadMap {
 	openAddSpaceEditor: EmptyPayload;
 	urlCopied: EmptyPayload;
 	urlCopyFailed: EmptyPayload;
+}
+
+/** What a Little window's chrome shows: the start search, or the page's address and where it can be filed. */
+export interface BridgeLittleState {
+	mode: "start" | "page";
+	/** The page's address; empty before its first navigation. */
+	url: string;
+	loading: boolean;
+	/** The Space the window was opened for, its accent color for the strip's palette. */
+	space: { id: string; name: string; icon: string; color: string };
+	otherSpaces: { id: string; name: string; icon: string }[];
+	/** Width the traffic lights take at the strip's start. */
+	leadingInset: number;
 }
 
 export type BridgeCommandName = keyof BridgeCommandPayloadMap;

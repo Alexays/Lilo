@@ -1420,6 +1420,15 @@
 		"resetTitle": "変更したフラグ",
 		"reloadNote": "変更を反映するにはページを再読み込みしてください"
 	},
+	"little": {
+		"openIn": "{space}で開く",
+		"openInMenu": "別のスペースで開く",
+		"copyLink": "リンクをコピー",
+		"linkCopied": "リンクをコピーしました",
+		"placeholder": "検索または URL を入力...",
+		"emptyTitle": "Web を検索、または URL を入力",
+		"emptySubtitle": "/ を入力すると、閲覧したページを検索できます。"
+	},
 	"urlToast": {
 		"pageActions": "ページのアクション",
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",

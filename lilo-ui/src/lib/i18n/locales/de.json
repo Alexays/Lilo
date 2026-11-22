@@ -1420,6 +1420,15 @@
 		"resetTitle": "Geänderte Schalter",
 		"reloadNote": "Lade eine Seite neu, damit eine Änderung wirkt"
 	},
+	"little": {
+		"openIn": "In {space} öffnen",
+		"openInMenu": "In einem anderen Space öffnen",
+		"copyLink": "Link kopieren",
+		"linkCopied": "Link kopiert",
+		"placeholder": "Suchen oder URL eingeben...",
+		"emptyTitle": "Im Web suchen oder URL eingeben",
+		"emptySubtitle": "Mit / durchsuchst du besuchte Seiten."
+	},
 	"urlToast": {
 		"pageActions": "Seitenaktionen",
 		"reEnableBlocking": "Blockierung auf dieser Website wieder aktivieren",
