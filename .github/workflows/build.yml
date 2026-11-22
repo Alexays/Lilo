@@ -217,13 +217,8 @@ jobs:
           restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
       - run: make swiftlint
         if: matrix.shard == 1
-      # swift-test builds Debug itself; its wall time lands in the job summary, pass or fail.
-      - name: Swift tests
-        shell: bash
-        run: |
-          start=$SECONDS
-          trap 'echo "swift-test shard ${{ matrix.shard }}/3 wall time: $((SECONDS - start))s" >> "$GITHUB_STEP_SUMMARY"' EXIT
-          make swift-test SWIFT_TEST_SHARD=${{ matrix.shard }}/3 RESULT_BUNDLE=build/swift-test.xcresult
+      # swift-test builds Debug itself.
+      - run: make swift-test SWIFT_TEST_SHARD=${{ matrix.shard }}/3 RESULT_BUNDLE=build/swift-test.xcresult
       - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult
         if: matrix.shard == 3
       # Every shard builds the same products: one saves them.
