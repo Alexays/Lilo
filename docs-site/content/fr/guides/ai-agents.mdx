@@ -205,6 +205,8 @@ La question apparaît sous la barre d'adresse, par exemple : **Claude Code** ve
 
 Si vous ne répondez pas dans les 45 secondes, l'action n'a pas lieu non plus. L'agent reçoit une erreur dont il peut tenir compte, telle que `The user did not allow clicking "Delete account" on example.com: ask them to do it or to allow it`.
 
+Chaque app connectée a une ligne **Actions sur les pages** sous elle dans **Réglages > Agents**. **Demander d'abord**, le choix par défaut, demande comme ci-dessus. **Sur les sites choisis** laisse l'agent de cette app agir sans demander sur les sites que vous ajoutez dans la ligne **Sites** en dessous, sous-domaines compris, et **Partout** sur tout site. Se connecter, payer, acheter, supprimer, publier et envoyer des données vers un autre site demandent toujours, pour tout agent, qu'un formulaire ou un bouton le fasse. Retirer l'app oublie son choix.
+
 Quel que soit le réglage, Lilo demande à chaque fois avant qu'un agent remette à une page l'un de vos fichiers (`file_upload`, `upload_image` avec un chemin de fichier, ou une règle `network_mock` qui sert un fichier), et cette demande ne propose pas de réponse « toujours ».
 
 ## Ce qu'un agent ne peut pas faire [#what-an-agent-cannot-do]

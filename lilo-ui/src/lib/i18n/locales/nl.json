@@ -678,7 +678,24 @@
 			"copyEntry": "Vermelding kopiëren",
 			"showAdded": "Toon wat Lilo heeft toegevoegd…",
 			"revealFile": "Toon instellingenbestand",
-			"footnote": "Apps die niet op deze Mac staan, worden niet getoond. Lilo zoekt opnieuw wanneer deze pagina opent."
+			"footnote": "Apps die niet op deze Mac staan, worden niet getoond. Lilo zoekt opnieuw wanneer deze pagina opent.",
+			"permissions": {
+				"act": "Handelt op pagina's",
+				"actLabel": "Hoe {client} op pagina's handelt",
+				"ask": "Eerst vragen",
+				"sites": "Op gekozen sites",
+				"always": "Overal",
+				"askLine": "Vraagt eerst, zoals elke agent standaard doet.",
+				"sitesLine": "Zonder te vragen op de sites hieronder, behalve voor de acties onder deze lijst.",
+				"alwaysLine": "Zonder te vragen, behalve voor de acties onder deze lijst.",
+				"askingOff": "Vragen staat voor alle agents uit, in de instelling hierboven.",
+				"sitesTitle": "Sites",
+				"noSites": "Nog geen sites.",
+				"addSite": "Site toevoegen…",
+				"addSiteLabel": "Site toevoegen waarop {client} zonder te vragen mag handelen",
+				"removeSite": "{site} verwijderen",
+				"floor": "Inloggen, betalen, kopen, verwijderen, publiceren en gegevens naar een andere site sturen vragen altijd, voor elke agent."
+			}
 		},
 		"navGroups": {
 			"tools": "Hulpmiddelen"

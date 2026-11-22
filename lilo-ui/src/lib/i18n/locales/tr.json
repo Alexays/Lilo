@@ -678,7 +678,24 @@
 			"copyEntry": "Girdiyi Kopyala",
 			"showAdded": "Lilo'nun Eklediklerini Göster…",
 			"revealFile": "Ayar Dosyasını Göster",
-			"footnote": "Bu Mac'te olmayan uygulamalar listelenmez. Lilo bu sayfa açıldığında yeniden bakar."
+			"footnote": "Bu Mac'te olmayan uygulamalar listelenmez. Lilo bu sayfa açıldığında yeniden bakar.",
+			"permissions": {
+				"act": "Sayfalarda işlem yapar",
+				"actLabel": "{client} sayfalarda nasıl işlem yapar",
+				"ask": "Önce Sor",
+				"sites": "Seçilen Sitelerde",
+				"always": "Her Yerde",
+				"askLine": "Varsayılan olarak her ajan gibi önce sorar.",
+				"sitesLine": "Aşağıdaki sitelerde sormadan, bu listenin altında belirtilen işlemler dışında.",
+				"alwaysLine": "Sormadan, bu listenin altında belirtilen işlemler dışında.",
+				"askingOff": "Sorular, yukarıdaki ayarda tüm aracılar için kapalı.",
+				"sitesTitle": "Siteler",
+				"noSites": "Henüz site yok.",
+				"addSite": "Site Ekle…",
+				"addSiteLabel": "{client} için sormadan eylem yapılabilecek bir site ekle",
+				"removeSite": "{site} sitesini kaldır",
+				"floor": "Oturum açma, ödeme, satın alma, silme, yayımlama ve başka bir siteye veri gönderme her ajan için her zaman sorulur."
+			}
 		},
 		"navGroups": {
 			"tools": "Araçlar"

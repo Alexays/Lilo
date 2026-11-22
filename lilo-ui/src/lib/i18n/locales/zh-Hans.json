@@ -678,7 +678,24 @@
 			"copyEntry": "拷贝条目",
 			"showAdded": "显示 Lilo 添加的内容…",
 			"revealFile": "显示设置文件",
-			"footnote": "未列出不在此 Mac 上的应用。每次打开此页面时 Lilo 都会重新查找。"
+			"footnote": "未列出不在此 Mac 上的应用。每次打开此页面时 Lilo 都会重新查找。",
+			"permissions": {
+				"act": "在网页上操作",
+				"actLabel": "{client} 在网页上的操作方式",
+				"ask": "先询问",
+				"sites": "在所选网站上",
+				"always": "所有网站",
+				"askLine": "先询问，与所有智能体的默认设置相同。",
+				"sitesLine": "在下方网站上无需询问，但此列表下方列出的操作除外。",
+				"alwaysLine": "无需询问，但此列表下方列出的操作除外。",
+				"askingOff": "在上方的设置中,所有代理的询问均已关闭。",
+				"sitesTitle": "网站",
+				"noSites": "尚无网站。",
+				"addSite": "添加网站…",
+				"addSiteLabel": "添加 {client} 无需询问即可操作的网站",
+				"removeSite": "移除 {site}",
+				"floor": "登录、付款、购买、删除、发布以及向其他网站发送数据时，所有智能体都会先询问。"
+			}
 		},
 		"navGroups": {
 			"tools": "工具"

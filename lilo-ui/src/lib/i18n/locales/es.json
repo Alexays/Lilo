@@ -678,7 +678,24 @@
 			"copyEntry": "Copiar entrada",
 			"showAdded": "Mostrar lo que añadió Lilo…",
 			"revealFile": "Mostrar archivo de ajustes",
-			"footnote": "Las apps que no están en este Mac no aparecen. Lilo vuelve a buscar al abrir esta página."
+			"footnote": "Las apps que no están en este Mac no aparecen. Lilo vuelve a buscar al abrir esta página.",
+			"permissions": {
+				"act": "Actúa en las páginas",
+				"actLabel": "Cómo actúa {client} en las páginas",
+				"ask": "Preguntar primero",
+				"sites": "En los sitios elegidos",
+				"always": "En todas partes",
+				"askLine": "Pregunta primero, como todo agente por omisión.",
+				"sitesLine": "Sin preguntar en los sitios de abajo, salvo las acciones indicadas bajo esta lista.",
+				"alwaysLine": "Sin preguntar, salvo las acciones indicadas bajo esta lista.",
+				"askingOff": "Las preguntas están desactivadas para todos los agentes, en el ajuste de arriba.",
+				"sitesTitle": "Sitios",
+				"noSites": "Aún no hay sitios.",
+				"addSite": "Añadir sitio…",
+				"addSiteLabel": "Añadir un sitio donde {client} puede actuar sin preguntar",
+				"removeSite": "Quitar {site}",
+				"floor": "Iniciar sesión, pagar, comprar, eliminar, publicar y enviar datos a otro sitio siempre preguntan, para todo agente."
+			}
 		},
 		"navGroups": {
 			"tools": "Herramientas"

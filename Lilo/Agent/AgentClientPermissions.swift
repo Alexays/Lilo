@@ -1,14 +1,13 @@
 import Foundation
 
-/// What one agent may do on pages without asking, kept per client name beside the global setting and site list.
-/// A client with no entry follows the global setting; `act` and `sites` only ever remove questions the user
-/// answered once for all, never one about a structural hit (a sign-in or payment form, a post to another
-/// origin, a frame that cannot be read): those are asked of every client.
+/// How one agent acts on pages, kept per app (its `AgentClientConfig.Client` id, or the agent's own name when no
+/// app is known) beside the global setting and site list. It only ever removes questions about ordinary actions:
+/// a sensitive one (signing in, paying, buying, deleting, publishing, sending data to another site) asks every agent.
 struct AgentClientPermission: Codable, Equatable {
-    enum Act: String, Codable { case ask, always }
+    enum Act: String, Codable { case ask, sites, always }
 
     var act: Act = .ask
-    /// Sites where this client alone acts unasked, their subdomains included.
+    /// Where `.sites` acts unasked, their subdomains included.
     var sites: [String] = []
 
     init(act: Act = .ask, sites: [String] = []) {
@@ -26,15 +25,16 @@ struct AgentClientPermission: Codable, Equatable {
 
     static let settingKey = "agentClientPermissions"
 
-    /// Whether the user is asked before an action of `client` on `site`. The global setting off and the global
-    /// site list decide first, as before per-client permissions existed; then a structural hit always asks;
-    /// then the client's own default and sites.
-    static func asks(
-        structural: Bool, site: String, globalAsks: Bool, globalSites: [String], client: AgentClientPermission?
-    ) -> Bool {
+    /// Whether the user is asked before an action on `site`. The global setting and site list decide first; then a
+    /// sensitive action always asks; then the agent's own choice.
+    static func asks(sensitive: Bool, site: String, globalAsks: Bool, globalSites: [String], client: AgentClientPermission?) -> Bool {
         guard globalAsks, !covers(globalSites, site) else { return false }
-        guard !structural, let client else { return true }
-        return client.act != .always && !covers(client.sites, site)
+        guard !sensitive, let client else { return true }
+        switch client.act {
+        case .ask: return true
+        case .sites: return !covers(client.sites, site)
+        case .always: return false
+        }
     }
 
     /// Whether `site` is one of `sites` or a subdomain of one.
@@ -46,7 +46,7 @@ struct AgentClientPermission: Codable, Equatable {
         json.flatMap { try? JSONDecoder().decode([String: AgentClientPermission].self, from: Data($0.utf8)) } ?? [:]
     }
 
-    /// Entries still at the default are dropped: an absent client follows the global setting.
+    /// Entries still at the default are dropped: an absent agent follows the global setting.
     static func encode(_ permissions: [String: AgentClientPermission]) -> String {
         let kept = permissions.filter { !$0.value.isDefault }
         return (try? JSONEncoder().encode(kept)).flatMap { String(bytes: $0, encoding: .utf8) } ?? "{}"

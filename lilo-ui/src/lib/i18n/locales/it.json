@@ -678,7 +678,24 @@
 			"copyEntry": "Copia voce",
 			"showAdded": "Mostra cosa ha aggiunto Lilo…",
 			"revealFile": "Mostra file di impostazioni",
-			"footnote": "Le app non presenti su questo Mac non sono elencate. Lilo cerca di nuovo quando si apre questa pagina."
+			"footnote": "Le app non presenti su questo Mac non sono elencate. Lilo cerca di nuovo quando si apre questa pagina.",
+			"permissions": {
+				"act": "Agisce sulle pagine",
+				"actLabel": "Come agisce {client} sulle pagine",
+				"ask": "Chiedi prima",
+				"sites": "Sui siti scelti",
+				"always": "Ovunque",
+				"askLine": "Chiede prima, come ogni agente per impostazione predefinita.",
+				"sitesLine": "Senza chiedere sui siti qui sotto, tranne per le azioni indicate sotto questo elenco.",
+				"alwaysLine": "Senza chiedere, tranne per le azioni indicate sotto questo elenco.",
+				"askingOff": "Le richieste sono disattivate per tutti gli agenti, nell'impostazione qui sopra.",
+				"sitesTitle": "Siti",
+				"noSites": "Ancora nessun sito.",
+				"addSite": "Aggiungi sito…",
+				"addSiteLabel": "Aggiungi un sito su cui {client} può agire senza chiedere",
+				"removeSite": "Rimuovi {site}",
+				"floor": "Accedere, pagare, acquistare, eliminare, pubblicare e inviare dati a un altro sito chiedono sempre, per ogni agente."
+			}
 		},
 		"navGroups": {
 			"tools": "Strumenti"

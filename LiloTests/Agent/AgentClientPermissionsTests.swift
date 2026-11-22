@@ -1,13 +1,13 @@
 import XCTest
 @testable import Lilo
 
-/// The decision table: global setting, global sites, structural hit, client default, client sites.
+/// The decision table: global setting, global sites, sensitive action, the agent's choice and sites.
 final class AgentClientPermissionTableTests: XCTestCase {
     private func asks(
-        structural: Bool = false, site: String = "shop.example.com", globalAsks: Bool = true, globalSites: [String] = [],
+        sensitive: Bool = false, site: String = "shop.example.com", globalAsks: Bool = true, globalSites: [String] = [],
         _ client: AgentClientPermission? = nil
     ) -> Bool {
-        AgentClientPermission.asks(structural: structural, site: site, globalAsks: globalAsks, globalSites: globalSites, client: client)
+        AgentClientPermission.asks(sensitive: sensitive, site: site, globalAsks: globalAsks, globalSites: globalSites, client: client)
     }
 
     func testAnUnknownClientGetsTheGlobalDefault() {
@@ -17,53 +17,52 @@ final class AgentClientPermissionTableTests: XCTestCase {
         XCTAssertTrue(asks(globalSites: ["other.test"]))
     }
 
-    func testAClientAtTheDefaultAsksAsAnUnknownOneDoes() {
+    func testAskFirstAsksAsAnUnknownClientDoes() {
         XCTAssertTrue(asks(AgentClientPermission()))
-        XCTAssertTrue(asks(AgentClientPermission(act: .ask, sites: ["other.test"])))
+        XCTAssertTrue(asks(AgentClientPermission(act: .ask, sites: ["example.com"])), "sites count only for On Chosen Sites")
     }
 
-    func testAlwaysSkipsTheQuestionForOrdinaryActions() {
+    func testEverywhereSkipsTheQuestionForOrdinaryActions() {
         XCTAssertFalse(asks(AgentClientPermission(act: .always)))
     }
 
-    func testAClientsSiteSkipsTheQuestionThereAndOnItsSubdomainsOnly() {
-        let client = AgentClientPermission(sites: ["example.com"])
+    func testChosenSitesSkipTheQuestionThereAndOnTheirSubdomainsOnly() {
+        let client = AgentClientPermission(act: .sites, sites: ["example.com"])
         XCTAssertFalse(asks(site: "example.com", client))
         XCTAssertFalse(asks(site: "shop.example.com", client))
         XCTAssertTrue(asks(site: "notexample.com", client))
         XCTAssertTrue(asks(site: "example.org", client))
     }
 
-    func testAStructuralHitAlwaysAsksWhateverTheClientMayDo() {
-        let always = AgentClientPermission(act: .always, sites: ["example.com"])
-        XCTAssertTrue(asks(structural: true, site: "shop.example.com", always))
-        XCTAssertTrue(asks(structural: true, AgentClientPermission(sites: ["shop.example.com"])))
-        XCTAssertTrue(asks(structural: true))
+    func testASensitiveActionAlwaysAsksWhateverTheAgentMayDo() {
+        XCTAssertTrue(asks(sensitive: true, AgentClientPermission(act: .always)))
+        XCTAssertTrue(asks(sensitive: true, AgentClientPermission(act: .sites, sites: ["shop.example.com"])))
+        XCTAssertTrue(asks(sensitive: true))
     }
 
-    func testTheGlobalSettingAndSiteListDecideBeforeTheClient() {
+    func testTheGlobalSettingAndSiteListDecideBeforeTheAgent() {
         XCTAssertFalse(asks(globalAsks: false, AgentClientPermission()))
-        XCTAssertFalse(asks(structural: true, globalAsks: false, AgentClientPermission(act: .always)))
-        XCTAssertFalse(asks(structural: true, globalSites: ["example.com"], AgentClientPermission()))
+        XCTAssertFalse(asks(sensitive: true, globalAsks: false, AgentClientPermission(act: .always)))
+        XCTAssertFalse(asks(sensitive: true, globalSites: ["example.com"], AgentClientPermission()))
     }
 
     func testStoredPermissionsKeepOnlyWhatDiffersFromTheDefault() {
         let json = AgentClientPermission.encode([
-            "Codex": AgentClientPermission(act: .always), "Claude Code": AgentClientPermission(),
-            "Zed": AgentClientPermission(sites: ["example.com"])
+            "codex": AgentClientPermission(act: .always), "claudeCode": AgentClientPermission(),
+            "zed": AgentClientPermission(act: .sites, sites: ["example.com"])
         ])
         let stored = AgentClientPermission.decode(json)
-        XCTAssertEqual(Set(stored.keys), ["Codex", "Zed"])
-        XCTAssertEqual(stored["Codex"]?.act, .always)
-        XCTAssertEqual(stored["Zed"]?.sites, ["example.com"])
+        XCTAssertEqual(Set(stored.keys), ["codex", "zed"])
+        XCTAssertEqual(stored["codex"]?.act, .always)
+        XCTAssertEqual(stored["zed"], AgentClientPermission(act: .sites, sites: ["example.com"]))
     }
 
-    /// Settings from before the per-client keys, and a value that does not parse, leave every client at the default.
+    /// No stored value, or one that does not parse, leaves every agent at the default.
     func testNoStoredValueOrAnUnreadableOneIsTheGlobalDefault() {
         XCTAssertEqual(AgentClientPermission.decode(nil), [:])
         XCTAssertEqual(AgentClientPermission.decode("not json"), [:])
-        XCTAssertEqual(AgentClientPermission.decode(#"{"Codex":{"act":"root"}}"#)["Codex"], AgentClientPermission())
-        XCTAssertEqual(AgentClientPermission.decode(#"{"Codex":{"act":"always"}}"#)["Codex"]?.act, .always)
+        XCTAssertEqual(AgentClientPermission.decode(#"{"codex":{"act":"root"}}"#)["codex"], AgentClientPermission())
+        XCTAssertEqual(AgentClientPermission.decode(#"{"codex":{"act":"sites","sites":["example.com"]}}"#)["codex"]?.act, .sites)
     }
 }
 
@@ -71,7 +70,9 @@ final class AgentClientPermissionTableTests: XCTestCase {
 final class AgentClientPermissionsTests: AgentToolTestCase {
     private static let page = """
     <!doctype html><title>Shop</title><body>
+    <button onclick="document.title = 'sent'">Send</button>
     <button onclick="document.title = 'ordered'">Place order</button>
+    <button onclick="document.title = 'deleted'">Delete</button>
     <form onsubmit="document.title = 'in'; return false"><input type="password"><button>Weiter</button></form>
     <form method="post" action="https://example.com/collect" target="_blank" onsubmit="return false"><input name="q"><button>Continue</button></form>
     </body>
@@ -111,46 +112,62 @@ final class AgentClientPermissionsTests: AgentToolTestCase {
         control.answerConsent(try XCTUnwrap(control.pendingConsentAnswers.keys.first), granted: granted)
     }
 
-    func testAClientSetToAlwaysActsUnaskedOnAnOrderButItsPeersAreAsked() async throws {
+    func testEverywhereSendsUnaskedButItsPeersAreAsked() async throws {
         control.setClientPermission("Test Agent", AgentClientPermission(act: .always))
         let tab = try await shopTab()
 
-        let reply = await click("Place order", tab: tab)
+        let reply = await click("Send", tab: tab)
 
         XCTAssertFalse(reply.isError, reply.text)
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "not asked")
 
-        let codex = try AgentTestClient(path: socketURL)
-        _ = await codex.initialize(name: "Codex")
-        let codexTab = try await shopTab(codex)
-        let other = Task { await click("Place order", tab: codexTab, as: codex) }
+        let peer = try AgentTestClient(path: socketURL)
+        _ = await peer.initialize(name: "Codex")
+        let otherTab = try await shopTab(peer)
+        let other = Task { await click("Send", tab: otherTab, as: peer) }
         try await answerQuestion(false)
         let refused = await other.value
         XCTAssertTrue(refused.text.hasPrefix("[needs_user]"), refused.text)
     }
 
-    func testAClientsSiteSkipsTheQuestionForThatClientOnly() async throws {
-        control.setClientPermission("Test Agent", AgentClientPermission(sites: ["127.0.0.1"]))
+    func testAChosenSiteSkipsTheQuestionForThatAgentOnly() async throws {
+        control.setClientPermission("Test Agent", AgentClientPermission(act: .sites, sites: ["127.0.0.1"]))
         let tab = try await shopTab()
 
-        let reply = await click("Place order", tab: tab)
+        let reply = await click("Send", tab: tab)
 
         XCTAssertFalse(reply.isError, reply.text)
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
-        XCTAssertTrue(control.alwaysAllowedSites.isEmpty, "the grant is the client's, not everyone's")
+        XCTAssertTrue(control.alwaysAllowedSites.isEmpty, "the grant is the agent's, not everyone's")
     }
 
-    func testAlwaysNeverSkipsASignInFormAPostToAnotherOriginOrAFrameItCannotRead() async throws {
-        control.setClientPermission("Test Agent", AgentClientPermission(act: .always, sites: ["127.0.0.1"]))
+    /// Buttons too, not only forms: an order or a delete button asks as a sign-in form or a post to another origin does.
+    func testEverywhereNeverSkipsASensitiveAction() async throws {
+        control.setClientPermission("Test Agent", AgentClientPermission(act: .always))
         let tab = try await shopTab()
 
-        for label in ["Weiter", "Continue"] {
+        for label in ["Place order", "Delete", "Weiter", "Continue"] {
             let reply = Task { await click(label, tab: tab) }
             try await answerQuestion(false)
             let result = await reply.value
             XCTAssertTrue(result.text.hasPrefix("[needs_user]"), "\(label): \(result.text)")
             XCTAssertEqual(result.meta["lilo/consent"] as? String, "denied", label)
         }
+    }
+
+    func testAnAppsChoiceCoversTheAgentsItConnectsAs() async throws {
+        control.setClientPermission("claudeCode", AgentClientPermission(act: .always))
+        let claude = try AgentTestClient(path: socketURL)
+        _ = await claude.initialize(name: "claude-code")
+        let tab = try await shopTab(claude)
+
+        let reply = await click("Send", tab: tab, as: claude)
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
+
+        control.revoke("claude-code")
+        XCTAssertNil(control.clientPermissions["claudeCode"], "revoking the agent forgets its app's choice")
     }
 
     func testAlwaysNeverSkipsAClickOnAFrameOfAnotherOrigin() async throws {
@@ -177,7 +194,7 @@ final class AgentClientPermissionsTests: AgentToolTestCase {
         XCTAssertNil(control.clientPermissions["Test Agent"])
     }
 
-    func testWithoutPerClientSettingsTheGlobalOnesDecideAsBefore() async throws {
+    func testWithoutPerAgentChoicesTheGlobalSettingDecides() async throws {
         XCTAssertTrue(control.clientPermissions.isEmpty)
         let tab = try await shopTab()
         let reply = Task { await click("Place order", tab: tab) }

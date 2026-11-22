@@ -281,10 +281,12 @@ enum AgentTools {
             // In one of the user's profiles the request carries their cookies: it may act for them, as a click does.
             if !["GET", "HEAD"].contains(method), !engine.isPrivateBrowsing, session.profileId != nil {
                 let target = URL(string: url, relativeTo: engine.currentURL)?.absoluteString ?? url
-                // A request to another origin hands the user's data to a third party: asked of every client.
+                // A DELETE, or a request handing the user's data to another origin, asks every agent.
                 let page = engine.currentURL
                 let crossOrigin = URL(string: target).map { ($0.scheme, $0.host(), $0.port) != (page?.scheme, page?.host(), page?.port) } ?? true
-                try await control.approveConsequentialAction("fetch", label: "\(method) \(target)", structural: crossOrigin, frame: nil, engine: engine, session: session)
+                try await control.approveConsequentialAction(
+                    "fetch", label: "\(method) \(target)", sensitive: crossOrigin || method == "DELETE", frame: nil, engine: engine, session: session
+                )
             }
             var options: [String: Any] = [
                 "url": url, "method": method,

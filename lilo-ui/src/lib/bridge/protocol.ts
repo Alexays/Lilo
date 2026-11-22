@@ -887,6 +887,7 @@ export interface BridgeCommandPayloadMap {
 	previewConversationArtifact: { tabId: string; code: string; language: string };
 	getAgentClients: EmptyPayload;
 	revokeAgentClient: { name: string };
+	setAgentClientPermission: { key: string } & BridgeAgentPermission;
 	getAppNames: { ids: string[] };
 	getUpdaterStatus: EmptyPayload;
 	checkForUpdates: EmptyPayload;
@@ -1386,6 +1387,14 @@ export interface BridgeAgentClientsSnapshot {
 	/** `name` is what the agent calls itself; `displayName` is how people know it ("Claude Code"); `client` the
 	 * entry of `clients` it is, null for an agent Lilo has no configuration for. */
 	allowed: { name: string; displayName: string; lastSeen: number | null; client: string | null }[];
+	/** How each agent acts on pages, by `clients` id or by agent `name`; an absent one asks first. */
+	permissions: Record<string, BridgeAgentPermission>;
+}
+
+/** Ask First, On Chosen Sites (`sites`, subdomains included) or Everywhere. Sensitive actions ask whatever this says. */
+export interface BridgeAgentPermission {
+	act: "ask" | "sites" | "always";
+	sites: string[];
 }
 
 export interface BridgeUpdaterStatus {

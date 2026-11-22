@@ -59,7 +59,14 @@ meanwhile; your other windows, and the site and extension prompts there, are not
 It counts as a refusal when you decline; one nobody answers in 45 seconds is withdrawn, and the agent
 may ask once more; with no window open the agent is told to ask you to open one first.
 
-Sites you always allow are listed in Settings, where you can remove them. Each agent also has a Permissions row (the ... menu of its tile in Settings > Agents): leave it on Ask each time, or choose Always allow so that agent acts on ordinary buttons without asking, and list sites where only that agent acts unasked. Both leave out what the page's structure flags (a form with a password or card field, a post to another origin, a frame Lilo cannot read, a cross-origin request) and every file upload: those are asked of every agent. An agent you have not set follows the setting above, and removing an agent forgets its Permissions. Whatever the setting,
+Sites you always allow are listed in Settings, where you can remove them. Each connected app (and each agent
+Lilo has no app for) also has an **Acts on pages** row under it in Settings > Agents: **Ask First**, the default,
+follows the setting above; **On Chosen Sites** lets that agent act without asking on the sites listed under it,
+their subdomains included; **Everywhere** lets it act without asking on any site. Neither ever covers a sensitive
+action, which asks every agent: a control that signs in, pays, buys, orders, deletes or publishes (by its form, a
+password or card field, or by its label, buttons included), a form or request that sends data to another origin, a
+`DELETE` request, or a frame Lilo cannot read. Removing an app or an agent forgets its choice.
+The agent is recognized by the name it gives when it connects. Whatever the setting,
 Lilo always asks before an agent hands a page one of your files (`file_upload`, `upload_image`).
 
 Code an agent runs itself through `javascript_tool`, `run` or `devtools_command` is not covered:

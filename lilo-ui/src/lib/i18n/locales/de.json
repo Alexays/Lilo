@@ -678,7 +678,24 @@
 			"copyEntry": "Eintrag kopieren",
 			"showAdded": "Zeigen, was Lilo hinzugefügt hat…",
 			"revealFile": "Einstellungsdatei im Finder zeigen",
-			"footnote": "Apps, die nicht auf diesem Mac sind, werden nicht aufgeführt. Lilo sucht erneut, wenn diese Seite geöffnet wird."
+			"footnote": "Apps, die nicht auf diesem Mac sind, werden nicht aufgeführt. Lilo sucht erneut, wenn diese Seite geöffnet wird.",
+			"permissions": {
+				"act": "Handelt auf Seiten",
+				"actLabel": "Wie {client} auf Seiten handelt",
+				"ask": "Zuerst fragen",
+				"sites": "Auf ausgewählten Websites",
+				"always": "Überall",
+				"askLine": "Fragt zuerst, wie jeder Agent standardmäßig.",
+				"sitesLine": "Ohne Nachfrage auf den Websites unten, außer bei den unter dieser Liste genannten Aktionen.",
+				"alwaysLine": "Ohne Nachfrage, außer bei den unter dieser Liste genannten Aktionen.",
+				"askingOff": "Nachfragen ist für alle Agenten in der Einstellung oben ausgeschaltet.",
+				"sitesTitle": "Websites",
+				"noSites": "Noch keine Websites.",
+				"addSite": "Website hinzufügen…",
+				"addSiteLabel": "Website hinzufügen, auf der {client} ohne Nachfrage handeln darf",
+				"removeSite": "{site} entfernen",
+				"floor": "Anmelden, Bezahlen, Kaufen, Löschen, Veröffentlichen und das Senden von Daten an eine andere Website fragen immer nach, bei jedem Agenten."
+			}
 		},
 		"navGroups": {
 			"tools": "Werkzeuge"

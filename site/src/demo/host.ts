@@ -1333,6 +1333,7 @@ export const createDemoHost = (
             id,
           })
         ),
+        permissions: {},
       }),
     getAppIcons: () =>
       emit("appIconsLoaded", {
