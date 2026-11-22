@@ -31,7 +31,7 @@ extension MainWindowController {
 
     /// Trims this window's space to the engine budget of `policy`; the shared lifecycle controller
     /// asks every window in turn. `freezesExcessEngines` suspends over-budget tabs instead of
-    /// discarding them — the routine trims call it so a space switch never reloads a page.
+    /// discarding them: the routine trims call it so a space switch never reloads a page.
     func trimActiveSpace(policy: TabLifecycleCoordinator.Policy, cap: Int?, freezesExcessEngines: Bool = false) {
         let budget = activeSpaceTrimBudget(policy: policy, cap: cap)
         guard tabManager.trimActiveSpaceEngines(

@@ -164,10 +164,12 @@ extension TabManager {
         if freezesExcessEngines {
             for id in toDiscard {
                 // A frozen Web Lock holder stalls every peer waiting for the lock, so the freeze waits
-                // for the page's answer like the idle sweep does; the guards re-run in the reply.
+                // for the page's answer like the idle sweep does; the guards re-run in the reply, where a tab
+                // shown meanwhile has already been resumed and must stay live.
                 guard let engine = engineHost.engine(for: id) else { continue }
                 WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self, weak engine] error in
-                    guard error == nil, let engine, self?.engineHost.engine(for: id) === engine, !engine.isLoading else { return }
+                    guard error == nil, let self, let engine, self.engineHost.engine(for: id) === engine, !engine.isLoading,
+                          self.activeTabId != id, self.activeSplit?.layout.paneIds.contains(id) != true else { return }
                     engine.freeze()
                 }
             }

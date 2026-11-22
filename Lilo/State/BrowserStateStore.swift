@@ -777,7 +777,7 @@ final class BrowserStateStore {
         }
     }
 
-    /// Freezes a parked engine once its page reports holding no Web Lock — a frozen lock holder would
+    /// Freezes a parked engine once its page reports holding no Web Lock: a frozen lock holder would
     /// hold up every tab waiting for the lock. The page answers later: a tab shown, loading or
     /// discarded meanwhile stays as it is.
     private func freezeParkedEngine(tabId: UUID, spaceId: UUID, engine: WKWebViewTab, now: Date) {

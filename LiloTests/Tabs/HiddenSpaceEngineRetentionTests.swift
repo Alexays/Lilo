@@ -92,7 +92,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
     private struct RecordedTrim: Equatable {
         let policy: TabLifecycleCoordinator.Policy
         let cap: Int?
-        let freezes: Bool = false
+        var freezes = false
     }
 
     func testWarningMemoryPressureCapsEveryTrimUntilNormal() {
@@ -105,7 +105,9 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
             config: config,
             discardEngine: { _ in nil },
             syncActiveState: {},
-            trimActiveSpaceEngines: { policy, cap, _ in recorded.append(RecordedTrim(policy: policy, cap: cap)); trimFired?.fulfill() }
+            trimActiveSpaceEngines: { policy, cap, freezes in
+                recorded.append(RecordedTrim(policy: policy, cap: cap, freezes: freezes)); trimFired?.fulfill()
+            }
         )
         controller.handleDidBecomeActive()
 
@@ -125,7 +127,7 @@ final class HiddenSpaceEngineRetentionTests: XCTestCase {
         trimFired = expectation(description: "relaxed trim")
         controller.scheduleActiveSpaceTrim(delay: 0)
         wait(for: [trimFired!], timeout: 1.0)
-        XCTAssertEqual(recorded, [RecordedTrim(policy: .foreground, cap: nil)])
+        XCTAssertEqual(recorded, [RecordedTrim(policy: .foreground, cap: nil, freezes: true)], "a routine trim freezes instead of discarding")
     }
 
     func testCriticalMemoryPressureCollapsesEveryTrim() {

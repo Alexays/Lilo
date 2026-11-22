@@ -386,9 +386,9 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         XCTAssertEqual(budgeted, [preferred, dirty])
         XCTAssertEqual(collapsed, [dirty])
         XCTAssertEqual(keep, [preferred, dirty])
-        XCTAssertTrue(
+        XCTAssertFalse(
             TabLifecycleCoordinator().protectedEngineIds(tabs: tabs, availableEngineIds: [preferred, dirty]).contains(dirty),
-            "unsaved form input vetoes freezing too: a frozen page cannot autosave mid-edit"
+            "a form tab can still be frozen"
         )
     }
 
@@ -416,12 +416,13 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         }
         let cases: [Case] = [
             Case(name: "plain", mutate: { _ in }, freezeProtected: false, discardProtected: false, idleDiscardProtected: false),
-            Case(name: "unsaved form", mutate: { $0.hasUnsavedFormData = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "unsaved form", mutate: { $0.hasUnsavedFormData = true }, freezeProtected: false, discardProtected: true, idleDiscardProtected: true),
             Case(name: "stored loading flag alone", mutate: { $0.isLoading = true }, freezeProtected: false, discardProtected: false, idleDiscardProtected: false),
             Case(name: "agent controlled", mutate: { $0.isAgentControlled = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "picture in picture", mutate: { $0.isInPictureInPicture = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "microphone", mutate: { $0.isMicrophoneActive = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "screen sharing", mutate: { $0.isScreenSharing = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "never sleep", mutate: { $0.neverSleep = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
             Case(name: "pinned", mutate: { $0.isPinned = true }, freezeProtected: false, discardProtected: false, idleDiscardProtected: true)
         ]
         for policy in [TabLifecycleCoordinator.Policy.foreground, .background] {

@@ -3177,8 +3177,8 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(frozen)
     }
 
-    /// The same routine trim leaves an unsaved-form engine alone entirely: the veto covers both the
-    /// freeze and the discard, so the page can keep autosaving while its space is hidden.
+    /// The same routine trim spares an unsaved-form engine as a discard would: the budget never
+    /// suspends it, only the idle sweep does once it has been idle long enough.
     func testTrimInactiveEnginesFreezeModeKeepsUnsavedFormEngineLive() async throws {
         let activeSpaceId = UUID()
         let hiddenSpaceId = UUID()
