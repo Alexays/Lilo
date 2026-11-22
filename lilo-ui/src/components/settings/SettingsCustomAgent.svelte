@@ -3,33 +3,27 @@
   import type { CommandFields } from "../../lib/agentInstances";
   import UiTextField from "../ui/UiTextField.svelte";
 
-  type Field = keyof CommandFields;
-
-  /** The form's fields, edited in place by the sheet that hosts it. */
+  /** The form's fields, edited in place as they are typed so the sheet's Add button follows them. */
   let { values = $bindable() }: { values: CommandFields } = $props();
-
-  function save(field: Field, value: string): void {
-    values = { ...values, [field]: value.trim() };
-  }
 </script>
 
 <!-- A program Lilo starts as an agent next to the registry's: one text per field, arguments and variables one per line. -->
 <div class="form">
   <label>
     <span class="label">{t("settings.items.customAgent.name")}</span>
-    <UiTextField value={values.name} placeholder={t("settings.items.customAgent.namePlaceholder")} oncommit={(value) => save("name", value)} />
+    <UiTextField value={values.name} placeholder={t("settings.items.customAgent.namePlaceholder")} onchange={(value) => (values.name = value)} />
   </label>
   <label>
     <span class="label">{t("settings.items.customAgent.executable")}</span>
-    <UiTextField value={values.executable} placeholder="/usr/local/bin/my-agent" oncommit={(value) => save("executable", value)} />
+    <UiTextField value={values.executable} placeholder="/usr/local/bin/my-agent" onchange={(value) => (values.executable = value)} />
   </label>
   <label>
     <span class="label">{t("settings.items.customAgent.arguments")}</span>
-    <textarea rows="3" spellcheck="false" placeholder="--profile&#10;acp" value={values.arguments} onchange={(event) => save("arguments", event.currentTarget.value)}></textarea>
+    <textarea rows="3" spellcheck="false" placeholder="--profile&#10;acp" bind:value={values.arguments}></textarea>
   </label>
   <label>
     <span class="label">{t("settings.items.customAgent.environment")}</span>
-    <textarea rows="4" spellcheck="false" placeholder="NAME=value" value={values.environment} onchange={(event) => save("environment", event.currentTarget.value)}></textarea>
+    <textarea rows="4" spellcheck="false" placeholder="NAME=value" bind:value={values.environment}></textarea>
   </label>
 </div>
 

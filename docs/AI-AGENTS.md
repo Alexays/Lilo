@@ -87,16 +87,16 @@ registry and are checked against its SHA-256 before they run.
   Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
 - An idle agent stops after ten minutes and resumes its session when you come back.
 
-### Your own agent command
+### Your own agents
 
-Settings > Agents > "Custom agent" starts a program of your own as an agent, next to the registry's, in the Ask bar's agent picker. Any harness that speaks ACP over standard input and output works, such as `dsh --profile acp` or a wrapper script.
+Settings > Agents > "Agents" lists the agents you manage, each with a switch: turn one off and the Ask bar's agent picker no longer offers it, while a conversation already started with it keeps working. A registry agent that is not in the list stays on. "Add Agent" adds one from the registry, or a command of your own: any harness that speaks ACP over standard input and output, such as `dsh --profile acp` or a wrapper script.
 
 - **Command** is the full path of an executable file (`~/` is expanded). Lilo checks it each time the agent starts and says so in the conversation when it is missing or not executable.
 - **Arguments** are one per line, passed as they are: no shell runs, so no quoting or expansion.
-- **Environment** is one `NAME=value` line per variable, added to the environment Lilo starts agents with (your shell's `PATH` included) and overriding it. Blank lines and lines starting with `#` are skipped.
+- **Environment** is one `NAME=value` line per variable, added to the environment Lilo starts agents with (your shell's `PATH` included) and overriding it. Blank lines and lines starting with `#` are skipped. Values are stored in Lilo's settings, not in the Keychain.
 - **Name** is what the picker and the sidebar show; the command's file name when left empty.
 
-There is one custom agent. Registry agents, sign-in and conversations work the same for it; Lilo does not give it a terminal.
+Registry agents, sign-in and conversations work the same for a command; Lilo does not give it a terminal.
 
 ## Saved flows
 

@@ -109,8 +109,6 @@ test("the command tab adds an entry, and the row's menu edits and removes it", a
 	const fields = sheet.locator(".command input");
 	await fields.nth(0).fill("Example Agent");
 	await fields.nth(1).fill("/opt/example/bin/example-acp");
-	// The field commits on blur, like the real keyboard flow.
-	await fields.nth(1).blur();
 	await sheet.getByRole("button", { name: "Add", exact: true }).click();
 	await expect(sheet).toBeHidden();
 
