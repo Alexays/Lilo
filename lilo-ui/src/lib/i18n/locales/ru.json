@@ -2684,7 +2684,11 @@
 			"noFolder": "Без папки",
 			"noFolderDetail": "Агент работает в собственной папке",
 			"backgroundHint": "{shortcut}, чтобы оставить в фоне",
-			"start": "Начать"
+			"start": "Начать",
+			"searchAgents": "Поиск агентов",
+			"featuredAgents": "Рекомендуемые",
+			"registryAgents": "Реестр",
+			"noMatches": "Нет подходящих агентов"
 		},
 		"row": {
 			"untitled": "Новый разговор",

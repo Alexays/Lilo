@@ -2684,7 +2684,11 @@
 			"noFolder": "フォルダなし",
 			"noFolderDetail": "エージェントは専用のフォルダで作業します",
 			"backgroundHint": "{shortcut} でバックグラウンドのままにする",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "エージェントを検索",
+			"featuredAgents": "注目",
+			"registryAgents": "レジストリ",
+			"noMatches": "一致するエージェントがありません"
 		},
 		"row": {
 			"untitled": "新しい会話",

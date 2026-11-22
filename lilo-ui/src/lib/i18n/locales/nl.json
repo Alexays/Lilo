@@ -2684,7 +2684,11 @@
 			"noFolder": "Geen map",
 			"noFolderDetail": "De agent werkt in een eigen map",
 			"backgroundHint": "{shortcut} om het op de achtergrond te houden",
-			"start": "Start"
+			"start": "Start",
+			"searchAgents": "Zoek agents",
+			"featuredAgents": "Uitgelicht",
+			"registryAgents": "Register",
+			"noMatches": "Geen overeenkomende agents"
 		},
 		"row": {
 			"untitled": "Nieuw gesprek",

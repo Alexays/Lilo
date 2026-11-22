@@ -2684,7 +2684,11 @@
 			"noFolder": "Sin carpeta",
 			"noFolderDetail": "El agente trabaja en una carpeta propia",
 			"backgroundHint": "{shortcut} para mantenerlo en segundo plano",
-			"start": "Empezar"
+			"start": "Empezar",
+			"searchAgents": "Buscar agentes",
+			"featuredAgents": "Destacados",
+			"registryAgents": "Registro",
+			"noMatches": "No hay agentes coincidentes"
 		},
 		"row": {
 			"untitled": "Nueva conversación",

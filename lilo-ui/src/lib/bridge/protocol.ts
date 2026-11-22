@@ -178,6 +178,8 @@ export interface BridgeAgentInfo {
 	description: string;
 	/** An SVG data URL from the ACP registry. */
 	icon?: string;
+	/** Offered first: one of Lilo's featured agents. */
+	featured?: boolean;
 }
 
 export interface BridgeFolderLock {

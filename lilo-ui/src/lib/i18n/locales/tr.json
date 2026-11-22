@@ -2684,7 +2684,11 @@
 			"noFolder": "Klasör yok",
 			"noFolderDetail": "Ajan kendi klasöründe çalışır",
 			"backgroundHint": "Arka planda tutmak için {shortcut}",
-			"start": "Başlat"
+			"start": "Başlat",
+			"searchAgents": "Ajanları ara",
+			"featuredAgents": "Öne çıkanlar",
+			"registryAgents": "Kayıt",
+			"noMatches": "Eşleşen ajan yok"
 		},
 		"row": {
 			"untitled": "Yeni sohbet",
