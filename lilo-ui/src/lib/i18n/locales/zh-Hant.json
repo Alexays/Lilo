@@ -917,6 +917,7 @@
 		"splitView": "分割顯示",
 		"folderEmpty": "資料夾是空的",
 		"newTab": "新增分頁",
+		"newTabShort": "新增",
 		"newTerminal": "新增終端機",
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"listOptions": "排序與分組",

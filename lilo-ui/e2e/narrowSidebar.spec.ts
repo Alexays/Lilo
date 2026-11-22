@@ -116,6 +116,24 @@ test("under the minimum, the arrows narrow the sidebar to the rail's detent", as
 	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
 });
 
+// The New Tab row keeps its terminal and agents buttons down to the detent, whole and inside the
+// sidebar; its label shows the longest of its forms that fits, never truncated.
+test("the New Tab row keeps its buttons and steps its label down to the detent", async ({ page }) => {
+	for (const [locale, width, label] of [["en", 260, "New Tab"], ["en", 170, "New Tab"], ["en", 150, "New"], ["fr", 203, "Nouvel onglet"], ["fr", 170, "Nouveau"], ["fr", 150, ""]] as const) {
+		await bootNarrow(page, "tabs", width);
+		await page.evaluate((locale) => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentsEnabled: "true", locale } }), locale);
+		const line = page.locator(".new-tab-line");
+		await expect(line.locator(".new-terminal-button")).toBeVisible();
+		await expect(line.locator(".agents-button")).toBeVisible();
+		const shown = line.locator(".new-tab-label");
+		await expect(shown).toHaveText(label);
+		expect(await shown.evaluate((span) => span.scrollWidth <= span.clientWidth)).toBe(true);
+		const sidebar = (await page.locator(".sidebar-viewport").boundingBox())!;
+		const rights = await line.locator("button").evaluateAll((buttons) => buttons.map((b) => b.getBoundingClientRect().right));
+		for (const right of rights) expect(right).toBeLessThanOrEqual(sidebar.x + sidebar.width - 8);
+	}
+});
+
 // The lights keep their place down the narrow range: the history buttons give way, the toggle stays, and
 // nothing passes the sidebar's edge, in either appearance.
 for (const scheme of ["light", "dark"] as const) {

@@ -917,6 +917,7 @@
 		"splitView": "Split view",
 		"folderEmpty": "Folder empty",
 		"newTab": "New Tab",
+		"newTabShort": "New",
 		"newTerminal": "New Terminal",
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"listOptions": "Sort and Group",

@@ -917,6 +917,7 @@
 		"splitView": "分割表示",
 		"folderEmpty": "空のフォルダ",
 		"newTab": "新規タブ",
+		"newTabShort": "新規",
 		"newTerminal": "新規ターミナル",
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"listOptions": "並べ替えとグループ化",
