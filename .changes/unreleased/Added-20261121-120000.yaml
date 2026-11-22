@@ -1,3 +1,3 @@
 kind: Added
-body: 'Agents can read a small snapshot of Lilo itself with browser_config: its version, whether the content blocker is on, the default page zoom, and the agent''s own permission state (its profile, whether actions ask first, whether calls are logged, and the sites where actions are always allowed). It is read-only, with no way to change anything'
+body: 'Agents can read a small snapshot of Lilo itself with browser_config: its version, whether the content blocker is on, the default page zoom, and the agent''s own permission state (its profile, whether actions ask first, and whether calls are logged). It is read-only, with no way to change anything'
 time: 2026-11-21T12:00:00.000000Z
