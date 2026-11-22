@@ -34,7 +34,7 @@ quick-deps:
 lilo-ui/node_modules/.package-lock.json: package-lock.json
 	@find lilo-ui/node_modules/ -mindepth 1 -delete; touch $@
 ui-check: lilo-ui/node_modules/.package-lock.json
-ui-check swiftlint-changed docs-check release-status sync-check validate-scope:
+ui-check swiftlint-changed docs-check release-status sync-check validate:
 	@echo "$@ tier=$$LILO_CHECK_TIER trigger=$$LILO_CHECK_TRIGGER tests=$$LILO_CHECK_TESTS files=$$(echo $$LILO_CHECK_FILES)" >> "$(CURDIR)/ran"
 	@[ "$$STUB_FAIL" != "$@" ] || { echo "$@ broke"; exit 1; }
 MK
@@ -98,7 +98,7 @@ status_of 0 env STUB_FAIL=swiftlint-changed git commit -q --no-verify -m "chore:
 [ ! -e ran ] || fail "--no-verify ran the hook"
 git checkout -q .
 
-# pre-push: validate-scope with the tier and trigger; a failure blocks; --no-verify and a branch deletion do not run it.
+# pre-push: validate with the tier and trigger; a failure blocks; --no-verify and a branch deletion do not run it.
 git init -q --bare "$WORK/remote.git"
 git remote add origin "$WORK/remote.git"
 rm -f ran
@@ -107,13 +107,13 @@ git config --unset lilo.hooks.pre-commit
 status_of 0 git commit -q --allow-empty -m "chore: pre-commit stays off"
 [ ! -e ran ] || fail "pre-push opt-in enabled pre-commit"
 status_of 0 git push -q origin HEAD:refs/heads/one
-[ "$(ran)" = "validate-scope tier=pre-push trigger=hook tests= files=" ] || fail "pre-push"
-status_of 1 env STUB_FAIL=validate-scope git push -q origin HEAD:refs/heads/two
+[ "$(ran)" = "validate tier=pre-push trigger=hook tests= files=" ] || fail "pre-push"
+status_of 1 env STUB_FAIL=validate git push -q origin HEAD:refs/heads/two
 grep -q 'git push --no-verify' "$WORK/out" || fail "the failure does not name --no-verify"
 rm -f ran
-status_of 0 env STUB_FAIL=validate-scope git push -q --no-verify origin HEAD:refs/heads/two
-status_of 0 env STUB_FAIL=validate-scope git push -q origin :refs/heads/two
-[ ! -e ran ] || fail "--no-verify or a deletion ran validate-scope"
+status_of 0 env STUB_FAIL=validate git push -q --no-verify origin HEAD:refs/heads/two
+status_of 0 env STUB_FAIL=validate git push -q origin :refs/heads/two
+[ ! -e ran ] || fail "--no-verify or a deletion ran validate"
 
 # Never install: a symlinked shared node_modules with a lockfile newer than the stamp is left intact and ui-check is skipped.
 git config lilo.hooks.pre-commit true

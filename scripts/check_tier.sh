@@ -17,7 +17,7 @@ esac
 
 checks=$(scripts/scope_checks.sh --tier "$tier" "$@")
 if [ "$checks" = none ]; then
-    echo "$tier_name: no quick check for these changes; git push runs validate-scope"
+    echo "$tier_name: no quick check for these changes; git push runs validate"
     exit 0
 fi
 # No base, so no list: every quick check runs on the whole tree.

@@ -91,7 +91,7 @@ TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help site-release-import validate validate-scope validate-ui check check-staged ui-check swiftlint-changed sync-check swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help site-release-import validate validate-ui check check-staged ui-check swiftlint-changed sync-check swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test scope-test tier-test agent-call \
@@ -119,7 +119,7 @@ hooks-install:
 hooks-install-checks: hooks-install
 	@git config --local lilo.hooks.pre-commit true
 
-## Also run validate-scope before each push (opt-in; serialized machine-wide by /tmp/tsc.lock, minutes with several worktrees)
+## Also run make validate before each push (opt-in; serialized machine-wide by /tmp/tsc.lock, minutes with several worktrees)
 hooks-install-push-checks: hooks-install
 	@git config --local lilo.hooks.pre-push true
 
@@ -166,27 +166,6 @@ $(UI_STAMP): $(UI_DEPS) $(UI_SOURCES)
 $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 	@$(MAKE) --no-print-directory ext-bridge-build
 	@mkdir -p $(@D) && touch $@
-
-## Run only the checks the diff against origin/main needs (BASE=ref), in parallel as in validate: a UI, website or docs change skips the Swift build and the installs it does not use
-validate-scope:
-	@checks=$$(scripts/scope_checks.sh $(BASE)); echo "validate-scope: $$checks" >&2; export LILO_CHECK_SCOPE="$$checks"; \
-	if [ "$$checks" = full ]; then $(MAKE) --no-print-directory validate; exit $$?; fi; \
-	deps=$(CHANGIE); \
-	case " $$checks " in *" ui-"*) deps="$$deps $(UI_DEPS)";; esac; \
-	case " $$checks " in *" site-"*) deps="$$deps $(SITE_DEPS)";; esac; \
-	case " $$checks " in *" docs-"*) deps="$$deps $(DOCS_DEPS)";; esac; \
-	$(MAKE) --no-print-directory $$deps || exit $$?; \
-	logs=$$(mktemp -d); names=; pids=; \
-	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" release-status; do \
-		name=$${group%% *}; \
-		case " $$checks " in *" $$name "*) \
-			names="$$names $$name"; \
-			$(CHECK_SUMMARY) run $$name "$$logs" -- $(MAKE) -k --no-print-directory $$group & pids="$$pids $$!";; \
-		esac; \
-	done; \
-	wait $$pids; \
-	$(CHECK_SUMMARY) report $(if $(JSON),--json) "$$logs" $$names; status=$$?; \
-	/bin/rm -rf "$$logs"; exit $$status
 
 # The quick tiers (scripts/check_tier.sh): no builds, fail at the first check, the checks chosen from the changed files.
 ## Run the quick checks the diff against origin/main needs, under 10 s, no builds (BASE=ref): lint and the tests beside the changed files
@@ -694,11 +673,11 @@ perf-compare:
 perf-summary-test:
 	@python3 scripts/perf_summary_test.py -q
 
-## Test the quiet check summary behind validate and validate-scope
+## Test the quiet check summary behind validate
 check-summary-test:
 	@python3 scripts/check_summary_test.py -q
 
-## Test the diff scoping behind validate-scope and the quick tiers
+## Test the diff scoping behind the quick tiers
 scope-test:
 	@scripts/scope_checks.test.sh
 

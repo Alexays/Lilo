@@ -14,9 +14,9 @@ done
 
 cd "$(git rev-parse --show-toplevel)"
 lockfile=${LILO_TSC_LOCK:-/tmp/tsc.lock}
-echo "pre-push: make validate-scope under $lockfile, about 30 s warm (BASE=ref git push diffs against another base; git push --no-verify skips it)" >&2
+echo "pre-push: make validate under $lockfile, about 30 s warm (git push --no-verify skips it)" >&2
 if command -v flock > /dev/null 2>&1; then lock="flock $lockfile"; else lock="lockf -k $lockfile"; fi
-LILO_CHECK_TIER=pre-push LILO_CHECK_TRIGGER=hook $lock make --no-print-directory validate-scope || {
-    echo "pre-push: validate-scope failed, so nothing was pushed; fix it, or git push --no-verify to push anyway (CI runs the full gate)" >&2
+LILO_CHECK_TIER=pre-push LILO_CHECK_TRIGGER=hook $lock make --no-print-directory validate || {
+    echo "pre-push: validate failed, so nothing was pushed; fix it, or git push --no-verify to push anyway (CI runs the same gate)" >&2
     exit 1
 }

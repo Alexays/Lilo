@@ -148,7 +148,7 @@ Run it once your change is done, and confirm it passes before you open a pull re
 It prints one line per check, `ok  ui-lint 12.3s` or `FAIL ui-lint 12.3s`, then the full log of the failed
 checks only and a count of the bytes printed; a green run is a dozen short lines. `make validate JSON=1` prints
 one JSON object per check instead (`check`, `ok`, `dur_s`, `bytes`, and the last 20 log lines as `log_tail` when
-it failed), for scripts and agents. `make validate-scope` prints the same lines for the checks a diff needs.
+it failed), for scripts and agents.
 
 Three tiers run less than `make validate`, each with a time budget, so a mistake shows up where it is cheapest to fix:
 
@@ -156,11 +156,11 @@ Three tiers run less than `make validate`, each with a time budget, so a mistake
 |------|------|--------|------|
 | `make check` | in your session, by hand or by an agent | under 10 s | no builds: eslint on the changed UI files and the tests beside them (the catalog tests for a locale), SwiftLint on the changed Swift files, the documentation site check, the release-note check. A Swift-only change runs SwiftLint alone. It stops at the first failure |
 | pre-commit hook | `git commit` | under 15 s | the same on the staged files, without the tests, plus `sync-check`: the tab bridge outputs match `make bridge-gen`, and a Swift file added or deleted, or a change to `project.yml`, comes with `Lilo.xcodeproj` (`make project-sync`) |
-| pre-push hook | `git push` | about 30 s warm | `make validate-scope` under `/tmp/tsc.lock` |
+| pre-push hook | `git push` | about 30 s warm | `make validate` under `/tmp/tsc.lock` |
 
 `make check BASE=<ref>` compares with another ref (default `origin/main`); without that ref it checks the whole tree. A diff with no quick check (the Makefile, scripts, the websites) prints so and leaves it to pre-push.
 `svelte-check` type-checks the whole UI in about 7 s, so it waits for `make ui-lint` in pre-push.
-`make hooks-install` enables only the `commit-msg` hook. The pre-commit and pre-push checks are opt-in, each on its own: `make hooks-install-checks` (pre-commit) and `make hooks-install-push-checks` (pre-push, which queues on `/tmp/tsc.lock` behind other worktrees' pushes). They are off after a pull in a clone that only ran `make hooks-install`, and `git config --local --unset lilo.hooks.pre-commit` (or `lilo.hooks.pre-push`) turns one off. A quick check whose dependencies are missing or older than the lockfile is skipped with a message, never installed (`make bootstrap` installs them). `git commit --no-verify` and `git push --no-verify` skip them, and CI runs the full gate either way; the hooks never skip on their own. `BASE=<ref> git push` makes pre-push compare with another ref.
+`make hooks-install` enables only the `commit-msg` hook. The pre-commit and pre-push checks are opt-in, each on its own: `make hooks-install-checks` (pre-commit) and `make hooks-install-push-checks` (pre-push, which queues on `/tmp/tsc.lock` behind other worktrees' pushes). They are off after a pull in a clone that only ran `make hooks-install`, and `git config --local --unset lilo.hooks.pre-commit` (or `lilo.hooks.pre-push`) turns one off. A quick check whose dependencies are missing or older than the lockfile is skipped with a message, never installed (`make bootstrap` installs them). `git commit --no-verify` and `git push --no-verify` skip them, and CI runs the full gate either way; the hooks never skip on their own.
 Editing an English page of the documentation site fails `make docs-check` until its French
 translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
 maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
@@ -169,7 +169,7 @@ only makes the French reference tables stale, which warns.
 | Command | Runs |
 |---------|------|
 | `make check` | the quick tier above: lint and the related tests of the changed files, no builds |
-| `make scope-test` | the diff scoping behind `validate-scope` and the tiers |
+| `make scope-test` | the diff scoping behind the quick tiers |
 | `make tier-test` | the quick tiers and their Git hooks, in temporary repositories with a stub Makefile |
 | `make ui-lint` | ESLint and svelte-check over `lilo-ui/` |
 | `make ui-test` | UI unit tests, including the catalog key and placeholder parity checks |
