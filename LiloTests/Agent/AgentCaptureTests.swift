@@ -347,7 +347,7 @@ final class AgentCaptureTests: AgentToolTestCase {
             "get_page_text", "javascript_tool", "read_console_messages", "read_network_requests", "resize_window", "file_upload",
             "upload_image", "gif_creator", "browser_batch",
             "list_profiles", "switch_profile", "reset_profile", "fetch", "run",
-            "flow_start", "flow_save", "flow_run",
+            "flow_start", "flow_save", "flow_run", "browser_config",
             "devtools_command", "devtools_events", "network_mock", "network_response", "cookies", "emulate", "performance"
         ])
     }

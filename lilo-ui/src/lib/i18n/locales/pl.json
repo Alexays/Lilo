@@ -162,6 +162,7 @@
 			"passwords": "Hasła",
 			"agentAccess": "Agenci korzystający z Lilo",
 			"agentClients": "Aplikacje, które mogą korzystać z Lilo",
+			"agentActivity": "Aktywność",
 			"lilo": "Lilo",
 			"tabsWindows": "Karty i okna",
 			"sitePermissions": "Uprawnienia witryn",
@@ -506,6 +507,11 @@
 				"title": "Inni agenci",
 				"description": "Dowolny inny klient MCP, z konfiguracją Lilo."
 			},
+			"agentActivity": {
+				"title": "Ostatnie wywołania agentów",
+				"description": "Ostatnie wywołania każdej aplikacji, od najnowszych. Odczytywane po otwarciu tej strony lub odświeżeniu.",
+				"keywords": "agent dziennik historia audyt akcje ostatnie wywołania aktywność"
+			},
 			"autoplay": {
 				"title": "Autoodtwarzanie",
 				"description": "Dotyczy stron otwieranych od teraz.",
@@ -679,6 +685,14 @@
 			"showAdded": "Pokaż, co dodało Lilo…",
 			"revealFile": "Pokaż plik ustawień",
 			"footnote": "Aplikacje, których nie ma na tym Macu, nie są wymienione. Lilo szuka ponownie po otwarciu tej strony."
+		},
+		"agentActivity": {
+			"refresh": "Odśwież",
+			"open": "Otwórz dziennik akcji",
+			"off": "Dziennik akcji jest wyłączony",
+			"offDescription": "Lilo nie zapisuje wywołań agentów. Włącz go, aby zobaczyć je tutaj.",
+			"empty": "Nie zapisano jeszcze żadnych wywołań.",
+			"failed": "Niepowodzenie"
 		},
 		"navGroups": {
 			"tools": "Narzędzia"

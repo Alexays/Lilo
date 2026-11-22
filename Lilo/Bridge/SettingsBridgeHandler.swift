@@ -45,6 +45,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         "copyAgentClientEntry",
         "getAgentClients",
         "revokeAgentClient",
+        "getAgentActionLog",
+        "openAgentActionLog",
         "getUpdaterStatus",
         "checkForUpdates",
         "installUpdate",
@@ -299,6 +301,15 @@ final class SettingsBridgeHandler: BridgeHandler {
             if let name = message.string("name") {
                 context?.agentControl.revoke(name)
                 await publishAgentClients()
+            }
+
+        case "getAgentActionLog":
+            await publishAgentActionLog()
+
+        case "openAgentActionLog":
+            if let directory = context?.agentControl.actionLog.directory {
+                try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+                NSWorkspace.shared.open(directory)
             }
 
         case "getUpdaterStatus":
@@ -598,6 +609,19 @@ final class SettingsBridgeHandler: BridgeHandler {
              "client": AgentClientConfig.Client(clientName: $0)?.rawValue ?? NSNull()] as [String: Any]
         }
         bridgeRouter?.send(event: "agentClientsLoaded", data: ["clients": clients, "allowed": allowed])
+    }
+
+    /// The latest calls of each client that has a log, read off the main thread when the page asks.
+    private func publishAgentActionLog() async {
+        guard let control = context?.agentControl else { return }
+        let directory = control.actionLog.directory
+        let names = Dictionary(control.allowedClients.keys.map { (AgentActionLog.clientFile($0), AgentControl.displayName($0)) }, uniquingKeysWith: { first, _ in first })
+        let clients = await Task.detached { AgentActionTail.clients(in: directory, names: names) }.value
+        bridgeRouter?.send(event: "agentActionLog", data: ["clients": clients.map { client in
+            ["name": client.name, "calls": client.calls.map { call in
+                ["time": call.time, "tool": call.tool, "host": call.host ?? NSNull(), "ok": call.ok, "code": call.code ?? NSNull()] as [String: Any]
+            }] as [String: Any]
+        }])
     }
 
     private static var appIconDataURLs: [URL: String] = [:]
