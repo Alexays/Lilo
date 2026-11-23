@@ -107,7 +107,8 @@ test("under the minimum, the arrows narrow the sidebar to the rail's detent", as
 	await page.locator(".sidebar-resize-handle").focus();
 	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
 	await expect.poll(sidebarWidth).toBe("163px");
-	await expect(page.locator(".tab-item .tab-actions").first()).toBeHidden();
+	await page.locator(".tab-item").first().hover();
+	await expect(page.locator(".tab-item .close-btn.visible").first()).toBeVisible();
 
 	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
 	await expect.poll(sidebarWidth).toBe("150px");
