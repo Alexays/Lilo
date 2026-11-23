@@ -43,6 +43,7 @@ SOLVED = {
     "flow-replay": ([ev("save", phone="(555) 010-0100"), ev("save", phone="(555) 010-0199")], "done"),
     "flow-miss": ([ev("save", phone="555 010 0199", address="")], "done"),
     "flow-gate-pay": ([], "asked"),
+    "connect-status": ([], "claude-code is not connected; fix: claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp"),
 }
 
 

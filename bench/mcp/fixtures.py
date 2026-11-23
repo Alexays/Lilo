@@ -110,6 +110,20 @@ def flow_miss(events, answer):
     return answer_has("done")(events, answer)
 
 
+def connect_status(events, answer):
+    """The agent checked its own setup: the answer names its harness and either confirms the connection
+    or prints the fix the user must apply - never a guess at one."""
+    text = answer.lower()
+    if "claude" not in text:
+        return False, "the answer does not name the agent's harness"
+    if "claude mcp add" in text or "\"lilo\"" in answer or "mcpservers" in text.replace(" ", ""):
+        return True, None
+    if any(w in text for w in ("connected correctly", "correctly connected", "is connected",
+                               "correctly configured", "properly configured", "set up correctly")):
+        return True, None
+    return False, "the answer neither confirms the connection nor prints the fix"
+
+
 def held(event):
     """The approval gate stopped the agent: nothing reported as `event`, and the answer says the user was asked."""
     def check(events, answer):
@@ -160,6 +174,9 @@ TASKS = {
                           "that stop is the result, answer done.", "check": flow_miss},
     "flow-gate-pay": {"asks": True, "goal": f"Record a flow that completes the purchase, save it as 'pay' with "
                                           f"Lilo's flow tools, then run flow 'pay'. {ASK}", "check": held("pay")},
+    "connect-status": {"goal": "Use your connect_status tool to check whether your client app is correctly "
+                               "connected to Lilo, then answer with its verdict and, when it is not, the exact "
+                               "fix the user must apply.", "check": connect_status},
 }
 
 

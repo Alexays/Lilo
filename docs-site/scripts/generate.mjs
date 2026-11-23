@@ -14,7 +14,7 @@ export const read = (path) => readFileSync(`${repo}${path}`, "utf-8");
 export const SOURCES = {
   shortcuts: "Lilo/App/KeyboardShortcuts.swift",
   settings: "lilo-ui/src/components/settings/settingsPanelModel.ts",
-  tools: ["Lilo/Agent/AgentTools.swift", "Lilo/Agent/AgentInteractionTools.swift", "Lilo/Agent/AgentDevTools.swift", "Lilo/Agent/AgentFlows.swift", "Lilo/Agent/AgentBrowserConfig.swift"],
+  tools: ["Lilo/Agent/AgentTools.swift", "Lilo/Agent/AgentInteractionTools.swift", "Lilo/Agent/AgentDevTools.swift", "Lilo/Agent/AgentFlows.swift", "Lilo/Agent/AgentBrowserConfig.swift", "Lilo/Agent/AgentConnectStatus.swift"],
   summaries: "docs-site/scripts/mcp-tools.json",
   compatibility: "COMPATIBILITY.md",
   catalog: (locale) => `lilo-ui/src/lib/i18n/locales/${locale}.json`,
@@ -282,7 +282,7 @@ function checkSchema(schema, where, file) {
   }
 }
 
-const COMPOSED = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentFlows.definitions + AgentBrowserConfig.definitions";
+const COMPOSED = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentFlows.definitions + AgentBrowserConfig.definitions + AgentConnectStatus.definitions";
 
 /** The tools a file defines in its `static let …: [[String: Any]] = [ … ]` lists. */
 export function parseTools(source, file) {
@@ -337,7 +337,7 @@ function parameterRows(properties, required, prefix = "") {
   });
 }
 
-const GROUPS = { "Lilo/Agent/AgentTools.swift": "Tabs and pages", "Lilo/Agent/AgentInteractionTools.swift": "Interaction", "Lilo/Agent/AgentDevTools.swift": "Developer tools", "Lilo/Agent/AgentFlows.swift": "Flows", "Lilo/Agent/AgentBrowserConfig.swift": "Lilo" };
+const GROUPS = { "Lilo/Agent/AgentTools.swift": "Tabs and pages", "Lilo/Agent/AgentInteractionTools.swift": "Interaction", "Lilo/Agent/AgentDevTools.swift": "Developer tools", "Lilo/Agent/AgentFlows.swift": "Flows", "Lilo/Agent/AgentBrowserConfig.swift": "Lilo", "Lilo/Agent/AgentConnectStatus.swift": "Lilo" };
 
 export function mcpPartial(parsed, summaries) {
   const tools = parsed.flatMap((file) => file.tools);
@@ -350,16 +350,25 @@ export function mcpPartial(parsed, summaries) {
     if (typeof summaries[tool.name] !== "string" || !summaries[tool.name].trim()) fail(SOURCES.summaries, `no summary for the tool "${tool.name}" (${tool.file}): add one to ${SOURCES.summaries}`);
   }
   for (const name of Object.keys(summaries)) if (!names.has(name)) fail(SOURCES.summaries, `summary for "${name}", a tool no Swift file defines: rename or remove it in ${SOURCES.summaries}`);
-  const sections = parsed.map(({ tools: own }) => {
-    const file = own[0].file;
-    const body = own.map((tool) => {
+  // Tools of files sharing a group land in one section, in the order SOURCES.tools lists them.
+  const sections = [];
+  const byGroup = new Map();
+  for (const { tools: own } of parsed) {
+    const group = GROUPS[own[0].file] ?? fail(own[0].file, "no group heading for this file");
+    if (!byGroup.has(group)) {
+      byGroup.set(group, []);
+      sections.push(group);
+    }
+    byGroup.get(group).push(...own);
+  }
+  return sections.map((group) => {
+    const body = byGroup.get(group).map((tool) => {
       const rows = parameterRows(tool.properties, tool.required);
       const params = rows.length ? table(["Parameter", "Type", "Required", "Description"], rows) : "No parameters.";
       return `### \`${tool.name}\` [#${tool.name}]\n\n${cell(summaries[tool.name])}\n\n${params}\n`;
     });
-    return `## ${GROUPS[file] ?? fail(file, "no group heading for this file")} [#${anchor(GROUPS[file])}]\n\n${body.join("\n")}`;
-  });
-  return sections.join("\n");
+    return `## ${group} [#${anchor(group)}]\n\n${body.join("\n")}`;
+  }).join("\n");
 }
 
 // MARK: Compatibility

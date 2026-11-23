@@ -1,0 +1,3 @@
+kind: Added
+body: 'Agents can verify their own Lilo setup in one call: the connect_status MCP tool reports which agent app is connected, whether its configuration names Lilo''s MCP server (connected, stale or missing), the exact command or JSON that fixes it, and the consent the agent''s calls run under'
+time: 2026-11-23T12:54:31.129322-08:00

@@ -4,7 +4,7 @@ import WebKit
 /// The tools an agent sees, named and shaped like Claude in Chrome's so agents need nothing new.
 @MainActor
 enum AgentTools {
-    static let definitions: [[String: Any]] = tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentFlows.definitions + AgentBrowserConfig.definitions
+    static let definitions: [[String: Any]] = tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions + AgentFlows.definitions + AgentBrowserConfig.definitions + AgentConnectStatus.definitions
     static let toolNames = Set(definitions.compactMap { $0["name"] as? String })
 
     private static let tabAndPageDefinitions: [[String: Any]] = [
@@ -303,6 +303,7 @@ enum AgentTools {
             if let content = try await AgentDevTools.call(name, arguments: arguments, session: session, control: control) { return content }
             if let content = try await AgentFlows.call(name, arguments: arguments, session: session, control: control) { return content }
             if let content = try await AgentBrowserConfig.call(name, arguments: arguments, session: session, control: control) { return content }
+            if let content = try await AgentConnectStatus.call(name, arguments: arguments, session: session, control: control) { return content }
             throw AgentToolError("Unknown tool: \(name)")
         }
     }
