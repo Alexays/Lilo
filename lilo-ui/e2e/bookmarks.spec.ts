@@ -110,6 +110,20 @@ test("favorites stay pinned above the scrolled tabs while they fit", async ({ pa
 	await expect(pane.locator(".bookmark-tile").first()).toBeInViewport();
 });
 
+test("the pinned favorites band lets a glass or grain Space's material through", async ({ page }) => {
+	const world = favoritesWorld(5);
+	world.spaces[0].material = "glass";
+	await bootChrome(page, world);
+	const favorites = page.locator(".space-pane").first().locator(".favorites-section");
+	await expect(favorites).toHaveClass(/pinned/);
+	await expect(favorites).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+
+	await page.evaluate(() => {
+		document.documentElement.dataset.material = "solid";
+	});
+	await expect(favorites).toHaveCSS("background-color", "rgb(74, 144, 217)");
+});
+
 test("a grid too tall to pin scrolls away with the tabs, and the tab list keeps its room", async ({ page }) => {
 	await bootChrome(page, favoritesWorld(120));
 	const pane = page.locator(".space-pane").first();

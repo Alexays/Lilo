@@ -267,6 +267,12 @@
     background: var(--sidebar-bg);
   }
 
+  /* An opaque band would cut across glass or grain. */
+  :global(html[data-material='glass']) .favorites-section.pinned,
+  :global(html[data-material='grain']) .favorites-section.pinned {
+    background: transparent;
+  }
+
   /* The edge the tabs scroll under, once they do. */
   .favorites-section::after {
     content: "";
