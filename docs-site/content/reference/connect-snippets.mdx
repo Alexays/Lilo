@@ -1,0 +1,12 @@
+---
+title: "Connect snippets"
+description: "The exact command or configuration that adds Lilo's MCP server to Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI by hand."
+sidebar:
+  order: 7
+---
+
+What it takes to connect each supported agent app without opening Lilo's Settings: a script, a dotfiles repository or a new Mac. Each section gives the file the app keeps its MCP servers in and the text that adds Lilo's server to it, the same text Settings shows when Lilo cannot write the file itself. To connect from Settings, or for any other MCP client, see [AI agents](/guides/ai-agents).
+
+The snippets use the path of a Lilo in your Applications folder, `/Applications/Lilo.app/Contents/MacOS/lilo-mcp`. If Lilo is elsewhere, use the path of its `lilo-mcp` instead. Each JSON snippet is a whole file holding only Lilo's entry: if the file exists, add the `lilo` entry to the object it already has and leave the rest as it is. Agent control must be on in Settings > Agents before an agent connects; [AI agents](/guides/ai-agents#allow-the-agent-the-first-time) describes the dialog that follows.
+
+<include>./_generated/connect-snippets.md</include>

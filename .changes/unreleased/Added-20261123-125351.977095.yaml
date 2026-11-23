@@ -1,0 +1,3 @@
+kind: Added
+body: The documentation site lists, for every agent app Lilo supports, the command or configuration that connects it by hand, the file it writes and the approval that follows, so you can set an agent up from a script or a new Mac without opening Settings
+time: 2026-11-23T12:53:51.977095-08:00

@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const LEDGER = `${root}blume.translations.json`;
 const GENERATED = "content/reference/_generated/";
-export const GENERATOR_OWNED = new Set([`${GENERATED}shortcuts.md`, `${GENERATED}settings.md`]);
+export const GENERATOR_OWNED = new Set([`${GENERATED}shortcuts.md`, `${GENERATED}settings.md`, `${GENERATED}connect-snippets.md`]);
 const DRIFT_CODES = new Set(["BLUME_TRANSLATE_MISSING", "BLUME_TRANSLATE_STALE"]);
 const UNTRACKED_REMEDY = " (delete the French file so make docs-translate translates it afresh, or restore its ledger entry from git)";
 

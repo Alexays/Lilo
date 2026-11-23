@@ -8,9 +8,11 @@ import { test } from "node:test";
 import {
   checkToolCount,
   compatibilityPartials,
+  connectSnippet,
   errorReport,
   loadSettings,
   mcpPartial,
+  parseHarnesses,
   parseShortcuts,
   parseTools,
   partials,
@@ -200,4 +202,34 @@ test("a shortcut title or setting without a catalog string fails", async () => {
   const items = { ...catalogs.en.settings.items, theme: { title: "Theme" } };
   const catalog = { ...catalogs.en, settings: { ...catalogs.en.settings, items } };
   assert.throws(() => settingsPartial(model, catalog, "en"), /en\.json: no string "settings\.items\.theme\.description"/u);
+});
+
+test("every harness of the app has a connect snippet, in both locales", () => {
+  const harnesses = parseHarnesses(read(SOURCES.harnesses), read(SOURCES.clientConfig));
+  assert.equal(harnesses.length, read(SOURCES.harnesses).match(/^\s*static let \w+ = Self\(/gmu).length);
+  for (const locale of ["en", "fr"]) {
+    const markdown = output[`content/${locale === "fr" ? "fr/" : ""}reference/_generated/connect-snippets.md`];
+    assert.equal(markdown.match(/^## .+ \[#[\w-]+\]$/gmu).length, harnesses.length, locale);
+    for (const harness of harnesses) assert.ok(markdown.includes(`~/${harness.path}`), `${locale}: ${harness.id}`);
+  }
+});
+
+test("a connect snippet is the text the app's manualSnippet builds", () => {
+  const byId = Object.fromEntries(parseHarnesses(read(SOURCES.harnesses), read(SOURCES.clientConfig)).map((harness) => [harness.id, connectSnippet(harness)]));
+  const helper = "/Applications/Lilo.app/Contents/MacOS/lilo-mcp";
+  assert.equal(byId.claudeCode.text, `claude mcp add --scope user lilo -- ${helper}`);
+  assert.equal(byId.codex.text, `[mcp_servers.lilo]\ncommand = "${helper}"`);
+  assert.deepEqual(JSON.parse(byId.zed.text), { context_servers: { lilo: { command: helper } } });
+  assert.deepEqual(JSON.parse(byId.vscode.text), { mcpServers: { lilo: { type: "stdio", command: helper, tools: ["*"] } } });
+  assert.deepEqual(JSON.parse(byId.opencode.text), { mcp: { lilo: { type: "local", command: [helper] } } });
+  assert.equal(byId.cursor.text, `{\n  "mcpServers": {\n    "lilo": {\n      "command": "${helper}"\n    }\n  }\n}`);
+});
+
+test("a harness list or snippet shape the reader does not know fails loudly", () => {
+  const source = read(SOURCES.harnesses);
+  const config = read(SOURCES.clientConfig);
+  assert.throws(() => parseHarnesses(source.replace("[claudeCode, ", "["), config), /`all` lists/u);
+  assert.throws(() => parseHarnesses(source.replace("case .stdio:", "case .stdio2:"), config), /Entry\.fields.+ENTRY_SOURCE/u);
+  assert.throws(() => parseHarnesses(source.replace("entry: .stdio", "entry: .other"), config), /entry shape \.other/u);
+  assert.throws(() => parseHarnesses(source, config.replace("tomlTable([10])", "tomlTable([13])")), /manualSnippet changed/u);
 });

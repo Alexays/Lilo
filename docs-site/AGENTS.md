@@ -13,7 +13,7 @@ These rules apply to `docs-site/`, the user documentation at docs.getlilo.app, a
 
 ## Generated reference
 
-- `scripts/generate.mjs` writes the partials under `content/reference/_generated/` (and the French shortcut and settings tables) from the app's sources before every Blume command. They are git-ignored build outputs: change the source they come from, never the partial. A reference page includes its partial with `<include>./_generated/<name>.md</include>`, which resolves to the French partial on the French page.
+- `scripts/generate.mjs` writes the partials under `content/reference/_generated/` (and the French shortcut, settings and connect-snippet tables) from the app's sources before every Blume command. They are git-ignored build outputs: change the source they come from, never the partial. A reference page includes its partial with `<include>./_generated/<name>.md</include>`, which resolves to the French partial on the French page.
 - The generator must be deterministic (no dates, stable order) and fail loudly on input it does not understand.
 
 ## Translation

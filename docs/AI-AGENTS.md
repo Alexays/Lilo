@@ -11,6 +11,13 @@ clients it finds. The first time a client connects, Lilo asks you to allow it; t
 tied to the program behind the connection (its code signature, or its path when unsigned), not to
 the name the client announces.
 
+### Connect a harness without opening Lilo
+
+Every supported harness (Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI) can be connected from a shell, a script or a dotfiles repository.
+The documentation site lists the command or file entry for each one, with the file it writes and the consent step that follows: [Connect snippets](https://docs.getlilo.app/reference/connect-snippets).
+The page is generated from `Lilo/Agent/HarnessDefinition.swift` and `AgentClientConfig.swift`, the same source Settings uses, so it cannot drift from the app.
+Lilo still asks you to allow the harness the first time it connects, whichever way it was set up.
+
 ## What agents can do
 
 Agents work in their own Agents Space, in a throwaway profile wiped after each session, and never
