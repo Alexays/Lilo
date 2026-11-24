@@ -85,10 +85,10 @@ final class ConversationSessionConfigTests: XCTestCase {
         let firstTab = register(first)
         start(first, firstTab)
         let ok87 = await waitForCall("session/new")
-        XCTAssertTrue(applied87)
+        XCTAssertTrue(ok87)
         first.setMode(firstTab, modeId: "acceptEdits")
         let applied = await waitForCall("session/set_mode", field: "modeId", value: "acceptEdits")
-        XCTAssertTrue(applied)
+        XCTAssertTrue(ok)
         let stored = await waitForChoice("lilo:mode", value: "acceptEdits")
         XCTAssertTrue(stored)
         close(first)
@@ -96,7 +96,7 @@ final class ConversationSessionConfigTests: XCTestCase {
         let second = makeHost()
         start(second, register(second))
         let ok97 = await waitForCall("session/set_mode", field: "modeId", value: "acceptEdits")
-        XCTAssertTrue(applied97)
+        XCTAssertTrue(ok97)
         XCTAssertFalse(callsMade().contains { $0["method"] as? String == "session/set_config_option" })
     }
 
@@ -106,18 +106,18 @@ final class ConversationSessionConfigTests: XCTestCase {
         let firstTab = register(first)
         start(first, firstTab)
         let ok106 = await waitForCall("session/new")
-        XCTAssertTrue(applied106)
+        XCTAssertTrue(ok106)
         first.setConfigOption(firstTab, configId: "mode", value: "acceptEdits")
         let ok108 = await waitForCall("session/set_config_option", field: "configId", value: "mode")
-        XCTAssertTrue(applied108)
+        XCTAssertTrue(ok108)
         let ok109 = await waitForChoice("mode", value: "acceptEdits")
-        XCTAssertTrue(applied109)
+        XCTAssertTrue(ok109)
         close(first)
 
         let second = makeHost()
         start(second, register(second))
         let ok114 = await waitForCall("session/set_config_option", field: "configId", value: "mode")
-        XCTAssertTrue(applied114)
+        XCTAssertTrue(ok114)
         let applied = callsMade().first { $0["method"] as? String == "session/set_config_option" }
         XCTAssertEqual((applied?["params"] as? [String: Any])?["value"] as? String, "acceptEdits")
     }
@@ -128,11 +128,11 @@ final class ConversationSessionConfigTests: XCTestCase {
         let tabId = register(host)
         start(host, tabId)
         let ok124 = await waitForCall("session/new")
-        XCTAssertTrue(applied124)
+        XCTAssertTrue(ok124)
         host.setMode(tabId, modeId: "acceptEdits")
 
         let ok127 = await waitForChoice("mode", value: "acceptEdits")
-        XCTAssertTrue(applied127)
+        XCTAssertTrue(ok127)
         XCTAssertNil(choices()?["lilo:mode"])
     }
 
@@ -143,7 +143,7 @@ final class ConversationSessionConfigTests: XCTestCase {
         start(host, register(host))
 
         let ok137 = await waitForCall("session/prompt")
-        XCTAssertTrue(applied137)
+        XCTAssertTrue(ok137)
         XCTAssertFalse(callsMade().contains { $0["method"] as? String == "session/set_mode" })
         XCTAssertNil(choices()?["lilo:mode"])
     }
@@ -155,7 +155,7 @@ final class ConversationSessionConfigTests: XCTestCase {
         start(host, register(host))
 
         let ok148 = await waitForCall("session/prompt")
-        XCTAssertTrue(applied148)
+        XCTAssertTrue(ok148)
         XCTAssertFalse(callsMade().contains { $0["method"] as? String == "session/set_config_option" })
         XCTAssertNil(choices()?["mode"])
     }
@@ -167,16 +167,16 @@ final class ConversationSessionConfigTests: XCTestCase {
         let firstTab = register(first)
         start(first, firstTab)
         let ok159 = await waitForCall("session/new")
-        XCTAssertTrue(applied159)
+        XCTAssertTrue(ok159)
         first.setConfigOption(firstTab, configId: "model", value: "b")
         let ok161 = await waitForChoice("model", value: "b")
-        XCTAssertTrue(applied161)
+        XCTAssertTrue(ok161)
         close(first)
 
         let second = makeHost()
         start(second, register(second))
         let ok166 = await waitForCall("session/set_config_option", field: "value", value: "b")
-        XCTAssertTrue(applied166)
+        XCTAssertTrue(ok166)
     }
 
     private func makeHost() -> ConversationHost {
