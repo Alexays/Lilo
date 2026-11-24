@@ -267,10 +267,17 @@
     background: var(--sidebar-bg);
   }
 
-  /* An opaque band would cut across glass or grain. */
+  /* An opaque band would cut across glass or grain, so the material shows through while nothing
+     sits under the strip; once tabs scroll under it, a near-opaque layer of the Space color keeps
+     their labels from bleeding through the strip's own. */
   :global(html[data-material='glass']) .favorites-section.pinned,
   :global(html[data-material='grain']) .favorites-section.pinned {
     background: transparent;
+  }
+
+  :global(html[data-material='glass']) .favorites-section.pinned.scrolled,
+  :global(html[data-material='grain']) .favorites-section.pinned.scrolled {
+    background: color-mix(in srgb, var(--sidebar-bg) 93%, transparent);
   }
 
   /* The edge the tabs scroll under, once they do. */

@@ -111,12 +111,17 @@ test("favorites stay pinned above the scrolled tabs while they fit", async ({ pa
 });
 
 test("the pinned favorites band lets a glass or grain Space's material through", async ({ page }) => {
-	const world = favoritesWorld(5);
+	const world = favoritesWorld(5, 40);
 	world.spaces[0].material = "glass";
 	await bootChrome(page, world);
 	const favorites = page.locator(".space-pane").first().locator(".favorites-section");
 	await expect(favorites).toHaveClass(/pinned/);
 	await expect(favorites).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+
+	// Once tabs scroll under it, a near-opaque layer of the Space color keeps their labels from bleeding through.
+	await page.locator(".space-pane").first().locator(".space-scroll").evaluate((el) => el.scrollTo({ top: 400 }));
+	await expect(favorites).toHaveClass(/scrolled/);
+	await expect(favorites).toHaveCSS("background-color", "color(srgb 0.290196 0.564706 0.85098 / 0.93)");
 
 	await page.evaluate(() => {
 		document.documentElement.dataset.material = "solid";

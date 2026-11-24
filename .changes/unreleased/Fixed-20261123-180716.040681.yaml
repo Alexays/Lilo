@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'On a glass or grain Space, tabs scrolled under the pinned favorites strip no longer show through its labels: the strip gains a near-opaque layer of the Space color while it overlaps scrolled content.'
+time: 2026-11-23T18:07:16.040681-08:00
