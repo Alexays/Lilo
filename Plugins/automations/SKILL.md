@@ -46,5 +46,5 @@ A one-line automation (`at` plus one `open`) is a timed single action. Add more 
 ## Do not
 
 - Do not write local times or relative times (`in 10m`); convert to UTC first.
-- Do not put secrets in a file: it is plain text and the steps are logged nowhere else.
+- Do not put secrets in a file: it is plain text.
 - Do not invent step words. An unknown first word fails the run at that step.
