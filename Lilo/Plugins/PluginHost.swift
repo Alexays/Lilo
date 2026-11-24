@@ -22,12 +22,28 @@ final class PluginHost {
     private let tabs: PluginTabsAdapter
     private var sessions: [String: PluginSession] = [:]
     private var records: [PluginRecord] = []
+    private var schedulers: [String: any PluginScheduler] = [:]
+    private var watchers: [String: PluginFolderWatcher] = [:]
+    private let makeScheduler: (PluginRecord) -> any PluginScheduler
 
-    init(settingsStore: SettingsStore, registry: PluginRegistry, secrets: any PluginSecretStore, tabs: PluginTabsAdapter = PluginTabsAdapter()) {
-        self.tabs = tabs
+    init(
+        settingsStore: SettingsStore, registry: PluginRegistry, secrets: any PluginSecretStore,
+        tabs: PluginTabsAdapter = PluginTabsAdapter(),
+        makeScheduler: @escaping (PluginRecord) -> any PluginScheduler = PluginHost.defaultScheduler
+    ) {
         self.settingsStore = settingsStore
         self.registry = registry
         self.secrets = secrets
+        self.tabs = tabs
+        self.makeScheduler = makeScheduler
+    }
+
+    /// Durable through `coordinate` when its binary is installed, else timers in this process.
+    static func defaultScheduler(for record: PluginRecord) -> any PluginScheduler {
+        guard let executable = CoordinateLocator.locate() else { return ClockPluginScheduler() }
+        return CoordinatePluginScheduler(
+            executable: executable, spool: record.supportDirectory.appendingPathComponent("spool", isDirectory: true)
+        )
     }
 
     convenience init(
@@ -60,8 +76,56 @@ final class PluginHost {
                 sessions.removeValue(forKey: id)
             }
         }
+        await armScheduledPlugins()
         if result.changed { onChanged?() }
         return result
+    }
+
+    /// For each enabled plugin holding `schedule`: pick up fires that landed while Lilo was
+    /// quit, watch its `watched/` folder, and wake it once so it re-arms from its files.
+    private func armScheduledPlugins() async {
+        for record in records {
+            let wanted = isEnabled(record) && grantedCapabilities(for: record).contains(.schedule)
+            if !wanted {
+                watchers.removeValue(forKey: record.id)
+                schedulers.removeValue(forKey: record.id)
+                continue
+            }
+            guard watchers[record.id] == nil else { continue }
+            let id = record.id
+            let folder = record.supportDirectory.appendingPathComponent(Self.watchedFolder, isDirectory: true)
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            watchers[id] = PluginFolderWatcher(folder: folder) { [weak self] in
+                Task { @MainActor in await self?.wake(id, method: "files.changed") }
+            }
+            _ = scheduler(for: record)
+            await wake(id, method: "files.changed")
+        }
+    }
+
+    /// The folder a plugin's authored files live in; a change under it wakes the plugin.
+    static let watchedFolder = "watched"
+
+    /// Starts the sidecar if it is down and notifies it. Fires may run long, so this is a
+    /// notification with no deadline.
+    func wake(_ id: String, method: String, params: [String: JSONValue] = [:]) async {
+        guard let session = await session(for: id) else { return }
+        guard (try? await session.start()) != nil else { return }
+        await session.notify(method, params: params)
+    }
+
+    private func scheduler(for record: PluginRecord) -> any PluginScheduler {
+        if let existing = schedulers[record.id] { return existing }
+        let scheduler = makeScheduler(record)
+        schedulers[record.id] = scheduler
+        scheduler.resume(fire: fireHandler(for: record.id))
+        return scheduler
+    }
+
+    private func fireHandler(for pluginID: String) -> @Sendable (String) -> Void {
+        { [weak self] jobID in
+            Task { @MainActor in await self?.wake(pluginID, method: "schedule.fire", params: ["id": .string(jobID)]) }
+        }
     }
 
     // MARK: - Panel mutations
@@ -74,6 +138,10 @@ final class PluginHost {
         if !enabled {
             Task { await sessions[id]?.stop() }
             sessions.removeValue(forKey: id)
+            watchers.removeValue(forKey: id)
+            schedulers.removeValue(forKey: id)
+        } else {
+            Task { await armScheduledPlugins() }
         }
     }
 
@@ -94,6 +162,7 @@ final class PluginHost {
         var grants = store.pluginCapabilityGrants
         grants[id] = remaining.count == manifest.capabilities.count ? nil : remaining.map(\.rawValue)
         store.pluginCapabilityGrants = grants
+        Task { await armScheduledPlugins() }
     }
 
     func stop(id: String) async {
@@ -177,7 +246,11 @@ final class PluginHost {
     func session(for id: String) async -> PluginSession? {
         guard let record = record(id: id), record.valid, isEnabled(record), let manifest = record.manifest else { return nil }
         if let session = sessions[id] { return session }
-        let session = PluginSession(manifest: manifest, pluginRoot: record.folder)
+        let granted = grantedCapabilities(for: record).map { JSONValue.string($0.rawValue) }
+        let support = record.supportDirectory.path
+        let session = PluginSession(manifest: manifest, pluginRoot: record.folder, initializeParams: {
+            ["supportDir": .string(support), "capabilities": .array(granted)]
+        })
         let api = hostAPI(for: record)
         await session.set(onRequest: { method, params in
             await api.handle(method, params: params)
@@ -199,7 +272,16 @@ final class PluginHost {
                 listTabs: { [tabs] in await MainActor.run { tabs.list() } },
                 openTab: { [tabs] url in await MainActor.run { tabs.open(url) } },
                 settingValues: { [weak self] _ in await self?.settingsStore?.pluginSettingValues[id] ?? [:] },
-                setSettingValue: { [weak self] _, name, value in await self?.storeSettingValue(value, named: name, for: id) }
+                setSettingValue: { [weak self] _, name, value in await self?.storeSettingValue(value, named: name, for: id) },
+                armSchedule: { [weak self] jobID, delay in
+                    guard let self else { return }
+                    await MainActor.run {
+                        self.scheduler(for: record).schedule(jobID, after: delay, fire: self.fireHandler(for: id))
+                    }
+                },
+                cancelSchedule: { [weak self] jobID in
+                    await MainActor.run { self?.schedulers[id]?.cancel(jobID) }
+                }
             ),
             granted: { [weak self] in await self?.grantedSet(for: id) ?? [] }
         )

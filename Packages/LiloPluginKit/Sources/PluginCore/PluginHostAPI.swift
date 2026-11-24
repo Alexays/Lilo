@@ -25,17 +25,24 @@ public struct PluginHostAdapters: Sendable {
     public var openTab: @Sendable (URL) async -> PluginTab?
     public var settingValues: @Sendable (_ pluginID: String) async -> [String: JSONValue]
     public var setSettingValue: @Sendable (_ pluginID: String, _ name: String, _ value: JSONValue) async -> Void
+    /// Arm a one-shot job `delay` seconds out; the host delivers the fire as `schedule.fire`.
+    public var armSchedule: @Sendable (_ jobID: String, _ delay: TimeInterval) async -> Void
+    public var cancelSchedule: @Sendable (_ jobID: String) async -> Void
 
     public init(
         listTabs: @escaping @Sendable () async -> [PluginTab] = { [] },
         openTab: @escaping @Sendable (URL) async -> PluginTab? = { _ in nil },
         settingValues: @escaping @Sendable (String) async -> [String: JSONValue] = { _ in [:] },
-        setSettingValue: @escaping @Sendable (String, String, JSONValue) async -> Void = { _, _, _ in }
+        setSettingValue: @escaping @Sendable (String, String, JSONValue) async -> Void = { _, _, _ in },
+        armSchedule: @escaping @Sendable (String, TimeInterval) async -> Void = { _, _ in },
+        cancelSchedule: @escaping @Sendable (String) async -> Void = { _ in }
     ) {
         self.listTabs = listTabs
         self.openTab = openTab
         self.settingValues = settingValues
         self.setSettingValue = setSettingValue
+        self.armSchedule = armSchedule
+        self.cancelSchedule = cancelSchedule
     }
 }
 
@@ -66,6 +73,7 @@ public struct PluginHostAPI: Sendable {
         case "tabs.list": return .tabsRead
         case "tabs.open": return .tabsOpen
         case "files.read", "files.write", "files.list": return .filesPluginDir
+        case "schedule.set", "schedule.cancel": return .schedule
         default: return nil
         }
     }
@@ -98,6 +106,15 @@ public struct PluginHostAPI: Sendable {
             case "secrets.delete":
                 guard let name = string("name") else { return missing }
                 try? secrets.deleteSecret(for: pluginID, name: name)
+                return .success(.null)
+            case "schedule.set":
+                guard let jobID = string("id"),
+                      case .number(let delay)? = object["delay"] else { return missing }
+                await adapters.armSchedule(jobID, delay)
+                return .success(.null)
+            case "schedule.cancel":
+                guard let jobID = string("id") else { return missing }
+                await adapters.cancelSchedule(jobID)
                 return .success(.null)
             case "tabs.list":
                 return .success(.object(["tabs": .array(await adapters.listTabs().map(\.json))]))

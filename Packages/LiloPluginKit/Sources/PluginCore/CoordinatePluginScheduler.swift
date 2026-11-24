@@ -44,6 +44,8 @@ public final class CoordinatePluginScheduler: PluginScheduler, @unchecked Sendab
         self.run = run
     }
 
+    deinit { watcher?.cancel() }
+
     public func schedule(_ jobID: String, after delay: TimeInterval, fire: @escaping @Sendable (String) -> Void) {
         queue.async { [self] in
             self.fire = fire
