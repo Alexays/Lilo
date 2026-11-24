@@ -836,6 +836,12 @@ export interface BridgeCommandPayloadMap {
 	answerTerminal: { tabId: string; text: string };
 	restoreClosedTerminal: { index: number };
 	getKeepAwakeState: EmptyPayload;
+	getPlugins: EmptyPayload;
+	setPluginEnabled: { id: string; enabled: boolean };
+	setPluginSetting: { id: string; name: string; value: BridgePluginSettingValue };
+	revokePluginCapability: { id: string; capability: string };
+	showPluginInFinder: { id: string };
+	stopPlugin: { id: string };
 	joinMeeting: { id: string };
 	dismissMeeting: { id: string };
 	getAgentActivity: EmptyPayload;
@@ -1201,6 +1207,8 @@ export interface BridgeEventPayloadMap {
 		closedTerminals?: BridgeClosedTerminal[];
 	};
 	keepAwakeChanged: BridgeKeepAwakeState;
+	/** Every plugin the host knows, rejected ones included, after any change. */
+	pluginsChanged: { plugins: BridgePluginRow[] };
 	/** The calendar event whose card shows, null when none does. */
 	meetingChanged: { meeting: BridgeMeeting | null };
 	agentActivity: {
@@ -1373,6 +1381,38 @@ export interface BridgeAgentActionLog {
 
 export interface BridgeKeepAwakeState {
 	helperStatus: "unsigned" | "notRegistered" | "requiresApproval" | "enabled" | "notFound";
+}
+
+export type BridgePluginSettingValue = string | number | boolean;
+
+/** A setting a plugin's manifest contributes; the panel renders it, the plugin never draws UI. */
+export interface BridgePluginSettingSpec {
+	name: string;
+	type: "text" | "password" | "dropdown" | "toggle" | "number";
+	title: string;
+	/** The choices of a `dropdown`. */
+	options?: string[];
+	default?: BridgePluginSettingValue;
+	required?: boolean;
+}
+
+/** One plugin folder: `capabilities` are what its manifest asks for, `grantedCapabilities` what the user allowed. */
+export interface BridgePluginRow {
+	id: string;
+	title: string;
+	version: string;
+	icon?: string;
+	enabled: boolean;
+	running: boolean;
+	/** Set when the manifest failed validation: the plugin is listed, never started. */
+	rejectionReason?: string;
+	capabilities: string[];
+	grantedCapabilities: string[];
+	settings: BridgePluginSettingSpec[];
+	/** The values the user set; a missing name takes the spec's `default`. */
+	settingValues: Record<string, BridgePluginSettingValue>;
+	/** The plugin's own support folder. */
+	supportDir: string;
 }
 
 export interface BridgeRunningApp {
