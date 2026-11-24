@@ -24,7 +24,9 @@ public enum CoordinateLocator {
 /// delivers it. Nothing runs in Lilo while jobs wait: the daemon owns the clock.
 ///
 /// A re-armed or cancelled id cancels its coordinate job through the id recorded in
-/// `spool/armed`. Fires are delivered at least once; the plugin dedupes.
+/// `spool/armed`. Fires are delivered at least once; the plugin dedupes. When `enqueue` fails
+/// (an older coordinate without `--run-at`, a broken install) the job runs on `fallback`
+/// instead: not durable, but never silently dropped.
 public final class CoordinatePluginScheduler: PluginScheduler, @unchecked Sendable {
     /// Runs `executable arguments` and returns trimmed stdout, or nil when it failed.
     public typealias Runner = @Sendable (URL, [String]) -> String?
@@ -33,11 +35,16 @@ public final class CoordinatePluginScheduler: PluginScheduler, @unchecked Sendab
     private let fired: URL
     private let armed: URL
     private let run: Runner
+    private let fallback: any PluginScheduler
     private let queue = DispatchQueue(label: "lilo.plugin.coordinate-scheduler")
     private var fire: (@Sendable (String) -> Void)?
     private var watcher: DispatchSourceFileSystemObject?
 
-    public init(executable: URL, spool: URL, run: @escaping Runner = CoordinatePluginScheduler.runProcess) {
+    public init(
+        executable: URL, spool: URL, fallback: any PluginScheduler = ClockPluginScheduler(),
+        run: @escaping Runner = CoordinatePluginScheduler.runProcess
+    ) {
+        self.fallback = fallback
         self.executable = executable
         fired = spool.appendingPathComponent("fired", isDirectory: true)
         armed = spool.appendingPathComponent("armed", isDirectory: true)
@@ -53,16 +60,19 @@ public final class CoordinatePluginScheduler: PluginScheduler, @unchecked Sendab
             let fm = FileManager.default
             try? fm.createDirectory(at: armed, withIntermediateDirectories: true)
             try? fm.createDirectory(at: fired, withIntermediateDirectories: true)
-            dropPending(name)
+            dropPending(name, jobID: jobID)
             let marker = ["sh", "-c", #"mkdir -p "$1" && : > "$1/$2""#, "sh", fired.path, name]
             let arguments = ["enqueue", "--run-at", "\(max(1, Int(delay.rounded(.up))))s", "--repo", "", "--"] + marker
-            guard let id = run(executable, arguments), Int(id) != nil else { return }
+            guard let id = run(executable, arguments), Int(id) != nil else {
+                fallback.schedule(jobID, after: delay, fire: fire)
+                return
+            }
             try? id.write(to: armed.appendingPathComponent(name), atomically: true, encoding: .utf8)
         }
     }
 
     public func cancel(_ jobID: String) {
-        queue.async { [self] in dropPending(Self.fileName(for: jobID)) }
+        queue.async { [self] in dropPending(Self.fileName(for: jobID), jobID: jobID) }
     }
 
     /// Delivers the fires that landed while nobody listened, then watches for new ones.
@@ -107,7 +117,8 @@ public final class CoordinatePluginScheduler: PluginScheduler, @unchecked Sendab
         }
     }
 
-    private func dropPending(_ name: String) {
+    private func dropPending(_ name: String, jobID: String) {
+        fallback.cancel(jobID)
         let fm = FileManager.default
         let record = armed.appendingPathComponent(name)
         if let id = (try? String(contentsOf: record, encoding: .utf8)).flatMap({ Int($0) }) {

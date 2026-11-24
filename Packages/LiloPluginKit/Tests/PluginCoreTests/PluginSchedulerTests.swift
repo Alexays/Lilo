@@ -105,11 +105,19 @@ final class PluginSchedulerTests: XCTestCase {
         restarted.suspend()
     }
 
-    func testFailedEnqueueRecordsNothing() {
-        let scheduler = CoordinatePluginScheduler(executable: stub, spool: spool, run: { _, _ in nil })
+    func testFailedEnqueueFallsBackToTheInProcessScheduler() {
+        let fallback = RecordingPluginScheduler()
+        let scheduler = CoordinatePluginScheduler(
+            executable: stub, spool: spool, fallback: fallback, run: { _, _ in nil }
+        )
         scheduler.schedule("a", after: 5) { _ in }
         scheduler.flush()
+        XCTAssertEqual(fallback.delays["a"], 5)
         XCTAssertFalse(FileManager.default.fileExists(atPath: spool.appendingPathComponent("armed/a").path))
+
+        scheduler.cancel("a")
+        scheduler.flush()
+        XCTAssertEqual(fallback.cancelled.last, "a")
     }
 
     /// Runs the marker command the stub "daemon" would have run.
