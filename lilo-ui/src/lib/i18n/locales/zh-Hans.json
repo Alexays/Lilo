@@ -511,6 +511,11 @@
 				"description": "本地文件逐条列出每次调用,绝不包含输入的文字或页面内容。",
 				"keywords": "智能体 日志 历史 审计 操作 回放"
 			},
+			"agentBackgroundHost": {
+				"title": "让智能体主机在后台运行",
+				"description": "关闭最后一个窗口后，Lilo 会继续为智能体服务，且不显示程序坞图标。再次打开 Lilo 即可恢复窗口。",
+				"keywords": "智能体 后台 主机 程序坞 窗口 headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "始终允许",
 				"description": "智能体在这些网站上操作时无需询问。",

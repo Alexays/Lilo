@@ -511,6 +511,11 @@
 				"description": "Un file locale elenca ogni chiamata, mai il testo digitato né il contenuto delle pagine.",
 				"keywords": "agente registro cronologia audit azioni riproduzione"
 			},
+			"agentBackgroundHost": {
+				"title": "Mantieni l'host degli agenti in background",
+				"description": "Chiudendo l'ultima finestra Lilo continua a servire gli agenti, senza icona nel Dock. Riapri Lilo per riavere la finestra.",
+				"keywords": "agente background host dock finestra headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre consentiti",
 				"description": "Gli agenti agiscono su questi siti senza chiedere.",

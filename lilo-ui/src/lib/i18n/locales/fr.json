@@ -511,6 +511,11 @@
 				"description": "Un fichier local liste chaque appel, jamais le texte saisi ni le contenu des pages.",
 				"keywords": "agent journal historique audit actions rejouer"
 			},
+			"agentBackgroundHost": {
+				"title": "Garder l'hôte des agents en arrière-plan",
+				"description": "Fermer la dernière fenêtre laisse Lilo servir les agents, sans icône dans le Dock. Rouvrez Lilo pour retrouver la fenêtre.",
+				"keywords": "agent arrière-plan hôte dock fenêtre headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Toujours autorisés",
 				"description": "Les agents y agissent sans demander.",

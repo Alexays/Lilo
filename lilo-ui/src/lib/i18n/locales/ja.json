@@ -511,6 +511,11 @@
 				"description": "ローカルのファイルに各呼び出しを記録します。入力したテキストやページの内容は含まれません。",
 				"keywords": "エージェント ログ 履歴 監査 操作 再生"
 			},
+			"agentBackgroundHost": {
+				"title": "エージェントホストをバックグラウンドで実行し続ける",
+				"description": "最後のウインドウを閉じても、LiloはDockにアイコンを出さずにエージェントの処理を続けます。もう一度Liloを開くとウインドウが戻ります。",
+				"keywords": "エージェント バックグラウンド ホスト Dock ウインドウ headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "常に許可",
 				"description": "これらのサイトでは、エージェントが確認なしで操作します。",

@@ -511,6 +511,11 @@
 				"description": "Eine lokale Datei listet jeden Aufruf, nie eingegebenen Text oder Seiteninhalt.",
 				"keywords": "agent protokoll verlauf audit aktionen wiedergabe"
 			},
+			"agentBackgroundHost": {
+				"title": "Agenten-Host im Hintergrund weiterlaufen lassen",
+				"description": "Wenn du das letzte Fenster schließt, bedient Lilo Agenten weiter, ohne Dock-Symbol. Öffne Lilo erneut, um das Fenster zurückzuholen.",
+				"keywords": "agent hintergrund host dock fenster headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Immer erlaubt",
 				"description": "Auf diesen Websites handeln Agenten ohne Nachfrage.",

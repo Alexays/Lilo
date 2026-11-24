@@ -511,6 +511,11 @@
 				"description": "Yerel bir dosya her çağrıyı listeler; yazılan metni ya da sayfa içeriğini asla içermez.",
 				"keywords": "ajan günlük geçmiş denetim eylemler yeniden oynatma"
 			},
+			"agentBackgroundHost": {
+				"title": "Ajan sunucusunu arka planda çalışır tut",
+				"description": "Son pencereyi kapattığınızda Lilo, Dock simgesi olmadan ajanlara hizmet etmeyi sürdürür. Pencereyi geri getirmek için Lilo'yu yeniden açın.",
+				"keywords": "ajan arka plan sunucu dock pencere headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Her zaman izin verilenler",
 				"description": "Ajanlar bu sitelerde sormadan işlem yapar.",

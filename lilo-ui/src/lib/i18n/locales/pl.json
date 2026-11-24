@@ -511,6 +511,11 @@
 				"description": "Lokalny plik wymienia każde wywołanie, nigdy wpisanego tekstu ani treści stron.",
 				"keywords": "agent dziennik historia audyt działania odtwarzanie"
 			},
+			"agentBackgroundHost": {
+				"title": "Utrzymuj host agentów w tle",
+				"description": "Po zamknięciu ostatniego okna Lilo nadal obsługuje agentów, bez ikony w Docku. Otwórz Lilo ponownie, aby przywrócić okno.",
+				"keywords": "agent tło host dock okno headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Zawsze dozwolone",
 				"description": "Na tych witrynach agenci działają bez pytania.",

@@ -254,6 +254,34 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertTrue(released, "the user's answer releases the held call")
     }
 
+    /// A background host's window is hidden from the user: its question waits in a notification too,
+    /// and the tap brings the window back to ask it.
+    func testAnOrderInTheBackgroundWaitsInANotification() async throws {
+        let posted = recordNotifications()
+        let tab = try await shopTab()
+        let engine = try engine(forTab: tab)
+        let session = try XCTUnwrap(control.sessions.first)
+        let hidden = try XCTUnwrap(window.window)
+        Headless.enter(concealing: hidden)
+        addTeardownBlock { @MainActor in Headless.leave(revealing: [hidden]) }
+
+        let approval = Task { try await control.approveConsequentialAction("click", label: "Place order", frame: nil, engine: engine, session: session) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the question holds rather than going to a window nobody sees")
+        let requestId = try XCTUnwrap(control.pendingConsentAnswers.keys.first)
+        let notification = try XCTUnwrap(posted.requests.first)
+        XCTAssertEqual(notification.identifier, AgentControl.consentNotificationId(requestId))
+
+        control.revealConsent(requestId: requestId)
+        XCTAssertFalse(Headless.isOn, "the tap leaves the background")
+        XCTAssertEqual(hidden.alphaValue, 1)
+        XCTAssertFalse(hidden.ignoresMouseEvents)
+        control.answerConsent(requestId, granted: true)
+
+        let released = try await approval.value
+        XCTAssertTrue(released, "the user's answer releases the held call")
+    }
+
     /// A question nobody answers expires in a notification as it does in a drawer.
     func testAQuestionHeldInANotificationStillExpires() async throws {
         _ = recordNotifications()

@@ -105,8 +105,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         StartupMetrics.mark("appDidFinishLaunching")
         #if !DEBUG
-        // Before any window: the copy that relaunches from Applications owns the profiles.
-        if ApplicationsMover.offerMoveIfNeeded() { return }
+        // Before any window: the copy that relaunches from Applications owns the profiles. A background host asks nothing.
+        if !Headless.isOn, ApplicationsMover.offerMoveIfNeeded() { return }
         #endif
         // Launch benchmark seed (scripts/bench_startup.sh): pages opened as if handed over by another app.
         ProcessInfo.processInfo.environment["LILO_BENCH_SEED_URLS"]?.split(separator: "\n")
@@ -180,6 +180,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// The floating PiP panel joins every Space, so AppKit counts it as a visible window; the Dock click still asks
     /// for a browser window, brought forward unless one already shows on this Space.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if Headless.isOn {
+            Headless.leave(revealing: browserContext.windows.windows.compactMap(\.window))
+            return false
+        }
         let browserWindowShown = sender.windows.contains { !($0 is NSPanel) && $0.isVisible && $0.isOnActiveSpace }
         guard !browserWindowShown, let window = mainWindowController?.window else { return true }
         window.makeKeyAndOrderFront(nil)

@@ -661,11 +661,7 @@ final class MainWindowController: NSWindowController {
             window.center()
         }
         window.identifier = NSUserInterfaceItemIdentifier("LiloMainWindow")
-        if Headless.isOn {
-            window.alphaValue = 0
-            window.ignoresMouseEvents = true
-            window.collectionBehavior = [.transient, .ignoresCycle, .stationary]
-        }
+        if Headless.isOn { Headless.conceal(window) }
         window.restorationClass = MainWindowController.self
         return window
     }
@@ -846,12 +842,19 @@ extension MainWindowController: TabManager.Delegate {
 
 extension MainWindowController: NSWindowDelegate {
     /// A running command keeps Lilo alive: the window hides instead of closing, and the Dock icon
-    /// brings it back. With nothing running, closing it quits.
+    /// brings it back. An agent host the user keeps running goes to the background instead, and opening
+    /// Lilo again brings it back. With neither, closing it quits.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         let host = tabManager.terminalHost
+        guard context.windows.windows.count == 1 else { return true }
         // Shells and Little windows outlive any window but the last one, which hides instead of quitting the app.
-        guard context.windows.windows.count == 1, !littleWindows.isEmpty || host.liveTabIds.contains(where: host.isBusy) else { return true }
-        sender.orderOut(nil)
+        if !littleWindows.isEmpty || host.liveTabIds.contains(where: host.isBusy) {
+            sender.orderOut(nil)
+            return false
+        }
+        let settings = context.settingsStore
+        guard settings?.get("agentControlEnabled") == "true", settings?.get(Headless.keepRunningKey) == "true" else { return true }
+        Headless.enter(concealing: sender)
         return false
     }
 

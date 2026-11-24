@@ -511,6 +511,11 @@
 				"description": "A local file lists each call, never typed text or page content.",
 				"keywords": "agent log history audit actions replay record"
 			},
+			"agentBackgroundHost": {
+				"title": "Run the agent host in the background",
+				"description": "Closing the last window keeps Lilo serving agents, with no Dock icon. Open Lilo again to bring the window back.",
+				"keywords": "agent background headless host dock window daemon"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Always allowed",
 				"description": "Agents act on these sites without asking.",

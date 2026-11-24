@@ -1,0 +1,3 @@
+kind: Added
+body: 'Lilo can serve agents in the background: start it with `--background` (`open -a Lilo --args --background`) for no Dock icon and no visible window, or turn on Settings > Agents > Run the agent host in the background so closing the last window keeps agents working. A question the agent needs answered arrives as a notification, and its tap or opening Lilo again brings the window back.'
+time: 2026-11-23T14:45:18.50758-08:00

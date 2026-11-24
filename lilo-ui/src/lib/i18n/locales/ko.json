@@ -511,6 +511,11 @@
 				"description": "로컬 파일에 각 호출이 기록되며, 입력한 텍스트나 페이지 내용은 포함되지 않습니다.",
 				"keywords": "에이전트 로그 기록 감사 작업 재생"
 			},
+			"agentBackgroundHost": {
+				"title": "에이전트 호스트를 백그라운드에서 계속 실행",
+				"description": "마지막 윈도우를 닫아도 Lilo는 Dock 아이콘 없이 에이전트를 계속 지원합니다. Lilo를 다시 열면 윈도우가 돌아옵니다.",
+				"keywords": "에이전트 백그라운드 호스트 Dock 윈도우 headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "항상 허용",
 				"description": "에이전트가 이 사이트에서는 묻지 않고 작업합니다.",

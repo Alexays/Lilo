@@ -511,6 +511,11 @@
 				"description": "Un archivo local enumera cada llamada, nunca el texto escrito ni el contenido de las páginas.",
 				"keywords": "agente registro historial auditoría acciones reproducir"
 			},
+			"agentBackgroundHost": {
+				"title": "Mantener el host de agentes en segundo plano",
+				"description": "Al cerrar la última ventana, Lilo sigue atendiendo a los agentes, sin icono en el Dock. Abre Lilo de nuevo para recuperar la ventana.",
+				"keywords": "agente segundo plano host dock ventana headless"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Siempre permitido",
 				"description": "Los agentes actúan en estos sitios sin preguntar.",
