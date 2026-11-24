@@ -88,7 +88,7 @@ final class ConversationSessionConfigTests: XCTestCase {
         XCTAssertTrue(ok87)
         first.setMode(firstTab, modeId: "acceptEdits")
         let applied = await waitForCall("session/set_mode", field: "modeId", value: "acceptEdits")
-        XCTAssertTrue(ok)
+        XCTAssertTrue(applied)
         let stored = await waitForChoice("lilo:mode", value: "acceptEdits")
         XCTAssertTrue(stored)
         close(first)
