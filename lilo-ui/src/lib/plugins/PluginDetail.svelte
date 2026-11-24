@@ -3,10 +3,8 @@
   import UiButton from "../../components/ui/UiButton.svelte";
   import UiInsetList from "../../components/ui/UiInsetList.svelte";
   import UiListRow from "../../components/ui/UiListRow.svelte";
-  import UiToggle from "../../components/ui/UiToggle.svelte";
   import { t } from "../i18n/state.svelte";
   import {
-    isPluginPending,
     revokePluginCapability,
     setPluginSetting,
     showPluginInFinder,
@@ -14,10 +12,11 @@
   } from "../../stores/plugins.svelte";
   import { capabilityLabelKey, missingRequiredSettings, pluginInitial, settingValue, type PluginRow } from "./pluginModel";
   import PluginSettingField from "./PluginSettingField.svelte";
+  import PluginSwitch from "./PluginSwitch.svelte";
 
   interface Props {
     plugin: PluginRow;
-    onenable: (enabled: boolean) => void;
+    onenable: (enabled: boolean) => boolean;
   }
 
   let { plugin, onenable }: Props = $props();
@@ -40,12 +39,7 @@
       {/snippet}
       {#snippet action()}
         {#if plugin.running}<UiBadge tone="success">{t("plugins.running")}</UiBadge>{/if}
-        <UiToggle
-          checked={plugin.enabled}
-          disabled={rejected || isPluginPending(plugin.id)}
-          ariaLabel={t("plugins.enabledToggleLabel", { name: plugin.title })}
-          onchange={onenable}
-        />
+        <PluginSwitch {plugin} {onenable} />
       {/snippet}
     </UiListRow>
     {#if rejected}

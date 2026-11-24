@@ -7,7 +7,7 @@
   }
 
   let {
-    checked = false,
+    checked = $bindable(false),
     disabled = false,
     ariaLabel,
     onchange,

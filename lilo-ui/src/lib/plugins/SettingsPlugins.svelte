@@ -26,9 +26,14 @@
 
   // Permissions are shown once, when the plugin is enabled with some it has not been granted; revoking one and
   // enabling again asks again for exactly that one.
-  function toggle(plugin: PluginRow, enabled: boolean): void {
-    if (enabled && ungrantedCapabilities(plugin).length) grantingId = plugin.id;
-    else setPluginEnabled(plugin.id, enabled);
+  // Returns false when the plugin waits on the sheet, so its switch goes back to what the host says.
+  function toggle(plugin: PluginRow, enabled: boolean): boolean {
+    if (enabled && ungrantedCapabilities(plugin).length) {
+      grantingId = plugin.id;
+      return false;
+    }
+    setPluginEnabled(plugin.id, enabled);
+    return true;
   }
 
   function confirmGrant(): void {

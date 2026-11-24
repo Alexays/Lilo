@@ -1,21 +1,20 @@
 <script lang="ts">
   import UiBadge from "../../components/ui/UiBadge.svelte";
-  import UiToggle from "../../components/ui/UiToggle.svelte";
   import { getFormatLocale, t } from "../i18n/state.svelte";
-  import { isPluginPending } from "../../stores/plugins.svelte";
   import { capabilityLabelKey, pluginInitial, type PluginRow } from "./pluginModel";
+  import PluginSwitch from "./PluginSwitch.svelte";
 
   interface Props {
     plugin: PluginRow;
     onopen: () => void;
-    onenable: (enabled: boolean) => void;
+    onenable: (enabled: boolean) => boolean;
   }
 
   let { plugin, onopen, onenable }: Props = $props();
 
   const rejected = $derived(Boolean(plugin.rejectionReason));
   const capabilities = $derived(
-    new Intl.ListFormat(getFormatLocale(), { type: "unit", style: "narrow" }).format(
+    new Intl.ListFormat(getFormatLocale(), { type: "unit", style: "short" }).format(
       plugin.capabilities.map((capability) => {
         const key = capabilityLabelKey(capability);
         return key ? t(key) : capability;
@@ -40,12 +39,7 @@
 
   {#if plugin.running}<UiBadge tone="success">{t("plugins.running")}</UiBadge>{/if}
 
-  <UiToggle
-    checked={plugin.enabled}
-    disabled={rejected || isPluginPending(plugin.id)}
-    ariaLabel={t("plugins.enabledToggleLabel", { name: plugin.title })}
-    onchange={onenable}
-  />
+  <PluginSwitch {plugin} {onenable} />
 </div>
 
 <style>
