@@ -189,5 +189,9 @@ final class AgentConsentTests: AgentToolTestCase {
         XCTAssertEqual(denied, .denied, "no at once, which the click reports as the user's refusal")
         XCTAssertLessThan(Date().timeIntervalSince(started), 5, "without the wait")
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
+
+        setenv("LILO_AGENT_CLICKS", "expire", 1)
+        let expired = await control.askConsent("Test Agent", action: click, timeout: 45)
+        XCTAssertEqual(expired, .expired, "a question nobody answered, without the wait")
     }
 }

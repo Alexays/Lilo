@@ -504,10 +504,10 @@ xcode-build-release: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
-# LILO_AGENT_ALLOW_ALL lets any agent client in without asking, LILO_AGENT_CLICKS=allow|deny answers every
-# question before a send, payment or deletion yes or no at once, and LILO_HEADLESS keeps the app from taking
-# focus, a Dock icon or a visible window: only a Debug build reads them. agent-app sets all three so a run is
-# unattended (CLICKS=deny refuses, HEADLESS=0 keeps the window).
+# LILO_AGENT_ALLOW_ALL lets any agent client in without asking, LILO_AGENT_CLICKS=allow|deny|expire answers
+# every question before a send, payment or deletion yes, no or expired at once, and LILO_HEADLESS keeps the app
+# from taking focus, a Dock icon or a visible window: only a Debug build reads them. agent-app sets all three so
+# a run is unattended (CLICKS=deny refuses, HEADLESS=0 keeps the window).
 AGENT_DATA = $(or $(LILO_APP_SUPPORT_DIR),$(HOME)/Library/Application Support/Lilo-Debug)
 # A fresh Debug profile has agent control off, and the app reads that setting only at launch: it is switched on
 # in the profile's database, which a first launch creates, before the app a client talks to starts.
@@ -531,7 +531,7 @@ agent-app-stop:
 		kill $$pid; while kill -0 $$pid 2>/dev/null; do sleep 0.2; done; fi; \
 		/bin/rm -f "$(AGENT_DATA)/agent-app.pid" "$(AGENT_DATA)/agent.sock"
 
-## Start the Debug app in a click mode (CLICKS=allow|deny), replacing the one agent-app started
+## Start the Debug app in a click mode (CLICKS=allow|deny|expire), replacing the one agent-app started
 agent-app-restart: agent-app-stop agent-app
 	@kill -0 "$$(cat "$(AGENT_DATA)/agent-app.pid" 2>/dev/null)" 2>/dev/null || { \
 		echo "A Debug app that make did not start is running: quit it to run in CLICKS=$(CLICKS)" >&2; exit 1; }

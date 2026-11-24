@@ -403,6 +403,7 @@ final class AgentControl {
             switch ProcessInfo.processInfo.environment["LILO_AGENT_CLICKS"] {
             case "allow": return .allowed
             case "deny": return .denied
+            case "expire": return .expired
             default: break
             }
         }
