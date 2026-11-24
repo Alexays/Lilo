@@ -55,6 +55,14 @@ final class AgentControl {
     static var sleepDelay: TimeInterval = 10
     /// Parked tabs put to sleep, woken by the agent's next call on them.
     var sleepingTabIds: Set<UUID> = []
+    /// Each tool call on a tab holds App Nap off from `wake` until the call settles and `sleepWhenIdle`
+    /// ends it: never an always-on assertion, an idle agent's tabs must not keep the app awake.
+    var napAssertions: [UUID: NSObjectProtocol] = [:]
+    /// Seams for the App Nap assertions above, faked in tests.
+    static var beginNapAssertion: (ProcessInfo.ActivityOptions, String) -> NSObjectProtocol = {
+        ProcessInfo.processInfo.beginActivity(options: $0, reason: $1)
+    }
+    static var endNapAssertion: (NSObjectProtocol) -> Void = { ProcessInfo.processInfo.endActivity($0) }
     /// Tabs a `performance` profile records, which never sleep: it spans the calls between its start and its stop.
     var profilingTabIds: Set<UUID> = []
     /// The per-call record of what agents did, in the app's support folder.
