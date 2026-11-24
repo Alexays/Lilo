@@ -269,25 +269,40 @@ final class PluginHostTests: XCTestCase {
         XCTAssertEqual(denied, .failure(.capabilityNotGranted))
     }
 
-    func testAFireWakesTheSleepingSidecar() async throws {
+    func testAFireIsDeliveredToTheSidecarAsANotification() async throws {
+        let folder = userRoot.appendingPathComponent("stub")
         try scheduledStub()
+        // A sidecar that logs every line it receives, so delivery is observable.
+        let script = folder.appendingPathComponent("bin/stub.sh")
+        try """
+        #!/bin/sh
+        while IFS= read -r line; do
+            printf '%s\\n' "$line" >> "$(dirname "$0")/../received.log"
+            case "$line" in *'"method":"initialize"'*)
+                id=$(printf '%s' "$line" | sed -n 's/.*"id":\\([0-9][0-9]*\\).*/\\1/p')
+                printf '%s\\n' "{\\"jsonrpc\\":\\"2.0\\",\\"id\\":$id,\\"result\\":{\\"protocolVersion\\":1,\\"tools\\":[]}}" ;;
+            esac
+        done
+        """.write(to: script, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+
         let scheduler = RecordingPluginScheduler()
         let (host, _, _) = try makeHost(scheduler: scheduler)
         await host.refresh()
         host.setEnabled(true, for: "app.lilo.test.stub")
-        _ = await api(for: host).handle("schedule.set", params: .object(["id": .string("job"), "delay": .number(5)]))
-        let sessionOrNil = await host.session(for: "app.lilo.test.stub")
-        let session = try XCTUnwrap(sessionOrNil)
-        await session.stop()
+        _ = await try api(for: host).handle("schedule.set", params: .object(["id": .string("job"), "delay": .number(5)]))
 
         scheduler.fire("job")
-        var running = false
+        let log = folder.appendingPathComponent("received.log")
+        var received = ""
         for _ in 0..<100 {
-            running = await session.isRunning
-            if running { break }
+            received = (try? String(contentsOf: log, encoding: .utf8)) ?? ""
+            if received.contains("schedule.fire") { break }
             try await Task.sleep(nanoseconds: 50_000_000)
         }
-        XCTAssertTrue(running)
-        await session.stop()
+        XCTAssertTrue(received.contains("\"method\":\"schedule.fire\""), received)
+        XCTAssertTrue(received.contains("\"id\":\"job\""), received)
+        XCTAssertTrue(received.contains("supportDir"), received)
+        await host.stop(id: "app.lilo.test.stub")
     }
 }
