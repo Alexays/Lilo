@@ -39,7 +39,7 @@ final class PluginHost {
     }
 
     /// Durable through `coordinate` when its binary is installed, else timers in this process.
-    static func defaultScheduler(for record: PluginRecord) -> any PluginScheduler {
+    nonisolated static func defaultScheduler(for record: PluginRecord) -> any PluginScheduler {
         guard let executable = CoordinateLocator.locate() else { return ClockPluginScheduler() }
         return CoordinatePluginScheduler(
             executable: executable, spool: record.supportDirectory.appendingPathComponent("spool", isDirectory: true)

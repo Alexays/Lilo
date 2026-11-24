@@ -276,7 +276,8 @@ final class PluginHostTests: XCTestCase {
         await host.refresh()
         host.setEnabled(true, for: "app.lilo.test.stub")
         _ = await api(for: host).handle("schedule.set", params: .object(["id": .string("job"), "delay": .number(5)]))
-        let session = try XCTUnwrap(await host.session(for: "app.lilo.test.stub"))
+        let sessionOrNil = await host.session(for: "app.lilo.test.stub")
+        let session = try XCTUnwrap(sessionOrNil)
         await session.stop()
 
         scheduler.fire("job")
