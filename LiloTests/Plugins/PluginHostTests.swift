@@ -193,20 +193,20 @@ final class PluginHostTests: XCTestCase {
         )
 
         // With no window the tab adapter answers an empty list and cannot open.
-        XCTAssertEqual(await api.handle("tabs.list", params: .null), .success(.object(["tabs": .array([])])))
-        XCTAssertEqual(
-            await api.handle("tabs.open", params: .object(["url": .string("https://example.com")])),
-            .failure(PluginRequestError(code: -32002, message: "No window can open the tab"))
-        )
+        let list = await api.handle("tabs.list", params: .null)
+        XCTAssertEqual(list, .success(.object(["tabs": .array([])])))
+        let open = await api.handle("tabs.open", params: .object(["url": .string("https://example.com")]))
+        XCTAssertEqual(open, .failure(PluginRequestError(code: -32002, message: "No window can open the tab")))
 
         // A revoke applies to the api already handed to a running session.
         host.revokeCapability("tabs:read", for: "app.lilo.test.stub")
         host.revokeCapability("files:plugin-dir", for: "app.lilo.test.stub")
-        XCTAssertEqual(await api.handle("tabs.list", params: .null), .failure(.capabilityNotGranted))
-        XCTAssertEqual(await api.handle("files.read", params: .object(["path": .string("state.json")])), .failure(.capabilityNotGranted))
-        XCTAssertEqual(
-            await api.handle("settings.get", params: .null), .success(.object(["mode": .string("fast")]))
-        )
+        let revokedTabs = await api.handle("tabs.list", params: .null)
+        XCTAssertEqual(revokedTabs, .failure(.capabilityNotGranted))
+        let revokedFiles = await api.handle("files.read", params: .object(["path": .string("state.json")]))
+        XCTAssertEqual(revokedFiles, .failure(.capabilityNotGranted))
+        let settings = await api.handle("settings.get", params: .null)
+        XCTAssertEqual(settings, .success(.object(["mode": .string("fast")])))
     }
 
     func testTabAdapterMapsATabToIDURLAndTitle() {
