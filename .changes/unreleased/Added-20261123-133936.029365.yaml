@@ -1,0 +1,3 @@
+kind: Added
+body: 'Agent consent questions asked while no window is open now wait in a notification: its tap opens a window at the question, which the user answers or lets expire.'
+time: 2026-11-23T13:39:36.029365-08:00

@@ -1,5 +1,6 @@
 import AppKit
 import Security
+import UserNotifications
 import WebKit
 import os
 
@@ -407,14 +408,21 @@ final class AgentControl {
             }
         }
         #endif
-        guard let windows = context?.windows.windows, !windows.isEmpty else { return .unavailable }
+        guard let context else { return .unavailable }
         let requestId = UUID().uuidString
         let request: [String: Any] = [
             "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
             "action": action ?? NSNull()
         ]
-        for window in shows(tabId, among: windows) { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
-        if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
+        let windows = context.windows.windows
+        if windows.isEmpty {
+            // Nothing on screen can ask: the question holds in a notification whose tap opens a
+            // window at it. It is never answered by absence: it waits for the user or expires.
+            unsafe Self.consentNotificationPoster(Self.notification(requestId: requestId, request: request))
+        } else {
+            for window in shows(tabId, among: windows) { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
+            if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: nil) }
         return await withTaskCancellationHandler {
             await withCheckedContinuation { pendingConsentAnswers[requestId] = ($0, request, tabId) }
@@ -436,6 +444,49 @@ final class AgentControl {
     private func shows(_ tabId: UUID?, among windows: [MainWindowController]) -> [MainWindowController] {
         guard let tabId, let holder = context?.windows.window(forTab: tabId) else { return windows }
         return [holder]
+    }
+
+    /// A consent notification's tap: a window shows the question it carried, asked again in its
+    /// drawer. The question stays held: the user answers it, never the notification itself.
+    func revealConsent(requestId: String) {
+        guard let pending = pendingConsentAnswers[requestId], let context else { return }
+        if context.windows.windows.isEmpty, let spaceId = context.spaceManager?.spaces.first?.id {
+            context.openWindow(on: spaceId, opening: .nothing)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        for router in shows(pending.tabId, among: context.windows.windows).map(\.bridgeRouter) {
+            router.send(event: "agentControlRequested", data: pending.request)
+        }
+    }
+
+    /// Posts the notification of a question no window could show; tests substitute a recorder.
+    nonisolated(unsafe) static var consentNotificationPoster: (sending UNNotificationRequest) -> Void = { UNUserNotificationCenter.requestAuthorizationAndAdd($0) }
+
+    nonisolated static func consentNotificationId(_ requestId: String) -> String { "lilo.agent.consent.\(requestId)" }
+
+    /// The notification of a question no window could show, worded as the drawer asks it.
+    private nonisolated static func notification(requestId: String, request: [String: Any]) -> sending UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        let name = request["clientName"] as? String ?? ""
+        let profileName = request["profileName"] as? String ?? ""
+        if let action = request["action"] as? [String: String] {
+            let label = action["label"] ?? "", site = action["site"] ?? "", tab = action["tab"] ?? ""
+            content.title = switch action["kind"] {
+            case "enter": unsafe String(format: "%@ wants to press Enter to submit \"%@\" in %@ (%@).".localized, name, label, tab, site)
+            case "fetch": unsafe String(format: "%@ wants to send \"%@\" from %@ (%@), with your cookies.".localized, name, label, tab, site)
+            case "upload": unsafe String(format: "%@ wants to upload %@ to %@.".localized, name, label, site)
+            default: unsafe String(format: "%@ wants to click \"%@\" in %@ (%@).".localized, name, label, tab, site)
+            }
+        } else {
+            content.title = profileName.isEmpty
+                ? unsafe String(format: "%@ wants to control Lilo".localized, name)
+                : unsafe String(format: "%@ wants to use the profile %@".localized, name, profileName)
+        }
+        content.body = "Open Lilo to answer.".localized
+        content.sound = .default
+        content.threadIdentifier = "lilo.agent.consent"
+        content.userInfo = ["agentConsentRequestId": requestId]
+        return UNNotificationRequest(identifier: consentNotificationId(requestId), content: content, trigger: nil)
     }
 
     static let asksBeforeActionsKey = "agentAskBeforeActions"
@@ -565,6 +616,7 @@ final class AgentControl {
         for window in context?.windows.windows ?? [] {
             window.bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": requestId])
         }
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Self.consentNotificationId(requestId)])
         answer.resume(returning: granted.map { $0 ? .allowed : .denied } ?? .expired)
     }
 

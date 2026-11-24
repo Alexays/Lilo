@@ -104,7 +104,7 @@ final class LiloMCPTests: XCTestCase {
         let call = await receive(output)?["result"] as? [String: Any]
         XCTAssertEqual((call?["_meta"] as? [String: Any])?["lilo/errorCode"] as? String, "needs_user")
         let text = ((call?["content"] as? [[String: Any]])?.first?["text"] as? String) ?? ""
-        XCTAssertTrue(text.hasPrefix("[needs_user] Lilo has no window to ask the user to allow Newcomer in"), text)
+        XCTAssertTrue(text.hasPrefix("[needs_user] Lilo asked you in a notification to allow Newcomer"), text)
         XCTAssertFalse(control.sessions.contains { $0.isRefused }, "no window is no refusal")
     }
 
