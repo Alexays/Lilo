@@ -1,11 +1,18 @@
 import Foundation
 
 /// A job the host fires once, `delay` seconds after `schedule`. The `schedule` capability's
-/// adapters: `ClockPluginScheduler` in-process, and the coordinate-enqueue adapter PR 6 adds
-/// (durable across launches). Re-arming an id replaces its pending fire.
+/// adapters: `ClockPluginScheduler` in-process, and `CoordinatePluginScheduler` (durable across
+/// launches). Re-arming an id replaces its pending fire.
 public protocol PluginScheduler: Sendable {
     func schedule(_ jobID: String, after delay: TimeInterval, fire: @escaping @Sendable (String) -> Void)
     func cancel(_ jobID: String)
+    /// Hands fires that landed while Lilo was not listening, and later ones, to `fire`.
+    /// In-process adapters hold nothing across launches, so the default does nothing.
+    func resume(fire: @escaping @Sendable (String) -> Void)
+}
+
+public extension PluginScheduler {
+    func resume(fire: @escaping @Sendable (String) -> Void) {}
 }
 
 /// The in-process fallback: one task per job on the injected clock, so `ManualClock` tests it
