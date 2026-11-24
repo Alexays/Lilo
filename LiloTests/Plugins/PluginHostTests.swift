@@ -28,7 +28,9 @@ final class PluginHostTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeHost() throws -> (PluginHost, SettingsStore, InMemoryPluginSecretStore) {
+    private func makeHost(
+        scheduler: any PluginScheduler = RecordingPluginScheduler()
+    ) throws -> (PluginHost, SettingsStore, InMemoryPluginSecretStore) {
         let database = try TemporaryProfileDatabase(schema: .global)
         self.database = database
         let store = SettingsStore(dbPool: database.pool)
@@ -37,7 +39,8 @@ final class PluginHostTests: XCTestCase {
         let host = PluginHost(
             settingsStore: store,
             registry: PluginRegistry(userRoot: userRoot, bundledRoot: bundledRoot, supportRoot: supportRoot),
-            secrets: secrets
+            secrets: secrets,
+            makeScheduler: { _ in scheduler }
         )
         return (host, store, secrets)
     }
@@ -216,5 +219,74 @@ final class PluginHostTests: XCTestCase {
             PluginTab(id: tab.id.uuidString, url: "https://example.com/a", title: "Example")
         )
         XCTAssertEqual(PluginTabsAdapter.plugin(Tab(url: nil, title: "")).url, "")
+    }
+
+    // MARK: - schedule capability
+
+    private func scheduledStub(capabilities: [String] = ["settings:store", "schedule"]) throws {
+        try StubPlugin.write(at: userRoot.appendingPathComponent("stub"), manifest: ["capabilities": capabilities])
+    }
+
+    private func api(for host: PluginHost, id: String = "app.lilo.test.stub") throws -> PluginHostAPI {
+        try host.hostAPI(for: XCTUnwrap(host.record(id: id)))
+    }
+
+    func testScheduleRequestsReachTheSchedulerOnlyWithTheGrant() async throws {
+        try scheduledStub()
+        let scheduler = RecordingPluginScheduler()
+        let (host, _, _) = try makeHost(scheduler: scheduler)
+        await host.refresh()
+        host.setEnabled(true, for: "app.lilo.test.stub")
+        await host.refresh()
+        let api = try api(for: host)
+
+        let set = await api.handle("schedule.set", params: .object(["id": .string("job"), "delay": .number(90)]))
+        XCTAssertEqual(set, .success(.null))
+        XCTAssertEqual(scheduler.delays["job"], 90)
+
+        let cancel = await api.handle("schedule.cancel", params: .object(["id": .string("job")]))
+        XCTAssertEqual(cancel, .success(.null))
+        XCTAssertEqual(scheduler.cancelled, ["job"])
+
+        host.revokeCapability("schedule", for: "app.lilo.test.stub")
+        let denied = await api.handle("schedule.set", params: .object(["id": .string("x"), "delay": .number(1)]))
+        XCTAssertEqual(denied, .failure(.capabilityNotGranted))
+        XCTAssertNil(scheduler.delays["x"])
+    }
+
+    func testUnknownMethodsAnswerMethodNotFound() async throws {
+        try scheduledStub(capabilities: ["tabs:open"])
+        let (host, _, _) = try makeHost()
+        await host.refresh()
+        host.setEnabled(true, for: "app.lilo.test.stub")
+        let api = try api(for: host)
+
+        let unknown = await api.handle("tabs.close", params: .object([:]))
+        XCTAssertEqual(unknown, .failure(.methodNotFound))
+
+        host.revokeCapability("tabs:open", for: "app.lilo.test.stub")
+        let denied = await api.handle("tabs.open", params: .object(["url": .string("https://example.com")]))
+        XCTAssertEqual(denied, .failure(.capabilityNotGranted))
+    }
+
+    func testAFireWakesTheSleepingSidecar() async throws {
+        try scheduledStub()
+        let scheduler = RecordingPluginScheduler()
+        let (host, _, _) = try makeHost(scheduler: scheduler)
+        await host.refresh()
+        host.setEnabled(true, for: "app.lilo.test.stub")
+        _ = await api(for: host).handle("schedule.set", params: .object(["id": .string("job"), "delay": .number(5)]))
+        let session = try XCTUnwrap(await host.session(for: "app.lilo.test.stub"))
+        await session.stop()
+
+        scheduler.fire("job")
+        var running = false
+        for _ in 0..<100 {
+            running = await session.isRunning
+            if running { break }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+        XCTAssertTrue(running)
+        await session.stop()
     }
 }

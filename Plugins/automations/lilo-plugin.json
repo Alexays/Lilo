@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "protocolVersion": 1,
+  "id": "app.lilo.automations",
+  "title": "Automations",
+  "version": "1.0.0",
+  "entry": "bin/automations",
+  "capabilities": ["schedule", "tabs:read", "tabs:open", "settings:store"],
+  "contributes": {
+    "tools": [],
+    "settings": [
+      {
+        "name": "askTimeoutMinutes",
+        "type": "dropdown",
+        "title": "Approval step expires after (minutes)",
+        "options": ["15", "60", "240", "1440"],
+        "default": "60"
+      }
+    ]
+  }
+}

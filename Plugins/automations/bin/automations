@@ -1,0 +1,115 @@
+#!/bin/sh
+# Automations sidecar: runs the automation files authored in <supportDir>/watched/*.auto.
+# Plain sh, no other runtime. Lilo Plugin Protocol v1: ndjson JSON-RPC on stdio.
+#
+# It keeps no clock of its own: `schedule.set` hands each file's start time to the host
+# (durable through coordinate when installed), and `schedule.fire` / `files.changed`
+# wake it. It exits once idle, so nothing stays resident between runs.
+
+queue=$(mktemp "${TMPDIR:-/tmp}/lilo-automations.XXXXXX") || exit 1
+trap 'rm -f "$queue" "$queue.t"' EXIT
+rid=0
+support=""
+
+send() { printf '%s\n' "$1"; }
+unslash() { sed 's#\\/#/#g'; }
+jstr() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+field() { printf '%s' "$2" | sed -n "s/.*\"$1\":\"\\([^\"]*\\)\".*/\\1/p" | unslash; }
+
+# Next message: the ones set aside while a request waited come first. Idle for 2 s ends us.
+next_line() {
+    if [ -s "$queue" ]; then
+        line=$(head -n 1 "$queue")
+        tail -n +2 "$queue" > "$queue.t"; mv "$queue.t" "$queue"
+        return 0
+    fi
+    IFS= read -r -t 2 line
+}
+
+# A plugin->host request; blocks for its response in $reply, setting other messages aside.
+request() {
+    rid=$((rid + 1))
+    send "{\"jsonrpc\":\"2.0\",\"id\":$rid,\"method\":\"$1\",\"params\":$2}"
+    while IFS= read -r reply; do
+        case "$reply" in
+            *'"method"'*) printf '%s\n' "$reply" >> "$queue" ;;
+            *"\"id\":$rid,"*|*"\"id\":$rid}"*) break ;;
+        esac
+    done
+    case "$reply" in *'"error"'*) return 1 ;; esac
+    reply=$(printf '%s' "$reply" | unslash)
+}
+
+to_epoch() { date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2>/dev/null || date -u -d "$1" +%s 2>/dev/null; }
+
+# Arms (or re-arms) every file with an `at` line and cancels what no longer has a file.
+sync_files() {
+    mkdir -p "$support/state"
+    now=$(date +%s)
+    for file in "$support"/watched/*.auto; do
+        [ -f "$file" ] || continue
+        name=$(basename "$file" .auto)
+        case "$name" in *[!A-Za-z0-9._-]*) continue ;; esac
+        [ -e "$support/state/$name.done" ] && continue
+        at=$(sed -n 's/^at[[:space:]][[:space:]]*//p' "$file" | head -n 1)
+        epoch=$(to_epoch "$at")
+        [ -n "$epoch" ] || { echo "invalid at: $at" > "$support/state/$name.done"; continue; }
+        if [ $((now - epoch)) -gt 86400 ]; then echo "expired" > "$support/state/$name.done"; continue; fi
+        stamp="$epoch $(cksum < "$file")"
+        # An overdue file is re-armed every sync: that re-drives a fire lost to an exit race.
+        [ "$epoch" -gt "$now" ] && [ "$(cat "$support/state/$name.armed" 2>/dev/null)" = "$stamp" ] && continue
+        delay=$((epoch - now)); [ "$delay" -gt 0 ] || delay=0
+        request schedule.set "{\"id\":\"$name\",\"delay\":$delay}" && echo "$stamp" > "$support/state/$name.armed"
+    done
+    for armed in "$support"/state/*.armed; do
+        [ -f "$armed" ] || continue
+        name=$(basename "$armed" .armed)
+        [ -f "$support/watched/$name.auto" ] && continue
+        request schedule.cancel "{\"id\":\"$name\"}"
+        rm -f "$armed"
+    done
+}
+
+# Runs one automation's steps in order. `done` is written first: a duplicate fire is a no-op.
+run() {
+    name=$1; file="$support/watched/$name.auto"
+    [ -f "$file" ] || return 0
+    mkdir -p "$support/state"
+    [ -e "$support/state/$name.done" ] && return 0
+    echo running > "$support/state/$name.done"
+    rm -f "$support/state/$name.armed"
+    request settings.get '{}'
+    minutes=$(printf '%s' "$reply" | sed -n 's/.*"askTimeoutMinutes":"\{0,1\}\([0-9][0-9]*\).*/\1/p')
+    status=completed; step=0
+    while IFS= read -r row <&3 || [ -n "$row" ]; do
+        verb=${row%% *}; arg=${row#"$verb"}; arg=${arg# }
+        case "$verb" in ''|'#'*|at) continue ;; esac
+        step=$((step + 1))
+        case "$verb" in
+            open)
+                request tabs.open "{\"url\":\"$(jstr "$arg")\"}" || { status="failed at step $step: tabs.open"; break; } ;;
+            ensure)
+                if request tabs.list '{}' && case "$reply" in *"\"$arg\""*) true ;; *) false ;; esac; then continue; fi
+                request tabs.open "{\"url\":\"$(jstr "$arg")\"}" || { status="failed at step $step: tabs.open"; break; } ;;
+            ask)
+                request ask "{\"message\":\"$(jstr "$arg")\",\"timeout\":$(( ${minutes:-60} * 60 ))}" \
+                    && case "$reply" in *'"approved":true'*) true ;; *) false ;; esac \
+                    || { status="stopped at step $step: not approved"; break; } ;;
+            *) status="failed at step $step: unknown step \"$verb\""; break ;;
+        esac
+    done 3< "$file"
+    echo "$status" > "$support/state/$name.done"
+}
+
+while next_line; do
+    method=$(field method "$line")
+    id=$(printf '%s' "$line" | sed -n 's/.*"id":\([0-9][0-9]*\)[,}].*/\1/p')
+    case "$method" in
+        initialize)
+            support=$(field supportDir "$line")
+            send "{\"jsonrpc\":\"2.0\",\"id\":$id,\"result\":{\"protocolVersion\":1,\"tools\":[]}}" ;;
+        files.changed) sync_files ;;
+        schedule.fire) run "$(field id "$line")" ;;
+        *) [ -z "$id" ] || send "{\"jsonrpc\":\"2.0\",\"id\":$id,\"error\":{\"code\":-32601,\"message\":\"Method not found\"}}" ;;
+    esac
+done
