@@ -88,7 +88,9 @@ with the Node.js version `.nvmrc` pins.
 
 Without signing setup, every build is ad-hoc signed. It runs on the Mac that built it, but macOS
 asks again for camera, microphone and keychain access after each rebuild, and the helper that keeps
-the Mac awake with the lid closed stays off.
+the Mac awake with the lid closed stays off. The hardened runtime is also off in this case: its
+library validation rejects the ad-hoc signed frameworks the bundle embeds, which crashes the app
+in dyld on launch.
 
 To sign with a stable identity (a free Apple ID's Personal Team is enough), copy
 `Makefile.local.example` to `Makefile.local` and set `LILO_DEBUG_TEAM_ID`. The file is git-ignored
