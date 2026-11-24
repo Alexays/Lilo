@@ -2434,6 +2434,8 @@
 		"Open Link in New Tab": "リンクを新規タブで開く",
 		"Open Link in New Window": "リンクを新規ウインドウで開く",
 		"Open Link in New Private Space": "リンクを新規プライベートスペースで開く",
+		"Open Link in Split View": "リンクを分割表示で開く",
+		"Open Link in Little Window": "リンクを小さなウインドウで開く",
 		"Unlock %@": "%@ のロックを解除",
 		"Unlock Folder…": "フォルダのロックを解除…",
 		"Lock Folder…": "フォルダをロック…",

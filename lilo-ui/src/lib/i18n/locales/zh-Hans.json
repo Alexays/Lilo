@@ -2434,6 +2434,8 @@
 		"Open Link in New Tab": "在新标签页中打开链接",
 		"Open Link in New Window": "在新窗口中打开链接",
 		"Open Link in New Private Space": "在新隐私空间中打开链接",
+		"Open Link in Split View": "在分屏浏览中打开链接",
+		"Open Link in Little Window": "在小窗口中打开链接",
 		"Unlock %@": "解锁“%@”",
 		"Unlock Folder…": "解锁文件夹…",
 		"Lock Folder…": "锁定文件夹…",

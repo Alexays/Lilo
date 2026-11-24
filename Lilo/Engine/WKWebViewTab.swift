@@ -56,6 +56,9 @@ final class WKWebViewTab: NSObject {
         /// Open a right-clicked link in a freshly created ephemeral private space and switch to it.
         func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL)
         func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL)
+        /// Open a right-clicked link in a split view beside the tab, or in a Little window.
+        func tab(_ tab: WKWebViewTab, openLinkInSplitView url: URL)
+        func tab(_ tab: WKWebViewTab, openLinkInLittleWindow url: URL)
         /// Names the search engine in the page's context menu.
         var searchEngineName: String { get }
         /// Opens the default search engine's results for `text` in a new tab.
@@ -253,6 +256,8 @@ final class WKWebViewTab: NSObject {
         onOpenInNewTab: { [weak self] url in if let self { delegate?.tab(self, didCreateNewTab: url, inBackground: true) } },
         onOpenInPrivateSpace: { [weak self] url in if let self { delegate?.tab(self, openLinkInNewPrivateSpace: url) } },
         onOpenInNewWindow: { [weak self] url in if let self { delegate?.tab(self, openLinkInNewWindow: url) } },
+        onOpenInSplitView: { [weak self] url in if let self { delegate?.tab(self, openLinkInSplitView: url) } },
+        onOpenInLittleWindow: { [weak self] url in if let self { delegate?.tab(self, openLinkInLittleWindow: url) } },
         onTogglePiP: { [weak self] in self?.togglePictureInPicture() },
         onBookmark: { [weak self] in if let self { delegate?.tabRequestsBookmark(self) } },
         onHideElement: { [weak self] in if let self { delegate?.tabRequestsHideElement(self) } },
@@ -1695,6 +1700,8 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
+    func tab(_ tab: WKWebViewTab, openLinkInSplitView url: URL) {}
+    func tab(_ tab: WKWebViewTab, openLinkInLittleWindow url: URL) {}
     var searchEngineName: String { "Google" }
     func tab(_ tab: WKWebViewTab, searchWebFor text: String) {}
     var imageSearchEngineName: String { "Google Lens" }

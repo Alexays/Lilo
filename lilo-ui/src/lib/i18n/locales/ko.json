@@ -2434,6 +2434,8 @@
 		"Open Link in New Tab": "새 탭에서 링크 열기",
 		"Open Link in New Window": "새 윈도우에서 링크 열기",
 		"Open Link in New Private Space": "새 개인정보 보호 스페이스에서 링크 열기",
+		"Open Link in Split View": "분할 보기에서 링크 열기",
+		"Open Link in Little Window": "작은 창에서 링크 열기",
 		"Unlock %@": "%@ 잠금 해제",
 		"Unlock Folder…": "폴더 잠금 해제…",
 		"Lock Folder…": "폴더 잠그기…",
