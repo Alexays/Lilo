@@ -3,6 +3,7 @@
 import type { Page } from "@playwright/test";
 import type {
 	AddressPlacement,
+	BridgePluginRow,
 	BridgeProfileSnapshot,
 	BridgeSidebarTreeItemSnapshot,
 	BridgeSpaceSnapshot,
@@ -29,6 +30,8 @@ export interface FakeHostWorld {
 	// The native bindings' keys by action id, as the host sends them after the initial state.
 	shortcutKeys?: Record<string, string>;
 	settings?: Record<string, string>;
+	/** The plugins the host found; it answers `getPlugins` with them and applies the plugin commands. */
+	plugins?: BridgePluginRow[];
 }
 
 interface SentCommand {
@@ -275,6 +278,28 @@ export async function installFakeHost(
 			echo(sourceSpaceId, [sourceSpaceId, targetSpaceId]);
 		}
 
+		// Mirrors the host: enabling grants what the manifest asked for and starts the sidecar, disabling stops it.
+		function pluginsEcho(): void {
+			setTimeout(() => window.__lilo?.receive({ event: "pluginsChanged", plugins: structuredClone(state.plugins ?? []) }), 0);
+		}
+
+		function handlePlugin(action: string, payload: Record<string, unknown>): void {
+			const plugin = state.plugins?.find((candidate) => candidate.id === payload.id);
+			if (action !== "getPlugins" && !plugin) return;
+			if (plugin && action === "setPluginEnabled") {
+				plugin.enabled = payload.enabled === true && !plugin.rejectionReason;
+				plugin.running = plugin.enabled;
+				if (plugin.enabled) plugin.grantedCapabilities = [...plugin.capabilities];
+			} else if (plugin && action === "setPluginSetting") {
+				plugin.settingValues[payload.name as string] = payload.value as string | number | boolean;
+			} else if (plugin && action === "revokePluginCapability") {
+				plugin.grantedCapabilities = plugin.grantedCapabilities.filter((capability) => capability !== payload.capability);
+			} else if (plugin && action === "stopPlugin") {
+				plugin.running = false;
+			}
+			if (action !== "showPluginInFinder") pluginsEcho();
+		}
+
 		function handle(message: SentCommand): void {
 			sent.push(message);
 			const payload = (message.payload ?? {}) as {
@@ -286,6 +311,14 @@ export async function installFakeHost(
 			};
 			const id = payload.id ?? "";
 			switch (message.action) {
+				case "getPlugins":
+				case "setPluginEnabled":
+				case "setPluginSetting":
+				case "revokePluginCapability":
+				case "showPluginInFinder":
+				case "stopPlugin":
+					handlePlugin(message.action, message.payload ?? {});
+					break;
 				case "commitSidebarDrop":
 					if (payload.type === "insert") {
 						applySidebarInsert(
