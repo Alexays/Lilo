@@ -7,6 +7,8 @@ import TestingSupport
 final class PluginHostTests: XCTestCase {
     private var root: URL!
     private var database: TemporaryProfileDatabase?
+    /// `PluginHost`'s reference is `weak` (the app's store lives on the context); tests retain it here.
+    private var store: SettingsStore?
     private var userRoot: URL { root.appendingPathComponent("user", isDirectory: true) }
     private var bundledRoot: URL { root.appendingPathComponent("bundled", isDirectory: true) }
     private var supportRoot: URL { root.appendingPathComponent("support", isDirectory: true) }
@@ -21,6 +23,7 @@ final class PluginHostTests: XCTestCase {
 
     override func tearDown() {
         try? FileManager.default.removeItem(at: root)
+        store = nil
         database = nil
         super.tearDown()
     }
@@ -29,6 +32,7 @@ final class PluginHostTests: XCTestCase {
         let database = try TemporaryProfileDatabase(schema: .global)
         self.database = database
         let store = SettingsStore(dbPool: database.pool)
+        self.store = store
         let secrets = InMemoryPluginSecretStore()
         let host = PluginHost(
             settingsStore: store,

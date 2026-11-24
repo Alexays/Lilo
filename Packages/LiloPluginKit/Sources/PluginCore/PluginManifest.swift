@@ -74,6 +74,13 @@ public struct PluginManifest: Codable, Equatable, Sendable {
             self.tools = tools
             self.settings = settings
         }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            // A plugin may contribute only one kind.
+            tools = try container.decodeIfPresent([Tool].self, forKey: .tools) ?? []
+            settings = try container.decodeIfPresent([Setting].self, forKey: .settings) ?? []
+        }
     }
 
     /// A tool the agent surface merges in while the plugin is enabled.

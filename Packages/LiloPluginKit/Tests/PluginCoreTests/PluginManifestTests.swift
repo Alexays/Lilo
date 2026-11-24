@@ -35,6 +35,20 @@ final class PluginManifestTests: XCTestCase {
         XCTAssertEqual(manifest.contributes.tools.first?.consentTier, .read)
     }
 
+    func testContributesDecodesWithEitherKeyAlone() throws {
+        let settingsOnly = try StubPlugin.write(at: plugin("settings-only"), manifest: [
+            "contributes": ["settings": [["name": "k", "type": "text", "title": "K"]]]
+        ])
+        XCTAssertEqual(settingsOnly.contributes.settings.map(\.name), ["k"])
+        XCTAssertTrue(settingsOnly.contributes.tools.isEmpty)
+
+        let toolsOnly = try StubPlugin.write(at: plugin("tools-only"), manifest: [
+            "contributes": ["tools": [["name": "t", "description": "d", "inputSchema": [:]]]]
+        ])
+        XCTAssertEqual(toolsOnly.contributes.tools.map(\.name), ["t"])
+        XCTAssertTrue(toolsOnly.contributes.settings.isEmpty)
+    }
+
     func testRejectsUnknownSchemaKey() throws {
         XCTAssertThrowsError(try StubPlugin.write(at: plugin(), manifest: ["uiSurface": true])) {
             guard case PluginManifestError.unknownKey(let key) = $0 else {
