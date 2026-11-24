@@ -86,6 +86,8 @@ final class ConversationHost {
 
     static let protocolVersion = 2
     static let idleDelay: TimeInterval = 600
+    /// v1 sends the mode with the session, not as a config option with an id of its own.
+    private static let modeChoiceId = "lilo:mode"
     private static let logger = Logger(liloCategory: "conversations")
 
     weak var context: BrowserContext?
@@ -105,8 +107,7 @@ final class ConversationHost {
     /// until its first turn ends (Claude's adapter assumes 200k for a 1M model), which reads as a full context.
     /// Kept across launches, as every launch starts new agent processes.
     private var contextWindows = unsafe UserDefaults.lilo.dictionary(forKey: "agentContextWindows") as? [String: Int] ?? [:]
-    /// The options last picked for each agent, by config id, which a new conversation starts with. The mode
-    /// is left out: a mode that skips the user's approval must be picked for each conversation.
+    /// The options last picked for each agent, by config id, which a new conversation starts with.
     private var agentChoices = unsafe UserDefaults.lilo.dictionary(forKey: "agentConfigChoices") as? [String: [String: Any]] ?? [:]
 
     /// Each conversation's log and checkpoints, so a relaunch shows the thread without starting its agent.
@@ -535,19 +536,41 @@ final class ConversationHost {
             Self.configId(of: option).map { ($0, option["currentValue"]) }
         }, uniquingKeysWith: { first, _ in first })
         for (configId, value) in agentChoices[conversation.agentId] ?? [:] {
-            guard let now = current[configId], !((now as? NSObject)?.isEqual(value) ?? false) else { continue }
+            guard let now = current[configId] else {
+                forgetChoice(conversation, configId: configId)
+                continue
+            }
+            guard !((now as? NSObject)?.isEqual(value) ?? false) else { continue }
             var params: [String: Any] = ["sessionId": sessionId, "configId": configId, "value": value]
             if value is Bool { params["type"] = "boolean" } else if conversation.protocolVersion >= 2 { params["type"] = "id" }
             // A value the agent no longer offers is forgotten, and the session keeps its default.
             guard let result = try? await connection.request("session/set_config_option", params) else {
-                agentChoices[conversation.agentId]?[configId] = nil
-                unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
+                forgetChoice(conversation, configId: configId)
                 continue
             }
             if let options = result["configOptions"] { state["configOptions"] = options }
         }
+        // v2 modes are config options, applied above; v1 sends them beside the session.
+        if let modeId = agentChoices[conversation.agentId]?[Self.modeChoiceId] as? String {
+            let available = (created["modes"] as? [String: Any])?["availableModes"] as? [[String: Any]] ?? []
+            if available.contains(where: { $0["id"] as? String == modeId }) {
+                do {
+                    _ = try await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
+                    state["modes"] = (state["modes"] as? [String: Any])?.merging(["currentModeId": modeId]) { _, new in new }
+                } catch {
+                    forgetChoice(conversation, configId: Self.modeChoiceId)
+                }
+            } else {
+                forgetChoice(conversation, configId: Self.modeChoiceId)
+            }
+        }
         applySessionState(conversation, state)
         persistSession(conversation)
+    }
+
+    private func forgetChoice(_ conversation: Conversation, configId: String) {
+        agentChoices[conversation.agentId]?[configId] = nil
+        unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
     }
 
     /// The prompt waits on a sign-in in a terminal; `signInFinished` sends it again.
@@ -1001,6 +1024,9 @@ final class ConversationHost {
                 guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
                 _ = try await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
                 append(conversation, ["sessionUpdate": "current_mode_update", "currentModeId": modeId])
+                let configId = Self.modeConfigId(in: conversation) ?? Self.modeChoiceId
+                agentChoices[conversation.agentId, default: [:]][configId] = modeId
+                unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
                 scheduleIdleStop(conversation)
             } catch {
                 failedOutsideTurn(conversation, error)
@@ -1019,11 +1045,8 @@ final class ConversationHost {
                 let result = try await connection.request("session/set_config_option", params)
                 if let options = result["configOptions"] as? [Any] {
                     append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
-                    let category = options.lazy.compactMap { $0 as? [String: Any] }.first { Self.configId(of: $0) == configId }?["category"] as? String
-                    if category != "mode" {
-                        agentChoices[conversation.agentId, default: [:]][configId] = value
-                        unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
-                    }
+                    agentChoices[conversation.agentId, default: [:]][configId] = value
+                    unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
                 }
                 scheduleIdleStop(conversation)
             } catch {
@@ -1035,6 +1058,17 @@ final class ConversationHost {
     /// v2 names an option `configId`.
     private static func configId(of option: [String: Any]) -> String? {
         option["configId"] as? String ?? option["id"] as? String
+    }
+
+    /// The option a v2 agent uses for its mode, if it offers one.
+    private static func modeConfigId(in conversation: Conversation) -> String? {
+        for entry in conversation.log.reversed() {
+            guard let options = entry.value["configOptions"] as? [[String: Any]] else { continue }
+            for option in options where option["category"] as? String == "mode" {
+                if let id = configId(of: option) { return id }
+            }
+        }
+        return nil
     }
 
     // MARK: - What the agent sends
