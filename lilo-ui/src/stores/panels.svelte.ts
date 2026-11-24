@@ -19,6 +19,7 @@ export type SettingsSectionId =
 	| "extensions"
 	| "terminal"
 	| "agents"
+	| "plugins"
 	| "advanced";
 
 export type DesignSystemSectionId =

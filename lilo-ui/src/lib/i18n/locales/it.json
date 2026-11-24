@@ -137,7 +137,8 @@
 			"privacy": "Privacy",
 			"extensions": "Estensioni",
 			"advanced": "Avanzate",
-			"agents": "Agenti"
+			"agents": "Agenti",
+			"plugins": "Plugin"
 		},
 		"groups": {
 			"browser": "Browser",
@@ -833,7 +834,8 @@
 			"terminal": "Le modifiche valgono per ogni scheda del terminale",
 			"agents": "Lilo non ha una propria IA",
 			"advanced": "Per sviluppo e test",
-			"searchMatches": "{count, plural, one{# impostazione corrisponde a \"{query}\"} other{# impostazioni corrispondono a \"{query}\"}}"
+			"searchMatches": "{count, plural, one{# impostazione corrisponde a \"{query}\"} other{# impostazioni corrispondono a \"{query}\"}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugin}}"
 		},
 		"callDock": {
 			"sidebar": "Nella barra laterale",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Rilegge la cartella per applicare le tue modifiche",
 		"reload": "Ricarica",
 		"installed": "Installate"
+	},
+	"plugins": {
+		"installed": "Installati",
+		"empty": "Ancora nessun plugin. Metti la cartella di un plugin nella cartella Plugins di Lilo e comparirà qui.",
+		"openDetailsLabel": "Apri i dettagli di {name}",
+		"enabledToggleLabel": "Attiva {name}",
+		"running": "In esecuzione",
+		"required": "Obbligatorio",
+		"rejectedTitle": "Impossibile eseguire questo plugin",
+		"permissions": "Permessi",
+		"noPermissions": "Questo plugin non richiede permessi.",
+		"notGranted": "Non consentito",
+		"revoke": "Revoca",
+		"revokeLabel": "Revoca {capability} a {name}",
+		"settings": "Impostazioni",
+		"folder": "Cartella del plugin",
+		"process": "Processo",
+		"stop": "Arresta processo",
+		"grantTitle": "Attivare {name}?",
+		"grantMessage": "{name} richiede questi permessi. Puoi revocarli uno per uno più tardi nelle impostazioni del plugin.",
+		"grantEnable": "Attiva",
+		"capabilities": {
+			"schedule": "Eseguire secondo una pianificazione",
+			"tabsRead": "Leggere le tue schede",
+			"tabsOpen": "Aprire schede",
+			"pageRead": "Leggere il contenuto delle pagine",
+			"pageAct": "Agire sulle pagine (chiede prima)",
+			"settingsStore": "Salvare le proprie impostazioni",
+			"uiSurface": "Mostrare un proprio pannello",
+			"filesPluginDir": "Usare la propria cartella"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Anteprima",

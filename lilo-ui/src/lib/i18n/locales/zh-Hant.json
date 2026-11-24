@@ -137,7 +137,8 @@
 			"privacy": "隱私權",
 			"extensions": "延伸功能",
 			"advanced": "進階",
-			"agents": "代理程式"
+			"agents": "代理程式",
+			"plugins": "外掛程式"
 		},
 		"groups": {
 			"browser": "瀏覽器",
@@ -833,7 +834,8 @@
 			"terminal": "變更會套用到每個終端機分頁",
 			"agents": "Lilo 本身不含 AI",
 			"advanced": "供開發與測試使用",
-			"searchMatches": "{count, plural, one{# 項設定符合「{query}」} other{# 項設定符合「{query}」}}"
+			"searchMatches": "{count, plural, one{# 項設定符合「{query}」} other{# 項設定符合「{query}」}}",
+			"plugins": "{count, plural, one{# 個外掛程式} other{# 個外掛程式}}"
 		},
 		"callDock": {
 			"sidebar": "在側邊欄中",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "重新讀取其資料夾以套用你的變更",
 		"reload": "重新載入",
 		"installed": "已安裝"
+	},
+	"plugins": {
+		"installed": "已安裝",
+		"empty": "尚無外掛程式。將外掛程式資料夾放進 Lilo 的 Plugins 資料夾,它就會出現在這裡。",
+		"openDetailsLabel": "開啟 {name} 的詳細資訊",
+		"enabledToggleLabel": "啟用 {name}",
+		"running": "執行中",
+		"required": "必填",
+		"rejectedTitle": "無法執行此外掛程式",
+		"permissions": "權限",
+		"noPermissions": "此外掛程式不需要任何權限。",
+		"notGranted": "未允許",
+		"revoke": "撤銷",
+		"revokeLabel": "撤銷 {name} 的「{capability}」權限",
+		"settings": "設定",
+		"folder": "外掛程式資料夾",
+		"process": "行程",
+		"stop": "停止行程",
+		"grantTitle": "啟用 {name}?",
+		"grantMessage": "{name} 要求以下權限。你之後可以在外掛程式的設定中逐項撤銷。",
+		"grantEnable": "啟用",
+		"capabilities": {
+			"schedule": "依排程執行",
+			"tabsRead": "讀取你的標籤頁",
+			"tabsOpen": "開啟標籤頁",
+			"pageRead": "讀取頁面內容",
+			"pageAct": "對頁面執行操作(先詢問)",
+			"settingsStore": "儲存自己的設定",
+			"uiSurface": "顯示自己的面板",
+			"filesPluginDir": "使用自己的資料夾"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "預覽",

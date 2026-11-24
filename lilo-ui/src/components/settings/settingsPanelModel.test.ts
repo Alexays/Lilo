@@ -25,7 +25,7 @@ test("formats the downloads label", () => {
 test("sections follow the navigation order with advanced last", () => {
   assert.deepEqual(
     SETTINGS_SECTIONS.map((section) => section.id),
-    ["general", "appearance", "tabs", "media", "privacy", "extensions", "terminal", "agents", "advanced"],
+    ["general", "appearance", "tabs", "media", "privacy", "extensions", "terminal", "agents", "plugins", "advanced"],
   );
 });
 

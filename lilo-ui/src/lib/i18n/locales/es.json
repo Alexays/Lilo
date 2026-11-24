@@ -137,7 +137,8 @@
 			"privacy": "Privacidad",
 			"extensions": "Extensiones",
 			"advanced": "Avanzado",
-			"agents": "Agentes"
+			"agents": "Agentes",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Navegador",
@@ -833,7 +834,8 @@
 			"terminal": "Los cambios se aplican a cada pestaña de terminal",
 			"agents": "Lilo no tiene IA propia",
 			"advanced": "Para desarrollo y pruebas",
-			"searchMatches": "{count, plural, one{# ajuste coincide con «{query}»} other{# ajustes coinciden con «{query}»}}"
+			"searchMatches": "{count, plural, one{# ajuste coincide con «{query}»} other{# ajustes coinciden con «{query}»}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugins}}"
 		},
 		"callDock": {
 			"sidebar": "En la barra lateral",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Vuelve a leer su carpeta para aplicar tus cambios",
 		"reload": "Volver a cargar",
 		"installed": "Instaladas"
+	},
+	"plugins": {
+		"installed": "Instalados",
+		"empty": "Aún no hay plugins. Pon la carpeta de un plugin en la carpeta Plugins de Lilo y aparecerá aquí.",
+		"openDetailsLabel": "Abrir los detalles de {name}",
+		"enabledToggleLabel": "Activar {name}",
+		"running": "En ejecución",
+		"required": "Obligatorio",
+		"rejectedTitle": "No se puede ejecutar este plugin",
+		"permissions": "Permisos",
+		"noPermissions": "Este plugin no pide permisos.",
+		"notGranted": "No permitido",
+		"revoke": "Revocar",
+		"revokeLabel": "Revocar {capability} a {name}",
+		"settings": "Ajustes",
+		"folder": "Carpeta del plugin",
+		"process": "Proceso",
+		"stop": "Detener proceso",
+		"grantTitle": "¿Activar {name}?",
+		"grantMessage": "{name} pide estos permisos. Puedes revocar cada uno más tarde en los ajustes del plugin.",
+		"grantEnable": "Activar",
+		"capabilities": {
+			"schedule": "Ejecutarse según una programación",
+			"tabsRead": "Leer tus pestañas",
+			"tabsOpen": "Abrir pestañas",
+			"pageRead": "Leer el contenido de las páginas",
+			"pageAct": "Actuar en las páginas (pregunta antes)",
+			"settingsStore": "Guardar sus ajustes",
+			"uiSurface": "Mostrar su propio panel",
+			"filesPluginDir": "Usar su propia carpeta"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Vista previa",

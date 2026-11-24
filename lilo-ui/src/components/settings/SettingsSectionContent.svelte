@@ -7,6 +7,7 @@
   import SettingsAdvanced from "./SettingsAdvanced.svelte";
   import SettingsAgentList from "./SettingsAgentList.svelte";
   import SettingsAgentPrompt from "./SettingsAgentPrompt.svelte";
+  import SettingsPlugins from "../../lib/plugins/SettingsPlugins.svelte";
   import SettingsExtensions from "./SettingsExtensions.svelte";
   import SettingsGroups from "./SettingsGroups.svelte";
   import SettingsSearchResults from "./SettingsSearchResults.svelte";
@@ -74,6 +75,8 @@
           <SettingsTerminal />
         {:else if section === "extensions"}
           <SettingsExtensions {subpage} />
+        {:else if section === "plugins"}
+          <SettingsPlugins {subpage} />
         {:else if section === "advanced"}
           <SettingsAdvanced />
         {:else}

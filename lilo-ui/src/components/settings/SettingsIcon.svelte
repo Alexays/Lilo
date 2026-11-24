@@ -41,6 +41,10 @@
     <path d="m7.8 10 1.5 1.5 3-3.2" />
   {:else if name === "extensions"}
     <path d="M4.4 7.4h2.8a1.9 1.9 0 1 1 3.8 0h2.8v2.8a1.9 1.9 0 1 1 0 3.8v2.6H4.4V7.4Z" />
+  {:else if name === "plugins"}
+    <path d="M10 2.8 16.4 6.2v7.6L10 17.2 3.6 13.8V6.2L10 2.8Z" />
+    <path d="m3.6 6.2 6.4 3.4 6.4-3.4" />
+    <path d="M10 9.6v7.6" />
   {:else if name === "agents"}
     <!-- The mascot, outlined like its neighbors: its eyes are the only filled marks. -->
     <circle cx="10" cy="10" r="6.6" />

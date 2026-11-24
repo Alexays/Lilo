@@ -137,7 +137,8 @@
 			"privacy": "Privacy",
 			"extensions": "Extensies",
 			"advanced": "Geavanceerd",
-			"agents": "Agents"
+			"agents": "Agents",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Browser",
@@ -833,7 +834,8 @@
 			"terminal": "Wijzigingen gelden voor elk terminaltabblad",
 			"agents": "Lilo heeft zelf geen AI",
 			"advanced": "Voor ontwikkeling en testen",
-			"searchMatches": "{count, plural, one{# instelling past bij \"{query}\"} other{# instellingen passen bij \"{query}\"}}"
+			"searchMatches": "{count, plural, one{# instelling past bij \"{query}\"} other{# instellingen passen bij \"{query}\"}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugins}}"
 		},
 		"callDock": {
 			"sidebar": "In de zijbalk",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Leest de map opnieuw in om je wijzigingen over te nemen",
 		"reload": "Opnieuw laden",
 		"installed": "Geïnstalleerd"
+	},
+	"plugins": {
+		"installed": "Geïnstalleerd",
+		"empty": "Nog geen plugins. Zet een pluginmap in de map Plugins van Lilo en hij verschijnt hier.",
+		"openDetailsLabel": "Details van {name} openen",
+		"enabledToggleLabel": "{name} inschakelen",
+		"running": "Actief",
+		"required": "Verplicht",
+		"rejectedTitle": "Deze plugin kan niet draaien",
+		"permissions": "Rechten",
+		"noPermissions": "Deze plugin vraagt geen rechten.",
+		"notGranted": "Niet toegestaan",
+		"revoke": "Intrekken",
+		"revokeLabel": "{capability} van {name} intrekken",
+		"settings": "Instellingen",
+		"folder": "Pluginmap",
+		"process": "Proces",
+		"stop": "Stop proces",
+		"grantTitle": "{name} inschakelen?",
+		"grantMessage": "{name} vraagt deze rechten. Je kunt ze later elk afzonderlijk intrekken in de instellingen van de plugin.",
+		"grantEnable": "Inschakelen",
+		"capabilities": {
+			"schedule": "Volgens een schema draaien",
+			"tabsRead": "Je tabbladen lezen",
+			"tabsOpen": "Tabbladen openen",
+			"pageRead": "Pagina-inhoud lezen",
+			"pageAct": "Op pagina's handelen (vraagt eerst)",
+			"settingsStore": "Eigen instellingen bewaren",
+			"uiSurface": "Een eigen paneel tonen",
+			"filesPluginDir": "Een eigen map gebruiken"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Voorvertoning",

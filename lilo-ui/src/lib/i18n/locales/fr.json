@@ -137,7 +137,8 @@
 			"privacy": "Confidentialité",
 			"extensions": "Extensions",
 			"advanced": "Avancé",
-			"agents": "Agents"
+			"agents": "Agents",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Navigateur",
@@ -833,7 +834,8 @@
 			"terminal": "Les changements s'appliquent à chaque onglet de terminal",
 			"agents": "Lilo n'embarque aucune IA",
 			"advanced": "Pour le développement et les tests",
-			"searchMatches": "{count, plural, one{# réglage correspond à « {query} »} other{# réglages correspondent à « {query} »}}"
+			"searchMatches": "{count, plural, one{# réglage correspond à « {query} »} other{# réglages correspondent à « {query} »}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugins}}"
 		},
 		"callDock": {
 			"sidebar": "Dans la barre latérale",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Relit son dossier pour prendre en compte vos modifications",
 		"reload": "Recharger",
 		"installed": "Installées"
+	},
+	"plugins": {
+		"installed": "Installés",
+		"empty": "Aucun plugin pour l'instant. Placez un dossier de plugin dans le dossier Plugins de Lilo et il apparaîtra ici.",
+		"openDetailsLabel": "Ouvrir les détails de {name}",
+		"enabledToggleLabel": "Activer {name}",
+		"running": "En cours",
+		"required": "Obligatoire",
+		"rejectedTitle": "Impossible d'exécuter ce plugin",
+		"permissions": "Autorisations",
+		"noPermissions": "Ce plugin ne demande aucune autorisation.",
+		"notGranted": "Non autorisé",
+		"revoke": "Révoquer",
+		"revokeLabel": "Révoquer {capability} pour {name}",
+		"settings": "Réglages",
+		"folder": "Dossier du plugin",
+		"process": "Processus",
+		"stop": "Arrêter le processus",
+		"grantTitle": "Activer {name} ?",
+		"grantMessage": "{name} demande ces autorisations. Vous pourrez révoquer chacune plus tard dans les réglages du plugin.",
+		"grantEnable": "Activer",
+		"capabilities": {
+			"schedule": "S'exécuter selon un calendrier",
+			"tabsRead": "Lire vos onglets",
+			"tabsOpen": "Ouvrir des onglets",
+			"pageRead": "Lire le contenu des pages",
+			"pageAct": "Agir sur les pages (demande d'abord)",
+			"settingsStore": "Enregistrer ses réglages",
+			"uiSurface": "Afficher son propre panneau",
+			"filesPluginDir": "Utiliser son propre dossier"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Aperçu",

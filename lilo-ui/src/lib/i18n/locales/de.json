@@ -137,7 +137,8 @@
 			"privacy": "Datenschutz",
 			"extensions": "Erweiterungen",
 			"advanced": "Erweitert",
-			"agents": "Agenten"
+			"agents": "Agenten",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Browser",
@@ -833,7 +834,8 @@
 			"terminal": "Änderungen gelten für jeden Terminal-Tab",
 			"agents": "Lilo hat keine eigene KI",
 			"advanced": "Für Entwicklung und Tests",
-			"searchMatches": "{count, plural, one{# Einstellung passt zu „{query}“} other{# Einstellungen passen zu „{query}“}}"
+			"searchMatches": "{count, plural, one{# Einstellung passt zu „{query}“} other{# Einstellungen passen zu „{query}“}}",
+			"plugins": "{count, plural, one{# Plugin} other{# Plugins}}"
 		},
 		"callDock": {
 			"sidebar": "In der Seitenleiste",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Liest den Ordner erneut ein, um deine Änderungen zu übernehmen",
 		"reload": "Neu laden",
 		"installed": "Installiert"
+	},
+	"plugins": {
+		"installed": "Installiert",
+		"empty": "Noch keine Plugins. Lege einen Plugin-Ordner in Lilos Plugins-Ordner, dann erscheint er hier.",
+		"openDetailsLabel": "Details zu {name} öffnen",
+		"enabledToggleLabel": "{name} aktivieren",
+		"running": "Läuft",
+		"required": "Erforderlich",
+		"rejectedTitle": "Dieses Plugin kann nicht ausgeführt werden",
+		"permissions": "Berechtigungen",
+		"noPermissions": "Dieses Plugin braucht keine Berechtigungen.",
+		"notGranted": "Nicht erlaubt",
+		"revoke": "Widerrufen",
+		"revokeLabel": "{capability} für {name} widerrufen",
+		"settings": "Einstellungen",
+		"folder": "Plugin-Ordner",
+		"process": "Prozess",
+		"stop": "Prozess stoppen",
+		"grantTitle": "{name} aktivieren?",
+		"grantMessage": "{name} fragt diese Berechtigungen an. Du kannst jede später in den Einstellungen des Plugins widerrufen.",
+		"grantEnable": "Aktivieren",
+		"capabilities": {
+			"schedule": "Nach Zeitplan ausführen",
+			"tabsRead": "Deine Tabs lesen",
+			"tabsOpen": "Tabs öffnen",
+			"pageRead": "Seiteninhalt lesen",
+			"pageAct": "Auf Seiten handeln (fragt vorher)",
+			"settingsStore": "Eigene Einstellungen speichern",
+			"uiSurface": "Eigenes Fenster zeigen",
+			"filesPluginDir": "Eigenen Ordner nutzen"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Vorschau",

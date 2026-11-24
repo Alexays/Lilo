@@ -137,7 +137,8 @@
 			"privacy": "개인정보 보호",
 			"extensions": "확장 프로그램",
 			"advanced": "고급",
-			"agents": "에이전트"
+			"agents": "에이전트",
+			"plugins": "플러그인"
 		},
 		"groups": {
 			"browser": "브라우저",
@@ -833,7 +834,8 @@
 			"terminal": "모든 터미널 탭에 적용됩니다",
 			"agents": "Lilo에는 자체 AI가 없습니다",
 			"advanced": "개발 및 테스트용",
-			"searchMatches": "{count, plural, one{'{query}'와 일치하는 설정 #개} other{'{query}'와 일치하는 설정 #개}}"
+			"searchMatches": "{count, plural, one{'{query}'와 일치하는 설정 #개} other{'{query}'와 일치하는 설정 #개}}",
+			"plugins": "{count, plural, one{플러그인 #개} other{플러그인 #개}}"
 		},
 		"callDock": {
 			"sidebar": "사이드바에",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "폴더를 다시 읽어 변경 사항을 반영합니다",
 		"reload": "새로고침",
 		"installed": "설치됨"
+	},
+	"plugins": {
+		"installed": "설치됨",
+		"empty": "아직 플러그인이 없습니다. 플러그인 폴더를 Lilo의 Plugins 폴더에 넣으면 여기에 나타납니다.",
+		"openDetailsLabel": "{name} 세부 정보 열기",
+		"enabledToggleLabel": "{name} 켜기",
+		"running": "실행 중",
+		"required": "필수",
+		"rejectedTitle": "이 플러그인을 실행할 수 없음",
+		"permissions": "권한",
+		"noPermissions": "이 플러그인은 권한을 요청하지 않습니다.",
+		"notGranted": "허용되지 않음",
+		"revoke": "철회",
+		"revokeLabel": "{name}의 {capability} 철회",
+		"settings": "설정",
+		"folder": "플러그인 폴더",
+		"process": "프로세스",
+		"stop": "프로세스 중지",
+		"grantTitle": "{name}을(를) 켤까요?",
+		"grantMessage": "{name}이(가) 다음 권한을 요청합니다. 각 권한은 나중에 플러그인 설정에서 철회할 수 있습니다.",
+		"grantEnable": "켜기",
+		"capabilities": {
+			"schedule": "일정에 따라 실행",
+			"tabsRead": "탭 읽기",
+			"tabsOpen": "탭 열기",
+			"pageRead": "페이지 내용 읽기",
+			"pageAct": "페이지에서 동작(먼저 확인)",
+			"settingsStore": "자체 설정 저장",
+			"uiSurface": "자체 패널 표시",
+			"filesPluginDir": "자체 폴더 사용"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "미리보기",

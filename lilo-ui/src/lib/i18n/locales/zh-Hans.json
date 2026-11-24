@@ -137,7 +137,8 @@
 			"privacy": "隐私",
 			"extensions": "扩展",
 			"advanced": "高级",
-			"agents": "智能体"
+			"agents": "智能体",
+			"plugins": "插件"
 		},
 		"groups": {
 			"browser": "浏览器",
@@ -833,7 +834,8 @@
 			"terminal": "更改适用于每个终端标签页",
 			"agents": "Lilo 本身不内置 AI",
 			"advanced": "供开发和测试使用",
-			"searchMatches": "{count, plural, one{# 项设置与“{query}”匹配} other{# 项设置与“{query}”匹配}}"
+			"searchMatches": "{count, plural, one{# 项设置与“{query}”匹配} other{# 项设置与“{query}”匹配}}",
+			"plugins": "{count, plural, one{# 个插件} other{# 个插件}}"
 		},
 		"callDock": {
 			"sidebar": "在边栏中",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "重新读取其文件夹以应用你的更改",
 		"reload": "重新载入",
 		"installed": "已安装"
+	},
+	"plugins": {
+		"installed": "已安装",
+		"empty": "还没有插件。把插件文件夹放进 Lilo 的 Plugins 文件夹,它就会出现在这里。",
+		"openDetailsLabel": "打开 {name} 的详情",
+		"enabledToggleLabel": "启用 {name}",
+		"running": "运行中",
+		"required": "必填",
+		"rejectedTitle": "无法运行此插件",
+		"permissions": "权限",
+		"noPermissions": "此插件不需要任何权限。",
+		"notGranted": "未允许",
+		"revoke": "撤销",
+		"revokeLabel": "撤销 {name} 的“{capability}”权限",
+		"settings": "设置",
+		"folder": "插件文件夹",
+		"process": "进程",
+		"stop": "停止进程",
+		"grantTitle": "启用 {name}?",
+		"grantMessage": "{name} 请求以下权限。你之后可以在插件的设置中逐项撤销。",
+		"grantEnable": "启用",
+		"capabilities": {
+			"schedule": "按计划运行",
+			"tabsRead": "读取你的标签页",
+			"tabsOpen": "打开标签页",
+			"pageRead": "读取页面内容",
+			"pageAct": "对页面执行操作(先询问)",
+			"settingsStore": "保存自己的设置",
+			"uiSurface": "显示自己的面板",
+			"filesPluginDir": "使用自己的文件夹"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "预览",

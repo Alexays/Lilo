@@ -15,6 +15,7 @@
   import { getActiveProfileId, getProfileById, getProfiles } from "../../stores/profiles.svelte";
   import { settingsActions } from "../../lib/bridge/actions";
   import { getSetting, loadSettingsSurface } from "../../stores/settings.svelte";
+  import { getPlugin, getPlugins, loadPlugins } from "../../stores/plugins.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { resolveDisplayName } from "../extensions/extensionPanelModel";
   import { isToggleOn, SETTINGS_SECTIONS, settingTitleKey } from "./settingsPanelModel";
@@ -42,6 +43,10 @@
     if (subpage?.startsWith("extension:")) {
       const extension = getShownExtensions()?.find((candidate) => `extension:${candidate.id}` === subpage);
       if (extension) return resolveDisplayName(extension);
+    }
+    if (subpage?.startsWith("plugin:")) {
+      const plugin = getPlugin(subpage.slice("plugin:".length));
+      if (plugin) return plugin.title;
     }
     const meta = SETTINGS_SECTIONS.find((candidate) => candidate.id === section);
     return meta ? t(meta.labelKey) : "";
@@ -85,6 +90,8 @@
         const profile = getProfileById(getShownExtensionsProfileId() || getActiveProfileId());
         return extensions && profile ? t("settings.notes.extensions", { count: extensions.length, profile: profile.name }) : "";
       }
+      case "plugins":
+        return t("settings.notes.plugins", { count: getPlugins().length });
       case "terminal":
         return t("settings.notes.terminal");
       case "agents":
@@ -99,6 +106,11 @@
   $effect(() => {
     if (shellOpen) loadSettingsSurface();
     else showProfileExtensions("");
+  });
+
+  // The plugin list is the host's to scan: asked for when the page opens, never while Settings is closed.
+  $effect(() => {
+    if (shellOpen && section === "plugins") loadPlugins();
   });
 
   // Listing every site's data walks the whole WebKit data store: once per opening, when a page shows sites.

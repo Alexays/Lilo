@@ -137,7 +137,8 @@
 			"privacy": "Privacy",
 			"extensions": "Extensions",
 			"advanced": "Advanced",
-			"agents": "Agents"
+			"agents": "Agents",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Browser",
@@ -833,7 +834,8 @@
 			"terminal": "Changes apply to every terminal tab",
 			"agents": "Lilo has no AI of its own",
 			"advanced": "For developers and testing",
-			"searchMatches": "{count, plural, one{# setting matches \"{query}\"} other{# settings match \"{query}\"}}"
+			"searchMatches": "{count, plural, one{# setting matches \"{query}\"} other{# settings match \"{query}\"}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugins}}"
 		},
 		"callDock": {
 			"sidebar": "In the sidebar",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Reads its folder again to pick up your changes",
 		"reload": "Reload",
 		"installed": "Installed"
+	},
+	"plugins": {
+		"installed": "Installed",
+		"empty": "No plugins yet. Put a plugin folder in Lilo's Plugins folder and it appears here.",
+		"openDetailsLabel": "Open details for {name}",
+		"enabledToggleLabel": "Enable {name}",
+		"running": "Running",
+		"required": "Required",
+		"rejectedTitle": "Can't run this plugin",
+		"permissions": "Permissions",
+		"noPermissions": "This plugin asks for no permissions.",
+		"notGranted": "Not allowed",
+		"revoke": "Revoke",
+		"revokeLabel": "Revoke {capability} from {name}",
+		"settings": "Settings",
+		"folder": "Plugin folder",
+		"process": "Process",
+		"stop": "Stop Process",
+		"grantTitle": "Enable {name}?",
+		"grantMessage": "{name} asks for these permissions. You can revoke each one later in the plugin's settings.",
+		"grantEnable": "Enable",
+		"capabilities": {
+			"schedule": "Run on a schedule",
+			"tabsRead": "Read your tabs",
+			"tabsOpen": "Open tabs",
+			"pageRead": "Read page content",
+			"pageAct": "Act on pages (asks first)",
+			"settingsStore": "Store its settings",
+			"uiSurface": "Show its own panel",
+			"filesPluginDir": "Use its own folder"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Peek",

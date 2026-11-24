@@ -36,6 +36,7 @@ export const SETTINGS_NAV_GROUPS: { id: string; labelKey?: string; sections: Set
     sections: [
       { id: "terminal", labelKey: "settings.sections.terminal" },
       { id: "agents", labelKey: "settings.sections.agents" },
+      { id: "plugins", labelKey: "settings.sections.plugins" },
     ],
   },
   { id: "advanced", sections: [{ id: "advanced", labelKey: "settings.sections.advanced" }] },

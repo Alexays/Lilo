@@ -137,7 +137,8 @@
 			"privacy": "Privacidade",
 			"extensions": "Extensões",
 			"advanced": "Avançado",
-			"agents": "Agentes"
+			"agents": "Agentes",
+			"plugins": "Plugins"
 		},
 		"groups": {
 			"browser": "Navegador",
@@ -833,7 +834,8 @@
 			"terminal": "As mudanças valem para todas as abas de terminal",
 			"agents": "O Lilo não tem IA própria",
 			"advanced": "Para desenvolvimento e testes",
-			"searchMatches": "{count, plural, one{# ajuste corresponde a \"{query}\"} other{# ajustes correspondem a \"{query}\"}}"
+			"searchMatches": "{count, plural, one{# ajuste corresponde a \"{query}\"} other{# ajustes correspondem a \"{query}\"}}",
+			"plugins": "{count, plural, one{# plugin} other{# plugins}}"
 		},
 		"callDock": {
 			"sidebar": "Na barra lateral",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "Lê a pasta novamente para aplicar suas alterações",
 		"reload": "Recarregar",
 		"installed": "Instaladas"
+	},
+	"plugins": {
+		"installed": "Instalados",
+		"empty": "Nenhum plugin ainda. Coloque a pasta de um plugin na pasta Plugins do Lilo e ele aparecerá aqui.",
+		"openDetailsLabel": "Abrir detalhes de {name}",
+		"enabledToggleLabel": "Ativar {name}",
+		"running": "Em execução",
+		"required": "Obrigatório",
+		"rejectedTitle": "Não é possível executar este plugin",
+		"permissions": "Permissões",
+		"noPermissions": "Este plugin não pede permissões.",
+		"notGranted": "Não permitido",
+		"revoke": "Revogar",
+		"revokeLabel": "Revogar {capability} de {name}",
+		"settings": "Ajustes",
+		"folder": "Pasta do plugin",
+		"process": "Processo",
+		"stop": "Parar processo",
+		"grantTitle": "Ativar {name}?",
+		"grantMessage": "{name} pede estas permissões. Você pode revogar cada uma depois, nos ajustes do plugin.",
+		"grantEnable": "Ativar",
+		"capabilities": {
+			"schedule": "Executar em uma programação",
+			"tabsRead": "Ler suas abas",
+			"tabsOpen": "Abrir abas",
+			"pageRead": "Ler o conteúdo das páginas",
+			"pageAct": "Agir nas páginas (pergunta antes)",
+			"settingsStore": "Guardar seus próprios ajustes",
+			"uiSurface": "Mostrar um painel próprio",
+			"filesPluginDir": "Usar sua própria pasta"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "Pré-visualizar",

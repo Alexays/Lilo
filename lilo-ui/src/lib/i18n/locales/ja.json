@@ -137,7 +137,8 @@
 			"privacy": "プライバシー",
 			"extensions": "機能拡張",
 			"advanced": "詳細",
-			"agents": "エージェント"
+			"agents": "エージェント",
+			"plugins": "プラグイン"
 		},
 		"groups": {
 			"browser": "ブラウザ",
@@ -833,7 +834,8 @@
 			"terminal": "変更はすべてのターミナルタブに反映されます",
 			"agents": "Lilo 自体に AI は搭載していません",
 			"advanced": "開発とテスト用",
-			"searchMatches": "{count, plural, one{「{query}」に一致する設定 # 件} other{「{query}」に一致する設定 # 件}}"
+			"searchMatches": "{count, plural, one{「{query}」に一致する設定 # 件} other{「{query}」に一致する設定 # 件}}",
+			"plugins": "{count, plural, one{# 個のプラグイン} other{# 個のプラグイン}}"
 		},
 		"callDock": {
 			"sidebar": "サイドバー内",
@@ -1241,6 +1243,37 @@
 		"reloadHint": "フォルダを読み込み直して変更を反映します",
 		"reload": "再読み込み",
 		"installed": "インストール済み"
+	},
+	"plugins": {
+		"installed": "インストール済み",
+		"empty": "プラグインはまだありません。プラグインのフォルダを Lilo の Plugins フォルダに入れると、ここに表示されます。",
+		"openDetailsLabel": "{name} の詳細を開く",
+		"enabledToggleLabel": "{name} を有効にする",
+		"running": "実行中",
+		"required": "必須",
+		"rejectedTitle": "このプラグインは実行できません",
+		"permissions": "権限",
+		"noPermissions": "このプラグインは権限を必要としません。",
+		"notGranted": "許可されていません",
+		"revoke": "取り消す",
+		"revokeLabel": "{name} の「{capability}」を取り消す",
+		"settings": "設定",
+		"folder": "プラグインのフォルダ",
+		"process": "プロセス",
+		"stop": "プロセスを停止",
+		"grantTitle": "{name} を有効にしますか?",
+		"grantMessage": "{name} は次の権限を求めています。各権限は、あとでプラグインの設定から取り消せます。",
+		"grantEnable": "有効にする",
+		"capabilities": {
+			"schedule": "スケジュールで実行",
+			"tabsRead": "タブを読む",
+			"tabsOpen": "タブを開く",
+			"pageRead": "ページの内容を読む",
+			"pageAct": "ページを操作(先に確認)",
+			"settingsStore": "自分の設定を保存",
+			"uiSurface": "専用のパネルを表示",
+			"filesPluginDir": "専用のフォルダを使う"
+		}
 	},
 	"commandBar": {
 		"hintPeek": "プレビュー",
