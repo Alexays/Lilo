@@ -2550,6 +2550,8 @@
 		"Screenshot of %@": "Bildschirmfoto von %@",
 		"Selection from %@": "Auswahl aus %@",
 		"The agent stopped (code %d).": "Der Agent wurde beendet (Code %d).",
+		"The agent did not answer in time.": "Der Agent hat nicht rechtzeitig geantwortet.",
+		"The agent could not open a session: %@": "Der Agent konnte keine Sitzung öffnen: %@",
 		"This agent is no longer in the ACP registry.": "Dieser Agent ist nicht mehr in der ACP-Registry.",
 		"The agent stopped.": "Der Agent wurde beendet.",
 		"The agent is not running.": "Der Agent läuft nicht.",
@@ -2839,6 +2841,21 @@
 			"featuredAgents": "Empfohlen",
 			"registryAgents": "Registrierung",
 			"noMatches": "Keine passenden Agenten"
+		},
+		"readiness": {
+			"ready": "Bereit",
+			"needsSignIn": "Anmeldung nötig",
+			"unavailable": "Nicht verfügbar",
+			"unverified": "Prüfung fehlgeschlagen",
+			"checking": "Wird geprüft ...",
+			"check": "Jetzt prüfen",
+			"signIn": "Anmelden",
+			"signInWith": "Mit {method} anmelden",
+			"model": "Modell",
+			"modelDefault": "Standardmodell",
+			"modelCustom": "Modell festlegen",
+			"modelPlaceholder": "Modell-ID",
+			"modelHint": "Dieser Agent listet keine Modelle auf. Gib die ID eines Modells ein."
 		},
 		"row": {
 			"untitled": "Neue Unterhaltung",

@@ -132,6 +132,14 @@ final class ACPConnection: @unchecked Sendable {
         if process.isRunning { process.terminate() }
     }
 
+    /// Ends the agent like `terminate`, and kills it when it still runs after `grace` seconds.
+    func terminate(killAfter grace: TimeInterval) {
+        terminate()
+        DispatchQueue.global().asyncAfter(deadline: .now() + grace) { [process] in
+            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        }
+    }
+
     private func send(_ message: Payload) {
         writes.async { [self] in _ = write(message.value) }
     }

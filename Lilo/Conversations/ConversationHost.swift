@@ -92,6 +92,7 @@ final class ConversationHost {
 
     weak var context: BrowserContext?
     let catalog: ACPAgentCatalog
+    let readiness: ACPAgentReadinessStore
     let projectFiles = ConversationProjectFiles()
     private(set) var conversations: [UUID: Conversation] = [:]
     /// The conversations each window's chrome shows, so updates go only where they are seen.
@@ -116,8 +117,11 @@ final class ConversationHost {
     private let saveQueue = DispatchQueue(label: "lilo.conversations.save", qos: .utility)
 
     init(directory: URL) {
-        catalog = ACPAgentCatalog(directory: directory)
+        let catalog = ACPAgentCatalog(directory: directory)
+        self.catalog = catalog
+        readiness = ACPAgentReadinessStore(directory: directory) { agent in try await catalog.launch(agent) }
         threads = directory.appending(path: "Conversations")
+        readiness.onChange = { [weak self] id in self?.broadcastReadiness(id) }
         catalog.commandsSetting = { [weak self] in self?.context?.settingsStore?.get("agentCommands") }
     }
 
@@ -696,6 +700,7 @@ final class ConversationHost {
 
     /// A terminal's command ended or its tab closed: a sign-in run there is done.
     func terminalFinished(_ terminalId: UUID) {
+        readiness.terminalFinished(terminalId)
         guard let tabId = signInTerminals.removeValue(forKey: terminalId), let conversation = conversations[tabId] else { return }
         signInFinished(conversation)
     }

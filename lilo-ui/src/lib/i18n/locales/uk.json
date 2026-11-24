@@ -2550,6 +2550,8 @@
 		"Screenshot of %@": "Знімок екрана: %@",
 		"Selection from %@": "Виділення: %@",
 		"The agent stopped (code %d).": "Агент зупинився (код %d).",
+		"The agent did not answer in time.": "Агент не відповів вчасно.",
+		"The agent could not open a session: %@": "Агент не зміг відкрити сеанс: %@",
 		"This agent is no longer in the ACP registry.": "Цього агента більше немає в реєстрі ACP.",
 		"The agent stopped.": "Агент зупинився.",
 		"The agent is not running.": "Агент не запущено.",
@@ -2839,6 +2841,21 @@
 			"featuredAgents": "Рекомендовані",
 			"registryAgents": "Реєстр",
 			"noMatches": "Немає відповідних агентів"
+		},
+		"readiness": {
+			"ready": "Готовий",
+			"needsSignIn": "Потрібен вхід",
+			"unavailable": "Недоступний",
+			"unverified": "Не вдалося перевірити",
+			"checking": "Перевірка...",
+			"check": "Перевірити зараз",
+			"signIn": "Увійти",
+			"signInWith": "Увійти через {method}",
+			"model": "Модель",
+			"modelDefault": "Модель за замовчуванням",
+			"modelCustom": "Задати модель",
+			"modelPlaceholder": "ID моделі",
+			"modelHint": "Цей агент не показує список моделей. Введіть ID потрібної моделі."
 		},
 		"row": {
 			"untitled": "Нова розмова",

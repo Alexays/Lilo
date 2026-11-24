@@ -43,6 +43,9 @@ export function initConversationsStore(): void {
 		_projects = data.projects;
 		_home = data.home;
 	});
+	on("agentReadiness", (data) => {
+		_agents = _agents.map((agent) => (agent.id === data.agentId ? { ...agent, checking: data.checking, readiness: data.readiness ?? agent.readiness } : agent));
+	});
 	on("conversationProjectChosen", (data) => { _chosenProject = data.path; });
 	on("openAskBar", (data) => {
 		_askSelection = data.selection;

@@ -1,12 +1,17 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import "../../lib/i18n/agentsCatalog";
   import { t } from "../../lib/i18n/state.svelte";
+  import { agentNote, agentStatus, signInMethods } from "../../lib/agentReadiness";
+  import type { BridgeAgentInfo } from "../../lib/bridge/protocol";
   import { type AgentCommand, parseAgentCommands, parseHiddenAgents } from "../../lib/agentCommands";
-  import { getAgents } from "../../stores/conversations.svelte";
+  import { getAgent, getAgents } from "../../stores/conversations.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { conversationActions } from "../agents/conversationActions";
   import AgentTile from "../agents/AgentTile.svelte";
   import SettingsAgentSheet from "./SettingsAgentSheet.svelte";
+  import UiBadge from "../ui/UiBadge.svelte";
+  import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
   import UiMoreMenu from "../ui/UiMoreMenu.svelte";
@@ -60,22 +65,67 @@
     return command.name || command.executable.split("/").filter(Boolean).at(-1) || command.id;
   }
 
+  const TONES = { ready: "success", needsSignIn: "accent", unavailable: "danger", unverified: "neutral" } as const;
+
+  // What the last probe found, and why when it is not simply ready. An agent nobody probed shows nothing.
+  function noteFor(agent: BridgeAgentInfo): string | undefined {
+    return agentNote(agent, {
+      needsSignIn: t("agents.readiness.needsSignIn"),
+      unavailable: t("agents.readiness.unavailable"),
+      unverified: t("agents.readiness.unverified"),
+    });
+  }
+
+  function readinessMenu(agent: BridgeAgentInfo | undefined): { label: string; onclick: () => void }[] {
+    if (!agent) return [];
+    const methods = signInMethods(agent);
+    return [
+      { label: t("agents.readiness.check"), onclick: () => conversationActions.probeAgent(agent.id, true) },
+      ...(methods.length > 1
+        ? methods.map((method) => ({ label: t("agents.readiness.signInWith", { method: method.name }), onclick: () => conversationActions.signInAgent(agent.id, method.id) }))
+        : []),
+    ];
+  }
+
   function commandLine(command: AgentCommand): string {
     return [command.executable, ...command.arguments.split("\n").map((line) => line.trim())].filter(Boolean).join(" ");
   }
 </script>
 
+{#snippet status(agent: BridgeAgentInfo | undefined)}
+  {#if agent?.checking}
+    <span class="status-line">{t("agents.readiness.checking")}</span>
+  {:else if agent && agentStatus(agent) !== "unknown"}
+    {@const state = agentStatus(agent)}
+    <span class="status-line">
+      <UiBadge tone={TONES[state as keyof typeof TONES]}>{t(`agents.readiness.${state}`)}</UiBadge>
+      {#if state !== "ready" && state !== "needsSignIn"}{noteFor(agent)}{/if}
+    </span>
+  {/if}
+{/snippet}
+
+{#snippet signIn(agent: BridgeAgentInfo | undefined)}
+  {#if agent && agentStatus(agent) === "needsSignIn" && !agent.checking}
+    {@const method = signInMethods(agent)[0]}
+    {#if method}<UiButton onclick={() => conversationActions.signInAgent(agent.id, method.id)}>{t("agents.readiness.signIn")}</UiButton>{/if}
+  {/if}
+{/snippet}
+
 <UiInsetList title={t("settings.agentList.commands")}>
   {#each commands as command (command.id)}
+    {@const info = getAgent(command.id)}
     <UiListRow title={commandName(command)} description={commandLine(command)}>
       {#snippet icon()}
         <AgentTile agentId={command.id} />
       {/snippet}
+      {@render status(info)}
       {#snippet action()}
+        {@render signIn(info)}
         <UiToggle ariaLabel={commandName(command)} checked={!hidden.has(command.id)} onchange={(checked) => setShown(command.id, checked)} />
         <UiMoreMenu
           label={t("settings.agentList.menu", { name: commandName(command) })}
           items={[
+            ...readinessMenu(info),
             { label: t("settings.agentList.edit"), onclick: () => (sheet = command) },
             { label: t("common.remove"), danger: true, onclick: () => remove(command) },
           ]}
@@ -98,8 +148,11 @@
         {#snippet icon()}
           <AgentTile agentId={agent.id} />
         {/snippet}
+        {@render status(agent)}
         {#snippet action()}
+          {@render signIn(agent)}
           <UiToggle ariaLabel={agent.name} checked={!hidden.has(agent.id)} onchange={(checked) => setShown(agent.id, checked)} />
+          <UiMoreMenu label={t("settings.agentList.menu", { name: agent.name })} items={readinessMenu(agent)} />
         {/snippet}
       </UiListRow>
     {/each}
@@ -111,6 +164,18 @@
 {/if}
 
 <style>
+  .status-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-6);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+  }
+
   .add-row {
     display: flex;
     align-items: center;

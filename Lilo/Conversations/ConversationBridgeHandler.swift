@@ -10,7 +10,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
         "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
-        "loadConversationCommands", "switchConversationAgent",
+        "loadConversationCommands", "switchConversationAgent", "probeAgent", "signInAgent",
         "searchConversationFiles", "previewConversationArtifact", "openConversationFile"
     ]
 
@@ -31,6 +31,10 @@ final class ConversationBridgeHandler: BridgeHandler {
             guard let agentId = payload["agentId"] as? String, let cwd = payload["cwd"] as? String else { return nil }
             let background = payload["background"] as? Bool ?? false
             guard let tab = await window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
+            // A model picked before the first prompt: the agent's record names the option that sets it.
+            if let model = payload["model"] as? String, !model.isEmpty, let configId = host.readiness.record(for: agentId)?.modelConfigId {
+                host.setConfigOption(tab.id, configId: configId, value: model)
+            }
             await prompt(tab.id, payload, interrupt: false)
         case "sendConversationPrompt":
             guard let tabId else { return nil }
@@ -59,22 +63,22 @@ final class ConversationBridgeHandler: BridgeHandler {
             }
         case "loadAgentCatalog":
             if payload["refresh"] as? Bool ?? false { await host.catalog.load() }
-            let featuredIds = Set(ACPAgentCatalog.featured.map(\.id))
             window.bridgeRouter.send(event: "agentCatalog", data: [
-                "agents": await host.catalog.runnableAgents().map { agent in
-                    var data: [String: Any] = ["id": agent.id, "name": agent.name, "description": agent.description]
-                    if case .command = agent.distribution {
-                        data["featured"] = true
-                        data["command"] = true
-                    } else if featuredIds.contains(agent.id) {
-                        data["featured"] = true
-                    }
-                    if let icon = host.catalog.iconDataURL(for: agent.id) { data["icon"] = icon }
-                    return data
-                },
+                "agents": await host.catalog.runnableAgents().map(host.agentPayload),
                 "projects": projects(),
                 "home": NSHomeDirectory()
             ])
+        case "probeAgent":
+            // Answers through the `agentReadiness` event, to every window; a record that is still fresh is not probed again.
+            // Not awaited: a probe can take a minute, which must not hold this message's turn open.
+            if let agentId = payload["agentId"] as? String, let agent = host.catalog.agent(id: agentId) {
+                let force = payload["force"] as? Bool ?? false
+                Task { await host.readiness.refresh(agent, force: force) }
+            }
+        case "signInAgent":
+            if let agentId = payload["agentId"] as? String, let methodId = payload["methodId"] as? String, let agent = host.catalog.agent(id: agentId) {
+                Task { await host.readiness.signIn(agent, methodId: methodId, in: window) }
+            }
         case "loadConversations":
             window.bridgeRouter.send(event: "conversationsChanged", data: ["conversations": host.summaries()])
         case "chooseConversationProject":

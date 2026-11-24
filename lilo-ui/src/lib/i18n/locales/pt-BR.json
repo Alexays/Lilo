@@ -2550,6 +2550,8 @@
 		"Screenshot of %@": "Captura de tela de %@",
 		"Selection from %@": "Seleção de %@",
 		"The agent stopped (code %d).": "O agente parou (código %d).",
+		"The agent did not answer in time.": "O agente não respondeu a tempo.",
+		"The agent could not open a session: %@": "O agente não conseguiu abrir uma sessão: %@",
 		"This agent is no longer in the ACP registry.": "Este agente não está mais no registro do ACP.",
 		"The agent stopped.": "O agente parou.",
 		"The agent is not running.": "O agente não está em execução.",
@@ -2839,6 +2841,21 @@
 			"featuredAgents": "Em destaque",
 			"registryAgents": "Registro",
 			"noMatches": "Nenhum agente correspondente"
+		},
+		"readiness": {
+			"ready": "Pronto",
+			"needsSignIn": "Requer login",
+			"unavailable": "Indisponível",
+			"unverified": "Não foi possível verificar",
+			"checking": "Verificando...",
+			"check": "Verificar agora",
+			"signIn": "Entrar",
+			"signInWith": "Entrar com {method}",
+			"model": "Modelo",
+			"modelDefault": "Modelo padrão",
+			"modelCustom": "Definir modelo",
+			"modelPlaceholder": "ID do modelo",
+			"modelHint": "Este agente não lista modelos. Digite o ID de um para usar."
 		},
 		"row": {
 			"untitled": "Nova conversa",

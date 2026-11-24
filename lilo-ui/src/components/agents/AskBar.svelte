@@ -7,6 +7,10 @@
   import { dismissable } from "../../lib/actions/dismissable";
   import { conversationActions } from "./conversationActions";
   import { parseHiddenAgents } from "../../lib/agentCommands";
+  import { agentNote, agentStatus, isPickable, modelControl } from "../../lib/agentReadiness";
+  import type { BridgeAgentInfo } from "../../lib/bridge/protocol";
+  import Icon from "../ui/Icon.svelte";
+  import { modelLogo } from "./modelLogos";
   import { t } from "../../lib/i18n/state.svelte";
   import { formatShortcut } from "../../lib/inputParser";
   import {
@@ -33,6 +37,8 @@
   let text = $state("");
   let attachments = $state.raw<AttachmentDraft[]>([]);
   let agentId = $state("");
+  // A model of the agent's record, set once its session opens; empty keeps the agent's default.
+  let model = $state("");
   let project = $state("");
   let pageTabId = $state<string | null>(null);
   let field: ReturnType<typeof PromptField> | undefined = $state();
@@ -91,9 +97,30 @@
 
   $effect(() => {
     const agents = enabledAgents;
-    if (agents.length === 0 || agents.some((agent) => agent.id === agentId)) return;
+    if (agents.length === 0 || agents.some((agent) => agent.id === agentId && isPickable(agent))) return;
+    // An agent that cannot start is never the default: the last one used, else the first that can.
     const last = getSetting("agentsLastAgent", "");
-    agentId = agents.some((agent) => agent.id === last) ? last : agents[0].id;
+    const pickable = agents.filter(isPickable);
+    agentId = (pickable.find((agent) => agent.id === last) ?? pickable[0] ?? agents[0]).id;
+  });
+
+  // The agent in front is looked at once per opening: the host answers from its record when that is recent.
+  let probedAgents: string[] = [];
+  $effect(() => {
+    if (!open) {
+      probedAgents = [];
+      return;
+    }
+    // Picking another agent in the same opening looks at it too; going back to one already looked at does not.
+    if (agentId && !probedAgents.includes(agentId)) {
+      probedAgents.push(agentId);
+      conversationActions.probeAgent(agentId);
+    }
+  });
+
+  $effect(() => {
+    void agentId;
+    model = "";
   });
 
   $effect(() => {
@@ -121,13 +148,39 @@
     return [...featured, ...rest].map((candidate) => ({
       value: candidate.id,
       label: candidate.name,
-      detail: candidate.description || undefined,
+      // What keeps an agent from starting, or asks something of the user, replaces its description.
+      detail: noteFor(candidate) ?? (candidate.description || undefined),
+      disabled: !isPickable(candidate),
       agentId: candidate.id,
       group: grouped ? t(candidate.featured ? "agents.ask.featuredAgents" : "agents.ask.registryAgents") : undefined,
     }));
   });
   const agent = $derived(getAgents().find((candidate) => candidate.id === agentId));
-  const canStart = $derived(!!agentId && text.trim().length > 0);
+  const canStart = $derived(!!agentId && !!agent && isPickable(agent) && text.trim().length > 0);
+  // The models the agent offered when last looked at, before any session exists to ask.
+  const models = $derived.by(() => {
+    const control = modelControl(agent, { hasModels: false, opened: false });
+    return control?.kind === "list" ? control.options : [];
+  });
+  const modelOptions = $derived([
+    { value: "", label: t("agents.readiness.modelDefault"), icon: "sparkle" as const },
+    ...models.map((option) => ({
+      value: option.id,
+      label: option.name,
+      detail: option.description,
+      icon: "sparkle" as const,
+      logo: modelLogo(`${option.id} ${option.name}`),
+    })),
+  ]);
+  const modelChoice = $derived(models.find((option) => option.id === model));
+
+  function noteFor(candidate: BridgeAgentInfo): string | undefined {
+    return agentNote(candidate, {
+      needsSignIn: t("agents.readiness.needsSignIn"),
+      unavailable: t("agents.readiness.unavailable"),
+      unverified: t("agents.readiness.unverified"),
+    });
+  }
 
   function start(background: boolean): void {
     if (!canStart) return;
@@ -137,6 +190,7 @@
       text: text.trim(),
       attachments: attachments.map((draft) => draft.attachment),
       background,
+      ...(model && { model }),
     });
     setSetting("agentsLastAgent", agentId);
     setSetting("agentsLastProject", project);
@@ -199,12 +253,26 @@
           {#if agent}<AgentTile agentId={agent.id} />{/if}
           {#if agent}
             <span class="picker-label">{agent.name}</span>
+            {#if agentStatus(agent) === "needsSignIn" || agentStatus(agent) === "unavailable"}
+              <span class="picker-label quiet">{t(`agents.readiness.${agentStatus(agent)}`)}</span>
+            {/if}
           {:else if catalogLoaded}
             <span class="picker-label quiet">{t("agents.ask.noAgents")}</span>
           {:else}
             <span class="catalog-spinner" aria-hidden="true"></span>
           {/if}
         </MenuPicker>
+        {#if models.length > 0}
+          <MenuPicker value={model} options={modelOptions} ariaLabel={t("agents.readiness.model")} onchange={(value) => (model = value)}>
+            {@const logo = modelChoice ? modelLogo(`${modelChoice.id} ${modelChoice.name}`) : undefined}
+            {#if logo}
+              <svg class="model-logo" viewBox="0 0 24 24" aria-hidden="true" style:color={logo.color}><path d={logo.path} /></svg>
+            {:else}
+              <Icon name="sparkle" size={13} />
+            {/if}
+            <span class="picker-label" class:quiet={!modelChoice}>{modelChoice?.name ?? t("agents.readiness.modelDefault")}</span>
+          </MenuPicker>
+        {/if}
         <button
           type="button"
           class="send"
@@ -283,6 +351,12 @@
 
   .picker-label.quiet {
     color: var(--text-secondary);
+  }
+
+  .model-logo {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
   }
 
   /* Shows only past 300 ms, and stops after about 30 s so a stalled catalog never keeps the display link up. */

@@ -2550,6 +2550,8 @@
 		"Screenshot of %@": "Снимок экрана: %@",
 		"Selection from %@": "Выделение: %@",
 		"The agent stopped (code %d).": "Агент остановился (код %d).",
+		"The agent did not answer in time.": "Агент не ответил вовремя.",
+		"The agent could not open a session: %@": "Агент не смог открыть сеанс: %@",
 		"This agent is no longer in the ACP registry.": "Этого агента больше нет в реестре ACP.",
 		"The agent stopped.": "Агент остановился.",
 		"The agent is not running.": "Агент не запущен.",
@@ -2839,6 +2841,21 @@
 			"featuredAgents": "Рекомендуемые",
 			"registryAgents": "Реестр",
 			"noMatches": "Нет подходящих агентов"
+		},
+		"readiness": {
+			"ready": "Готов",
+			"needsSignIn": "Требуется вход",
+			"unavailable": "Недоступен",
+			"unverified": "Не удалось проверить",
+			"checking": "Проверка...",
+			"check": "Проверить сейчас",
+			"signIn": "Войти",
+			"signInWith": "Войти через {method}",
+			"model": "Модель",
+			"modelDefault": "Модель по умолчанию",
+			"modelCustom": "Задать модель",
+			"modelPlaceholder": "ID модели",
+			"modelHint": "Этот агент не показывает список моделей. Введите ID нужной модели."
 		},
 		"row": {
 			"untitled": "Новый разговор",
