@@ -268,15 +268,25 @@
   }
 
   /* An opaque band would cut across glass or grain, so the material shows through while nothing
-     sits under the strip; once tabs scroll under it, a near-opaque layer of the Space color keeps
-     their labels from bleeding through the strip's own. */
+     sits under the strip. */
   :global(html[data-material='glass']) .favorites-section.pinned,
   :global(html[data-material='grain']) .favorites-section.pinned {
     background: transparent;
   }
 
+  /* Once tabs scroll under it, the strip frosts them the way a native toolbar frosts what runs
+     beneath it: the labels lose their edges, and a light layer of the Space color keeps the strip
+     in the sidebar's hue. The layer stays near the material's own tint, so the strip reads as part
+     of the material instead of a band painted over it. */
   :global(html[data-material='glass']) .favorites-section.pinned.scrolled,
   :global(html[data-material='grain']) .favorites-section.pinned.scrolled {
+    background: color-mix(in srgb, var(--sidebar-bg) 30%, transparent);
+    backdrop-filter: blur(20px) saturate(1.3);
+  }
+
+  /* Without the blur, the labels under the strip would read through it: it turns opaque, as native
+     materials do when the system asks for less transparency. */
+  :global(html:is(.reduced-transparency, .reduced-power)) .favorites-section.pinned.scrolled {
     background: color-mix(in srgb, var(--sidebar-bg) 93%, transparent);
   }
 

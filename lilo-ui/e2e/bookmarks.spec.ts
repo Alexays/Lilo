@@ -118,10 +118,11 @@ test("the pinned favorites band lets a glass or grain Space's material through",
 	await expect(favorites).toHaveClass(/pinned/);
 	await expect(favorites).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 
-	// Once tabs scroll under it, a near-opaque layer of the Space color keeps their labels from bleeding through.
+	// Once tabs scroll under it, the strip frosts them: a light Space-color layer plus blur, no opaque band.
 	await page.locator(".space-pane").first().locator(".space-scroll").evaluate((el) => el.scrollTo({ top: 400 }));
 	await expect(favorites).toHaveClass(/scrolled/);
-	await expect(favorites).toHaveCSS("background-color", "color(srgb 0.290196 0.564706 0.85098 / 0.93)");
+	await expect(favorites).toHaveCSS("background-color", "color(srgb 0.290196 0.564706 0.85098 / 0.3)");
+	await expect(favorites).toHaveCSS("backdrop-filter", "blur(20px) saturate(1.3)");
 
 	await page.evaluate(() => {
 		document.documentElement.dataset.material = "solid";
