@@ -171,4 +171,50 @@ final class PluginHostTests: XCTestCase {
         XCTAssertNotNil(second)
         XCTAssertTrue(first !== second)
     }
+
+    func testHostAPIGatesOnLiveGrantsAndRoutesSettingsAndFiles() async throws {
+        try StubPlugin.write(at: userRoot.appendingPathComponent("stub"), manifest: [
+            "capabilities": ["settings:store", "files:plugin-dir", "tabs:read", "tabs:open"]
+        ])
+        let (host, store, _) = try makeHost()
+        await host.refresh()
+        let record = try XCTUnwrap(host.record(id: "app.lilo.test.stub"))
+        let api = host.hostAPI(for: record)
+
+        let set = await api.handle("settings.set", params: .object(["name": .string("mode"), "value": .string("fast")]))
+        XCTAssertEqual(set, .success(.null))
+        XCTAssertEqual(store.pluginSettingValues["app.lilo.test.stub"]?["mode"], .string("fast"))
+
+        // Files land in the plugin's support folder, nowhere else.
+        let write = await api.handle("files.write", params: .object(["path": .string("state.json"), "content": .string("{}")]))
+        XCTAssertEqual(write, .success(.null))
+        XCTAssertEqual(
+            try String(contentsOf: supportRoot.appendingPathComponent("app.lilo.test.stub/state.json"), encoding: .utf8), "{}"
+        )
+
+        // With no window the tab adapter answers an empty list and cannot open.
+        XCTAssertEqual(await api.handle("tabs.list", params: .null), .success(.object(["tabs": .array([])])))
+        XCTAssertEqual(
+            await api.handle("tabs.open", params: .object(["url": .string("https://example.com")])),
+            .failure(PluginRequestError(code: -32002, message: "No window can open the tab"))
+        )
+
+        // A revoke applies to the api already handed to a running session.
+        host.revokeCapability("tabs:read", for: "app.lilo.test.stub")
+        host.revokeCapability("files:plugin-dir", for: "app.lilo.test.stub")
+        XCTAssertEqual(await api.handle("tabs.list", params: .null), .failure(.capabilityNotGranted))
+        XCTAssertEqual(await api.handle("files.read", params: .object(["path": .string("state.json")])), .failure(.capabilityNotGranted))
+        XCTAssertEqual(
+            await api.handle("settings.get", params: .null), .success(.object(["mode": .string("fast")]))
+        )
+    }
+
+    func testTabAdapterMapsATabToIDURLAndTitle() {
+        let tab = Tab(id: UUID(), url: URL(string: "https://example.com/a"), title: "Example")
+        XCTAssertEqual(
+            PluginTabsAdapter.plugin(tab),
+            PluginTab(id: tab.id.uuidString, url: "https://example.com/a", title: "Example")
+        )
+        XCTAssertEqual(PluginTabsAdapter.plugin(Tab(url: nil, title: "")).url, "")
+    }
 }

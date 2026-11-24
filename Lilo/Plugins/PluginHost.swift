@@ -19,16 +19,21 @@ final class PluginHost {
     private let registry: PluginRegistry
     private weak var settingsStore: SettingsStore?
     private let secrets: any PluginSecretStore
+    private let tabs: PluginTabsAdapter
     private var sessions: [String: PluginSession] = [:]
     private var records: [PluginRecord] = []
 
-    init(settingsStore: SettingsStore, registry: PluginRegistry, secrets: any PluginSecretStore) {
+    init(settingsStore: SettingsStore, registry: PluginRegistry, secrets: any PluginSecretStore, tabs: PluginTabsAdapter = PluginTabsAdapter()) {
+        self.tabs = tabs
         self.settingsStore = settingsStore
         self.registry = registry
         self.secrets = secrets
     }
 
-    convenience init(settingsStore: SettingsStore, secrets: any PluginSecretStore = KeychainPluginSecretStore()) {
+    convenience init(
+        settingsStore: SettingsStore, secrets: any PluginSecretStore = KeychainPluginSecretStore(),
+        tabs: PluginTabsAdapter = PluginTabsAdapter()
+    ) {
         var roots = [PluginRegistry.Root(url: Self.defaultUserRoot, bundled: false)]
         if let bundled = Bundle.main.resourceURL?.appendingPathComponent("Plugins", isDirectory: true) {
             roots.append(PluginRegistry.Root(url: bundled, bundled: true))
@@ -36,7 +41,8 @@ final class PluginHost {
         self.init(
             settingsStore: settingsStore,
             registry: PluginRegistry(roots: roots, supportRoot: Self.defaultSupportRoot),
-            secrets: secrets
+            secrets: secrets,
+            tabs: tabs
         )
     }
 
@@ -78,11 +84,7 @@ final class PluginHost {
             if case .string(let secret) = value { try? secrets.setSecret(secret, for: id, name: name) }
             return
         }
-        var values = store.pluginSettingValues
-        var plugin = values[id] ?? [:]
-        plugin[name] = value
-        values[id] = plugin
-        store.pluginSettingValues = values
+        storeSettingValue(value, named: name, for: id)
     }
 
     func revokeCapability(_ capability: String, for id: String) {
@@ -161,7 +163,7 @@ final class PluginHost {
         return declared.filter { granted.contains($0.rawValue) }
     }
 
-    private func record(id: String) -> PluginRecord? {
+    func record(id: String) -> PluginRecord? {
         records.first { $0.id == id }
     }
 
@@ -176,8 +178,9 @@ final class PluginHost {
         guard let record = record(id: id), record.valid, isEnabled(record), let manifest = record.manifest else { return nil }
         if let session = sessions[id] { return session }
         let session = PluginSession(manifest: manifest, pluginRoot: record.folder)
-        await session.set(onRequest: { [weak self] method, params in
-            await self?.handlePluginRequest(pluginID: id, method: method, params: params) ?? .failure(.methodNotFound)
+        let api = hostAPI(for: record)
+        await session.set(onRequest: { method, params in
+            await api.handle(method, params: params)
         }, onExit: { [weak self] in
             Task { @MainActor in self?.onChanged?() }
         })
@@ -185,52 +188,33 @@ final class PluginHost {
         return session
     }
 
-    /// Plugin→host calls. Every method maps to one capability; a plugin without the grant gets
-    /// the rejection, and an unmapped method answers `methodNotFound`.
-    private func handlePluginRequest(
-        pluginID: String, method: String, params: JSONValue
-    ) async -> Result<JSONValue, PluginRequestError> {
-        let required: PluginCapability
-        switch method {
-        case "settings.get", "settings.set", "secrets.get", "secrets.set", "secrets.delete":
-            required = .settingsStore
-        default:
-            return .failure(.methodNotFound)
-        }
-        guard let record = record(id: pluginID), grantedCapabilities(for: record).contains(required) else {
-            return .failure(.capabilityNotGranted)
-        }
-        switch method {
-        case "settings.get":
-            return .success(.object(settingsStore?.pluginSettingValues[pluginID] ?? [:]))
-        case "settings.set":
-            guard case .object(let object) = params, case .string(let name)? = object["name"],
-                  let value = object["value"] else { return .failure(.methodNotFound) }
-            var values = settingsStore?.pluginSettingValues ?? [:]
-            var plugin = values[pluginID] ?? [:]
-            plugin[name] = value
-            values[pluginID] = plugin
-            settingsStore?.pluginSettingValues = values
-            return .success(.null)
-        case "secrets.get":
-            guard case .object(let object) = params, case .string(let name)? = object["name"] else {
-                return .failure(.methodNotFound)
-            }
-            let secret = try? secrets.secret(for: pluginID, name: name)
-            return .success(secret.map { .string($0) } ?? .null)
-        case "secrets.set":
-            guard case .object(let object) = params, case .string(let name)? = object["name"],
-                  case .string(let value)? = object["value"] else { return .failure(.methodNotFound) }
-            try? secrets.setSecret(value, for: pluginID, name: name)
-            return .success(.null)
-        case "secrets.delete":
-            guard case .object(let object) = params, case .string(let name)? = object["name"] else {
-                return .failure(.methodNotFound)
-            }
-            try? secrets.deleteSecret(for: pluginID, name: name)
-            return .success(.null)
-        default:
-            return .failure(.methodNotFound)
-        }
+    /// Plugin→host calls go through `PluginHostAPI`, which maps every method to one capability and
+    /// answers `capabilityNotGranted` without the grant. Grants are read per call, so a revoke
+    /// takes effect on a running sidecar's next request.
+    func hostAPI(for record: PluginRecord) -> PluginHostAPI {
+        let id = record.id
+        return PluginHostAPI(
+            pluginID: id, supportDirectory: record.supportDirectory, secrets: secrets,
+            adapters: PluginHostAdapters(
+                listTabs: { [tabs] in await MainActor.run { tabs.list() } },
+                openTab: { [tabs] url in await MainActor.run { tabs.open(url) } },
+                settingValues: { [weak self] _ in await self?.settingsStore?.pluginSettingValues[id] ?? [:] },
+                setSettingValue: { [weak self] _, name, value in await self?.storeSettingValue(value, named: name, for: id) }
+            ),
+            granted: { [weak self] in await self?.grantedSet(for: id) ?? [] }
+        )
+    }
+
+    private func grantedSet(for id: String) -> Set<PluginCapability> {
+        record(id: id).map { Set(grantedCapabilities(for: $0)) } ?? []
+    }
+
+    private func storeSettingValue(_ value: JSONValue, named name: String, for id: String) {
+        guard let store = settingsStore else { return }
+        var values = store.pluginSettingValues
+        var plugin = values[id] ?? [:]
+        plugin[name] = value
+        values[id] = plugin
+        store.pluginSettingValues = values
     }
 }
