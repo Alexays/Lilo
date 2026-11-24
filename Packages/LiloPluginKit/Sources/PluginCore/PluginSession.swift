@@ -12,6 +12,10 @@ public struct PluginRequestError: Error, Equatable, Sendable {
 
     /// A plugin calling a host API it was not granted gets this back.
     public static let capabilityNotGranted = PluginRequestError(code: -32001, message: "Capability not granted")
+    /// A call whose params are missing or malformed, or name something outside the plugin's reach.
+    public static func invalidParams(_ message: String) -> PluginRequestError {
+        PluginRequestError(code: -32602, message: message)
+    }
     /// Anything else the host does not implement.
     public static let methodNotFound = PluginRequestError(code: -32601, message: "Method not found")
 }
