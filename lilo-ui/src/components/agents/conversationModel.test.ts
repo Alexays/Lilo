@@ -684,3 +684,26 @@ test("switching agents swaps the conversation's agent, clears its pickers and co
   const last = conversation.thread.items.at(-1);
   assert.deepEqual(last?.kind === "notice" && [last.text, last.agentId], ["handoff", "codex-acp"]);
 });
+
+test("a URL elicitation draws a sign-in link and settles with its answer", async () => {
+  const { openConversation } = await import("./conversationThread");
+  const conversation = openConversation(
+    {
+      tabId: "t",
+      agentId: "a",
+      cwd: "/",
+      checkpoints: [],
+      updates: [
+        { sessionUpdate: "lilo_sign_in_link", requestId: "link1", url: "https://example.com/connect", message: "Sign in" },
+        { sessionUpdate: "lilo_permission_resolved", requestId: "link1", answer: { action: "accept" } },
+      ],
+    } as never,
+    [],
+  );
+  const [item] = conversation.thread.items;
+  assert.deepEqual([item?.kind, item?.kind === "signInLink" && item.url, item?.kind === "signInLink" && item.answer?.action], [
+    "signInLink",
+    "https://example.com/connect",
+    "accept",
+  ]);
+});

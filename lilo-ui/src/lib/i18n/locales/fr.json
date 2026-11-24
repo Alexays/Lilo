@@ -2846,6 +2846,11 @@
 			"skip": "Passer",
 			"skipped": "Passée"
 		},
+		"signInLink": {
+			"open": "Ouvrir dans un nouvel onglet",
+			"decline": "Ne pas ouvrir",
+			"opened": "Ouvert"
+		},
 		"badge": {
 			"title": "Agents",
 			"waiting": "{count, plural, one{Agents, # vous attend} other{Agents, # vous attendent}}",

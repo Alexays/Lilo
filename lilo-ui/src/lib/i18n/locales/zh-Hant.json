@@ -2854,6 +2854,11 @@
 			"skip": "略過",
 			"skipped": "已略過"
 		},
+		"signInLink": {
+			"open": "在新分頁中開啟",
+			"decline": "不開啟",
+			"opened": "已開啟"
+		},
 		"badge": {
 			"title": "代理程式",
 			"waiting": "{count, plural, one{代理程式，# 個正在等你} other{代理程式，# 個正在等你}}",

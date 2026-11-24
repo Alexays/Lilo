@@ -251,6 +251,16 @@ export interface QuestionItem {
   answer: QuestionAnswer | null;
 }
 
+/** One of the agent's URL elicitations: a page it asks the user to open (a browser sign-in). */
+export interface SignInLinkItem {
+  kind: "signInLink";
+  id: number;
+  requestId: string | number;
+  message: string;
+  url: string;
+  answer: QuestionAnswer | null;
+}
+
 export interface NoticeItem {
   kind: "notice";
   id: number;
@@ -268,6 +278,7 @@ export type ThreadItem =
   | PlanItem
   | PermissionItem
   | QuestionItem
+  | SignInLinkItem
   | NoticeItem;
 
 export interface ConversationState {
@@ -912,6 +923,23 @@ export function resolveQuestion(state: ConversationState, requestId: string | nu
   for (let i = state.items.length - 1; i >= 0; i--) {
     const item = state.items[i];
     if (item.kind === "question" && item.requestId === requestId) {
+      item.answer = answer;
+      break;
+    }
+  }
+  return state;
+}
+
+/** A URL elicitation: the page the agent asks the user to open, out of band. */
+export function addSignInLink(state: ConversationState, requestId: string | number, message: string, url: string): ConversationState {
+  state.items.push({ kind: "signInLink", id: state.nextId++, requestId, message, url, answer: null });
+  return state;
+}
+
+export function resolveSignInLink(state: ConversationState, requestId: string | number, answer: QuestionAnswer): ConversationState {
+  for (let i = state.items.length - 1; i >= 0; i--) {
+    const item = state.items[i];
+    if (item.kind === "signInLink" && item.requestId === requestId) {
       item.answer = answer;
       break;
     }

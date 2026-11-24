@@ -2854,6 +2854,11 @@
 			"skip": "Überspringen",
 			"skipped": "Übersprungen"
 		},
+		"signInLink": {
+			"open": "In einem neuen Tab öffnen",
+			"decline": "Nicht öffnen",
+			"opened": "Geöffnet"
+		},
 		"badge": {
 			"title": "Agenten",
 			"waiting": "{count, plural, one{Agenten, # wartet auf dich} other{Agenten, # warten auf dich}}",

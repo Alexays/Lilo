@@ -295,6 +295,8 @@ export function itemSignature(item: ThreadItem, undone: Set<string>): string {
       return item.answer ?? "";
     case "question":
       return item.answer?.action ?? "";
+    case "signInLink":
+      return item.answer?.action ?? "";
     case "notice":
       return item.text;
   }

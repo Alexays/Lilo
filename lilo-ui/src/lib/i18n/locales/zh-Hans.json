@@ -2854,6 +2854,11 @@
 			"skip": "跳过",
 			"skipped": "已跳过"
 		},
+		"signInLink": {
+			"open": "在新标签页中打开",
+			"decline": "不打开",
+			"opened": "已打开"
+		},
 		"badge": {
 			"title": "智能体",
 			"waiting": "{count, plural, one{智能体，# 个在等你} other{智能体，# 个在等你}}",

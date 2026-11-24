@@ -2854,6 +2854,11 @@
 			"skip": "Overslaan",
 			"skipped": "Overgeslagen"
 		},
+		"signInLink": {
+			"open": "Openen in een nieuw tabblad",
+			"decline": "Niet openen",
+			"opened": "Geopend"
+		},
 		"badge": {
 			"title": "Agents",
 			"waiting": "{count, plural, one{Agents, # wacht op je} other{Agents, # wachten op je}}",

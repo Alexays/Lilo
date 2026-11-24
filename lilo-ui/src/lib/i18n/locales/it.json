@@ -2854,6 +2854,11 @@
 			"skip": "Salta",
 			"skipped": "Saltata"
 		},
+		"signInLink": {
+			"open": "Apri in una nuova scheda",
+			"decline": "Non aprire",
+			"opened": "Aperto"
+		},
 		"badge": {
 			"title": "Agenti",
 			"waiting": "{count, plural, one{Agenti, # ti aspetta} other{Agenti, # ti aspettano}}",

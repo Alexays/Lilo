@@ -61,7 +61,7 @@
   // Mounted on first open, then kept so closing can animate.
   let opened = $state(false);
   // Only a question answered while on screen settles; one answered before the replay draws still.
-  const askedHere = untrack(() => (item.kind === "permission" || item.kind === "question") && item.answer === null);
+  const askedHere = untrack(() => (item.kind === "permission" || item.kind === "question" || item.kind === "signInLink") && item.answer === null);
   let confirmingRestore = $state(false);
   let copied = $state(false);
 </script>
@@ -262,6 +262,14 @@
       {view.answer.action === "accept" && picks.length
         ? t("agents.conversation.answered", { option: picks.join(", ") })
         : view.answer.action === "decline" ? t("agents.question.skipped") : t("agents.conversation.cancelled")}
+    </span>
+  </div>
+{:else if view.kind === "signInLink" && view.answer !== null}
+  <!-- A pending sign-in link docks over the composer; once answered, its answer stays in the thread. -->
+  <div class="permission" class:settled={askedHere}>
+    <span class="permission-title">{view.message}</span>
+    <span class="permission-answer">
+      {view.answer.action === "accept" ? t("agents.signInLink.opened") : t("agents.conversation.cancelled")}
     </span>
   </div>
 {:else if view.kind === "notice"}

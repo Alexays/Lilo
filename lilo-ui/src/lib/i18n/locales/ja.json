@@ -2854,6 +2854,11 @@
 			"skip": "スキップ",
 			"skipped": "スキップしました"
 		},
+		"signInLink": {
+			"open": "新しいタブで開く",
+			"decline": "開かない",
+			"opened": "開きました"
+		},
 		"badge": {
 			"title": "エージェント",
 			"waiting": "{count, plural, one{エージェント、# 件が対応待ち} other{エージェント、# 件が対応待ち}}",

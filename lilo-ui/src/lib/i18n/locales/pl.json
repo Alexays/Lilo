@@ -2854,6 +2854,11 @@
 			"skip": "Pomiń",
 			"skipped": "Pominięto"
 		},
+		"signInLink": {
+			"open": "Otwórz w nowej karcie",
+			"decline": "Nie otwieraj",
+			"opened": "Otwarto"
+		},
 		"badge": {
 			"title": "Agenci",
 			"waiting": "{count, plural, one{Agenci, # czeka na Ciebie} few{Agenci, # czekają na Ciebie} many{Agenci, # czeka na Ciebie} other{Agenci, # czeka na Ciebie}}",
