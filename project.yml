@@ -12,6 +12,8 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.10.0
+  LiloPluginKit:
+    path: Packages/LiloPluginKit
 
 targets:
   Lilo:
@@ -53,6 +55,8 @@ targets:
         product: GRDB
       - package: Sparkle
         product: Sparkle
+      - package: LiloPluginKit
+        product: PluginCore
       - framework: Vendor/GhosttyVt.xcframework
         embed: false
       - target: LiloPowerHelper
@@ -169,6 +173,8 @@ targets:
       - path: LiloTests
     dependencies:
       - target: Lilo
+      - package: LiloPluginKit
+        product: TestingSupport
     settings:
       base:
         # Not on the shared xcconfig's Swift 6: the tests are not yet clean under strict concurrency.

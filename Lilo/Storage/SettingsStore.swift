@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import PluginCore
 
 /// Simple key-value settings store backed by the global database. Reads are served from an
 /// in-memory mirror loaded once at init (accessors sit on hot paths: per-navigation and
@@ -304,6 +305,50 @@ final class SettingsStore {
         set {
             let json = (try? String(data: JSONEncoder().encode(newValue), encoding: .utf8)) ?? "{}"
             set("featureFlagOverrides", value: json)
+        }
+    }
+
+    /// Ids of the plugins the user enabled; anything not listed is disabled.
+    var enabledPluginIDs: Set<String> {
+        get {
+            guard let json = get("enabledPluginIDs"),
+                  let data = json.data(using: .utf8),
+                  let list = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+            return Set(list)
+        }
+        set {
+            let json = (try? String(data: JSONEncoder().encode(newValue.sorted()), encoding: .utf8)) ?? "[]"
+            set("enabledPluginIDs", value: json)
+        }
+    }
+
+    /// Capabilities still granted, per plugin id and by raw value (`tabs:read`, ...). A missing
+    /// entry grants everything the manifest declares; revoking writes the smaller set.
+    var pluginCapabilityGrants: [String: [String]] {
+        get {
+            guard let json = get("pluginCapabilityGrants"),
+                  let data = json.data(using: .utf8),
+                  let dict = try? JSONDecoder().decode([String: [String]].self, from: data) else { return [:] }
+            return dict
+        }
+        set {
+            let json = (try? String(data: JSONEncoder().encode(newValue), encoding: .utf8)) ?? "{}"
+            set("pluginCapabilityGrants", value: json)
+        }
+    }
+
+    /// Non-password setting values, per plugin id and setting name. `password` settings live in
+    /// the Keychain (`KeychainPluginSecretStore`) and never land here.
+    var pluginSettingValues: [String: [String: JSONValue]] {
+        get {
+            guard let json = get("pluginSettingValues"),
+                  let data = json.data(using: .utf8),
+                  let dict = try? JSONDecoder().decode([String: [String: JSONValue]].self, from: data) else { return [:] }
+            return dict
+        }
+        set {
+            let json = (try? String(data: JSONEncoder().encode(newValue), encoding: .utf8)) ?? "{}"
+            set("pluginSettingValues", value: json)
         }
     }
 }

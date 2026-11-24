@@ -52,6 +52,15 @@ public actor PluginSession {
     /// The sidecar stopped or was killed (deadline miss, idle exit, `stop`).
     public var onExit: (@Sendable () -> Void)?
 
+    /// Sets both plugin→host callbacks at once, before the first call configures the session.
+    public func set(
+        onRequest: @escaping @Sendable (String, JSONValue) async -> Result<JSONValue, PluginRequestError>,
+        onExit: @escaping @Sendable () -> Void
+    ) {
+        self.onRequest = onRequest
+        self.onExit = onExit
+    }
+
     /// The `ready` payload of the current sidecar, nil once it stops.
     public private(set) var ready: PluginReady?
 
