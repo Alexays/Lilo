@@ -1,0 +1,3 @@
+kind: Fixed
+body: An agent's devtools no longer hang for a minute on a tab after it switches profiles, and a performance profile keeps the samples of a page reached by a cross-site navigation
+time: 2026-11-26T00:21:04.017892+01:00

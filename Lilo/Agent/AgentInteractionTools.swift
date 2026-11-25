@@ -379,7 +379,10 @@ enum AgentInteractionTools {
         if ["left_click", "double_click", "triple_click", "key"].contains(action) {
             let start = ContinuousClock.now
             while !engine.isLoading, ContinuousClock.now - start < .milliseconds(100) { try? await Task.sleep(for: .milliseconds(20)) }
-            if engine.isLoading { await AgentTools.waitForLoad(engine, capture: control.captures[tab.id]) }
+            if engine.isLoading {
+                await AgentTools.waitForLoad(engine, capture: control.captures[tab.id])
+                if control.profilingTabIds.contains(tab.id) { _ = try? await control.inspectors[tab.id]?.script("profileFollows") }
+            }
             // A post or a payment sent by script: leaving the page before its request ends would cancel it.
             if let capture = control.captures[tab.id] {
                 let running = { capture.indexByLoad.filter { !loadsBefore.contains($0.key) }.values.map { capture.requests[$0] } }
