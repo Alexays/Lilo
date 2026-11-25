@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../../lib/i18n/pluginCatalog";
   import UiBadge from "../../components/ui/UiBadge.svelte";
   import { getFormatLocale, t } from "../i18n/state.svelte";
   import { capabilityLabelKey, pluginInitial, type PluginRow } from "./pluginModel";

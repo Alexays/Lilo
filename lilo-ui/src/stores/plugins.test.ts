@@ -14,7 +14,6 @@ async function setup() {
 	const posted = stubBridgeWindow();
 	const loadStore = await freshStores();
 	const store = await loadStore("/src/stores/plugins.svelte.ts");
-	store.initPluginsStore();
 	return { posted, store };
 }
 

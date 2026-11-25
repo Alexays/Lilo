@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../../lib/i18n/pluginCatalog";
   import UiToggle from "../../components/ui/UiToggle.svelte";
   import { t } from "../i18n/state.svelte";
   import { isPluginPending } from "../../stores/plugins.svelte";

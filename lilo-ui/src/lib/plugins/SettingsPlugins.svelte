@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../../lib/i18n/pluginCatalog";
   import UiButton from "../../components/ui/UiButton.svelte";
   import UiInsetList from "../../components/ui/UiInsetList.svelte";
   import UiModal from "../../components/ui/UiModal.svelte";

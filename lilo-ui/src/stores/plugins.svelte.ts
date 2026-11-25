@@ -1,7 +1,7 @@
 // Plugin store: the plugins the host found, enabled or not, with the optimistic wait on their toggles.
+// The module is loaded with the Plugins section, not with the chrome: nothing here belongs in the first frame.
 
-import { on } from "../lib/bridge";
-import { pluginActions } from "../lib/bridge/actions";
+import { on, postMessage } from "../lib/bridge";
 import type { BridgePluginSettingValue } from "../lib/bridge/protocol";
 import { coercePluginRow, type PluginRow } from "../lib/plugins/pluginModel";
 
@@ -21,18 +21,17 @@ function settle(id: string): void {
 	_pending = rest;
 }
 
-export function initPluginsStore(): void {
-	on("pluginsChanged", (data) => {
-		_plugins = (Array.isArray(data.plugins) ? data.plugins : []).map(coercePluginRow).filter((row) => row !== null);
-		_loaded = true;
-		for (const [id, { enabled }] of Object.entries(_pending)) {
-			if (getPlugin(id)?.enabled !== !enabled) settle(id);
-		}
-	});
-}
+// The listener registers when the module loads: the Plugins section loads it, and nothing else needs it.
+on("pluginsChanged", (data) => {
+	_plugins = (Array.isArray(data.plugins) ? data.plugins : []).map(coercePluginRow).filter((row) => row !== null);
+	_loaded = true;
+	for (const [id, { enabled }] of Object.entries(_pending)) {
+		if (getPlugin(id)?.enabled !== !enabled) settle(id);
+	}
+});
 
 /** Asks the host for the list; the Plugins section calls it when it opens, so a closed Settings costs nothing. */
-export const loadPlugins = (): void => pluginActions.load();
+export const loadPlugins = (): void => postMessage("getPlugins");
 
 export const getPlugins = (): PluginRow[] => _plugins;
 export const getPlugin = (id: string): PluginRow | undefined => _plugins.find((plugin) => plugin.id === id);
@@ -43,13 +42,14 @@ export const isPluginPending = (id: string): boolean => id in _pending;
 export function setPluginEnabled(id: string, enabled: boolean): void {
 	if (isPluginPending(id) || getPlugin(id)?.enabled === enabled) return;
 	_pending = { ..._pending, [id]: { enabled, timer: setTimeout(() => settle(id), PENDING_TIMEOUT_MS) } };
-	pluginActions.setEnabled(id, enabled);
+	postMessage("setPluginEnabled", { id, enabled });
 }
 
 export function setPluginSetting(id: string, name: string, value: BridgePluginSettingValue): void {
-	pluginActions.setSetting(id, name, value);
+	postMessage("setPluginSetting", { id, name, value });
 }
 
-export const revokePluginCapability = (id: string, capability: string): void => pluginActions.revokeCapability(id, capability);
-export const showPluginInFinder = (id: string): void => pluginActions.showInFinder(id);
-export const stopPlugin = (id: string): void => pluginActions.stop(id);
+export const revokePluginCapability = (id: string, capability: string): void =>
+	postMessage("revokePluginCapability", { id, capability });
+export const showPluginInFinder = (id: string): void => postMessage("showPluginInFinder", { id });
+export const stopPlugin = (id: string): void => postMessage("stopPlugin", { id });

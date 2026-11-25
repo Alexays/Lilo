@@ -7,7 +7,6 @@ import type {
 	BridgeControlTabOrder,
 	BridgeLinkDropTarget,
 	BridgeMediaAction,
-	BridgePluginSettingValue,
 	ImportSelection,
 	OptionalPayloadCommandName,
 	ScreenshotExport,
@@ -371,16 +370,6 @@ export const keepAwakeActions = {
 	openLoginItems: emitEmpty("openLoginItemsSettings"),
 	loadRunningApps: emitEmpty("getRunningApps"),
 	loadAppNames: (ids: string[]): void => emit("getAppNames", { ids }),
-};
-
-export const pluginActions = {
-	load: emitEmpty("getPlugins"),
-	setEnabled: (id: string, enabled: boolean): void => emit("setPluginEnabled", { id, enabled }),
-	setSetting: (id: string, name: string, value: BridgePluginSettingValue): void =>
-		emit("setPluginSetting", { id, name, value }),
-	revokeCapability: (id: string, capability: string): void => emit("revokePluginCapability", { id, capability }),
-	showInFinder: emitId("showPluginInFinder"),
-	stop: emitId("stopPlugin"),
 };
 
 export const meetingActions = {

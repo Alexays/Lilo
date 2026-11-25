@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../../lib/i18n/pluginCatalog";
   import UiSelect from "../../components/ui/UiSelect.svelte";
   import UiTextField from "../../components/ui/UiTextField.svelte";
   import UiToggle from "../../components/ui/UiToggle.svelte";

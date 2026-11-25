@@ -46,9 +46,9 @@ function stripNativeStringsPlugin(): Plugin {
 		enforce: "pre",
 		load(id) {
 			if (!id.endsWith("/i18n/locales/en.json?raw")) return null;
-			const { whatsNew, agents, settings } = JSON.parse(readFileSync(id.slice(0, -4), "utf8"));
+			const { whatsNew, agents, settings, plugins } = JSON.parse(readFileSync(id.slice(0, -4), "utf8"));
 			delete whatsNew.releases;
-			return `export default ${JSON.stringify(JSON.stringify({ whatsNew, agents, settings }))}`;
+			return `export default ${JSON.stringify(JSON.stringify({ whatsNew, agents, settings, plugins }))}`;
 		},
 		transform(code, id) {
 			if (!/\/i18n\/locales\/[^/]+\.json$/.test(id)) return null;
@@ -58,6 +58,7 @@ function stripNativeStringsPlugin(): Plugin {
 				delete catalog.whatsNew;
 				delete catalog.agents;
 				delete catalog.settings;
+				delete catalog.plugins;
 			}
 			else if (catalog.whatsNew) delete catalog.whatsNew.releases;
 			return { code: JSON.stringify(catalog), map: null };
