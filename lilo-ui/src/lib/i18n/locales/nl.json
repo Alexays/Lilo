@@ -2767,6 +2767,7 @@
 			"moreOptions": "Meer opties",
 			"switchBusy": "Beschikbaar zodra het antwoord klaar is",
 			"switchNote": "De nieuwe agent krijgt een samenvatting van dit gesprek, niet de volledige geschiedenis.",
+			"openInTab": "Openen in tab",
 			"signInHint": "Log in bij de agent: je bericht wordt verstuurd zodra je bent ingelogd.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Naar nieuwste",

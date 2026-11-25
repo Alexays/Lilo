@@ -2767,6 +2767,7 @@
 			"moreOptions": "更多选项",
 			"switchBusy": "回复结束后可用",
 			"switchNote": "新智能体会收到本对话的摘要，而不是完整历史。",
+			"openInTab": "在标签页中打开",
 			"signInHint": "请使用智能体登录：登录后即发送你的消息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新",

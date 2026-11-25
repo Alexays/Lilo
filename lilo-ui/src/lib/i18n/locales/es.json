@@ -2767,6 +2767,7 @@
 			"moreOptions": "Más opciones",
 			"switchBusy": "Disponible cuando termine la respuesta",
 			"switchNote": "El nuevo agente recibe un resumen de esta conversación, no el historial completo.",
+			"openInTab": "Abrir en una pestaña",
 			"signInHint": "Inicia sesión con el agente: tu mensaje se envía en cuanto inicies sesión.",
 			"branch": "Rama {branch}",
 			"jumpToLatest": "Ir al final",

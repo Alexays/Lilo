@@ -2767,6 +2767,7 @@
 			"moreOptions": "Altre opzioni",
 			"switchBusy": "Disponibile al termine della risposta",
 			"switchNote": "Il nuovo agente riceve un riepilogo di questa conversazione, non la cronologia completa.",
+			"openInTab": "Apri in una scheda",
 			"signInHint": "Accedi con l'agente: il messaggio viene inviato appena hai effettuato l'accesso.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Vai agli ultimi",

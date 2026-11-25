@@ -2767,6 +2767,7 @@
 			"moreOptions": "その他のオプション",
 			"switchBusy": "応答が終わると選べます",
 			"switchNote": "新しいエージェントには、会話の全履歴ではなく要約が渡されます。",
+			"openInTab": "タブで開く",
 			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
 			"branch": "ブランチ {branch}",
 			"jumpToLatest": "最新へ移動",

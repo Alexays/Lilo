@@ -2767,6 +2767,7 @@
 			"moreOptions": "更多選項",
 			"switchBusy": "回覆結束後可用",
 			"switchNote": "新代理程式會收到此對話的摘要，而不是完整歷史。",
+			"openInTab": "在分頁中開啟",
 			"signInHint": "請使用代理程式登入：登入後即傳送你的訊息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新",

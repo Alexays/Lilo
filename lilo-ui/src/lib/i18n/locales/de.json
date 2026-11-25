@@ -2767,6 +2767,7 @@
 			"moreOptions": "Weitere Optionen",
 			"switchBusy": "Verfügbar, sobald die Antwort fertig ist",
 			"switchNote": "Der neue Agent erhält eine Zusammenfassung dieser Unterhaltung, nicht den vollständigen Verlauf.",
+			"openInTab": "In Tab öffnen",
 			"signInHint": "Melde dich beim Agenten an: Deine Nachricht wird gesendet, sobald du angemeldet bist.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Zum Neuesten",

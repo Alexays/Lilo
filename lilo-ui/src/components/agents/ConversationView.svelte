@@ -66,9 +66,12 @@
     tabId: string;
     /** The pane's frame as shares of the content area. */
     frame: Pick<BridgeSplitPaneFrame, "x" | "y" | "width" | "height">;
+    /** Set on a mini card: Esc and its close button call it, as `onexpand` its expand button. */
+    onclose?: () => void;
+    onexpand?: () => void;
   }
 
-  let { tabId, frame }: Props = $props();
+  let { tabId, frame, onclose, onexpand }: Props = $props();
 
   type ItemRow = { kind: "item"; key: string; item: ThreadItem; sig: string; promptIndex: number; canRestore: boolean; turn: TurnSummary | null };
   type WorkRow = { kind: "work"; key: string; calls: ToolCallItem[]; sig: string; promptIndex: number; done: boolean };
@@ -573,7 +576,7 @@
   }
 </script>
 
-<div class="conversation-root chrome-content-overlay-root">
+<div class="conversation-root chrome-content-overlay-root" class:in-card={!!onclose}>
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section
     class="conversation"
@@ -659,6 +662,14 @@
           <span class="ring" class:high={usagePercent >= 80} style:--context-used="{usagePercent}%"></span>
           {usagePercent}%
         </span>
+      {/if}
+      {#if onclose}
+        <button type="button" class="card-control" aria-label={t("agents.conversation.openInTab")} use:tooltip={t("agents.conversation.openInTab")} onclick={onexpand}>
+          <Icon name="external" size={12} />
+        </button>
+        <button type="button" class="card-control" aria-label={t("common.close")} use:tooltip={t("common.close")} onclick={onclose}>
+          <Icon name="close" size={12} />
+        </button>
       {/if}
     </header>
 
@@ -875,7 +886,7 @@
           }}
           onsubmit={send}
           onemptyreturn={(always) => attachments.length === 0 && (answerPending(true, always) || (questionForm?.answer("accept") ?? false))}
-          onescape={() => answerPending(false) || (questionForm?.answer("decline") ?? false) || stop()}
+          onescape={() => answerPending(false) || (questionForm?.answer("decline") ?? false) || (onclose ? (onclose(), true) : stop())}
           onemptykey={(key) => questionForm?.pick(key) ?? false}
           onemptyup={() => {
             const items = conversation?.thread.items ?? [];
@@ -1033,6 +1044,41 @@
       --bg-primary: var(--conversation-bg);
       --float-surface: var(--conversation-surface);
     }
+  }
+
+  /* A card sizes it, not the window's content area. */
+  .conversation-root.in-card {
+    position: absolute;
+    inset: 0;
+    border-radius: 0;
+  }
+
+  .in-card .conversation {
+    border-radius: 0;
+  }
+
+  .card-control {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+
+  .card-control:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .card-control:focus-visible {
+    outline: var(--focus-outline);
   }
 
   .header {

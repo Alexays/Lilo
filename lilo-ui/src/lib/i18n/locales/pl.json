@@ -2767,6 +2767,7 @@
 			"moreOptions": "Więcej opcji",
 			"switchBusy": "Dostępne po zakończeniu odpowiedzi",
 			"switchNote": "Nowy agent dostaje podsumowanie tej rozmowy, a nie pełną historię.",
+			"openInTab": "Otwórz w karcie",
 			"signInHint": "Zaloguj się w agencie: wiadomość zostanie wysłana, gdy się zalogujesz.",
 			"branch": "Gałąź {branch}",
 			"jumpToLatest": "Przejdź do najnowszych",

@@ -2767,6 +2767,7 @@
 			"moreOptions": "Diğer seçenekler",
 			"switchBusy": "Yanıt bittiğinde kullanılabilir",
 			"switchNote": "Yeni ajan, tüm geçmişi değil bu konuşmanın bir özetini alır.",
+			"openInTab": "Sekmede aç",
 			"signInHint": "Ajanla oturum açın: oturum açtığınızda mesajınız gönderilir.",
 			"branch": "Dal {branch}",
 			"jumpToLatest": "En yeniye git",

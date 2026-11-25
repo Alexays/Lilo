@@ -2759,6 +2759,7 @@
 			"moreOptions": "More options",
 			"switchBusy": "Available once this turn ends",
 			"switchNote": "The new agent gets a summary of this conversation, not the full history.",
+			"openInTab": "Open in a tab",
 			"signInHint": "Sign in with the agent: your message is sent once you are signed in.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Jump to latest",
