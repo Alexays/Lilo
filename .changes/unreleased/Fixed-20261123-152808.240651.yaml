@@ -1,0 +1,3 @@
+kind: Fixed
+body: While an agent's call runs, App Nap no longer slows Lilo down when its window is hidden
+time: 2026-11-23T15:28:08.240651-08:00

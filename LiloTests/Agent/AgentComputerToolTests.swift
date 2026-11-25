@@ -574,6 +574,20 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(reply.text, "\"late\"")
     }
 
+    func testAppNapStaysOffOnlyWhileACallRuns() async throws {
+        let tab = try await newAgentTab()
+        XCTAssertNil(control.napActivity, "nothing is held between calls")
+
+        let call = Task { await client.callTool("javascript_tool", ["tabId": tab, "action": "javascript_exec", "text": "await new Promise(r => setTimeout(() => r('done'), 800))"]) }
+        let held = await pollUntil(timeout: 5) { self.control.napActivity != nil }
+        XCTAssertTrue(held, "a running call holds App Nap off")
+        let reply = await call.value
+        XCTAssertEqual(reply.text, "\"done\"")
+        let released = await pollUntil(timeout: 5) { self.control.napActivity == nil }
+        XCTAssertTrue(released, "the last call to end lets go")
+        XCTAssertEqual(control.callsInFlight, 0)
+    }
+
     func testALongCallSendsProgressToAClientThatAskedForIt() async throws {
         let tab = try await newAgentTab()
         AgentMCP.progressInterval = .milliseconds(500)

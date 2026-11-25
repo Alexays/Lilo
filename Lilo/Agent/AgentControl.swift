@@ -56,6 +56,19 @@ final class AgentControl {
     static var sleepDelay: TimeInterval = 10
     /// Parked tabs put to sleep, woken by the agent's next call on them.
     var sleepingTabIds: Set<UUID> = []
+    /// Agent calls running, across sessions. While any runs, App Nap stays off: a hidden Lilo would stretch
+    /// the call's timers and script round trips. The Mac can still idle-sleep, and nothing is held between calls.
+    var callsInFlight = 0 {
+        didSet {
+            if callsInFlight > 0, napActivity == nil {
+                napActivity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep, reason: "An agent call is running")
+            } else if callsInFlight == 0, let napActivity {
+                ProcessInfo.processInfo.endActivity(napActivity)
+                self.napActivity = nil
+            }
+        }
+    }
+    private(set) var napActivity: NSObjectProtocol?
     /// Tabs a `performance` profile records, which never sleep: it spans the calls between its start and its stop.
     var profilingTabIds: Set<UUID> = []
     /// The per-call record of what agents did, in the app's support folder.
