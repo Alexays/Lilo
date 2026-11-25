@@ -511,6 +511,11 @@
 				"description": "本地文件逐条列出每次调用,绝不包含输入的文字或页面内容。",
 				"keywords": "智能体 日志 历史 审计 操作 回放"
 			},
+			"agentBackgroundHost": {
+				"title": "为智能体保持打开",
+				"description": "关闭最后一个窗口后，Lilo 会留在菜单栏中，智能体仍可使用。你自己标签页中的媒体会停止播放。",
+				"keywords": "智能体 后台 菜单栏 程序坞 窗口 关闭"
+			},
 			"agentAlwaysAllowed": {
 				"title": "始终允许",
 				"description": "智能体在这些网站上操作时无需询问。",
@@ -2089,6 +2094,8 @@
 		"Command failed": "命令失败",
 		"Command finished": "命令已完成",
 		"Waiting for your answer": "等待你的答复",
+		"Open for agents": "为智能体保持打开",
+		"Show Lilo": "显示 Lilo",
 		"Reply": "回复",
 		"Send": "发送",
 		"%@ failed with exit code %d after %@.": "%@ 失败，退出码为 %d，用时 %@。",

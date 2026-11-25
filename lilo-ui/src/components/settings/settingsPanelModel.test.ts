@@ -65,6 +65,16 @@ test("settings under a switch that is off drop out of their group", () => {
   assert.deepEqual(shown[0].settings, ["agentsEnabled", "agentConversationPlacement", "agentsNotifyDone", "agentSystemPrompt", "agentSystemPromptText", "agentList"]);
 });
 
+test("the background agent host is an agent access switch, off until turned on", () => {
+  const access = sectionGroups("agents").find((group) => group.groupKey === "settings.groups.agentAccess");
+  assert.ok(access?.settings.includes("agentBackgroundHost"));
+  const values: Record<string, string> = {};
+  const get = (key: string, fallback: string) => values[key] ?? fallback;
+  assert.equal(isToggleOn("agentBackgroundHost", get), false);
+  values.agentBackgroundHost = "true";
+  assert.equal(isToggleOn("agentBackgroundHost", get), true);
+});
+
 test("cross-site tracking prevention is a protection switch, on until turned off", () => {
   const protection = sectionGroups("privacy").find((group) => group.groupKey === "settings.groups.protection");
   assert.ok(protection?.settings.includes("preventCrossSiteTracking"));

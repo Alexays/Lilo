@@ -511,6 +511,11 @@
 				"description": "Um arquivo local lista cada chamada, nunca o texto digitado nem o conteúdo das páginas.",
 				"keywords": "agente registro histórico auditoria ações reproduzir"
 			},
+			"agentBackgroundHost": {
+				"title": "Continuar aberto para os agentes",
+				"description": "Ao fechar a última janela, o Lilo fica na barra de menus para que os agentes ainda possam usá-lo. A mídia das suas abas para.",
+				"keywords": "agente segundo plano barra de menus dock janela fechar"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre permitido",
 				"description": "Agentes atuam nestes sites sem perguntar.",
@@ -2089,6 +2094,8 @@
 		"Command failed": "O comando falhou",
 		"Command finished": "Comando concluído",
 		"Waiting for your answer": "Aguardando sua resposta",
+		"Open for agents": "Aberto para os agentes",
+		"Show Lilo": "Mostrar Lilo",
 		"Reply": "Responder",
 		"Send": "Enviar",
 		"%@ failed with exit code %d after %@.": "%@ falhou com o código de saída %d após %@.",

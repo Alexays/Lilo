@@ -254,6 +254,40 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertTrue(released, "the user's answer releases the held call")
     }
 
+    /// Closing the last window keeps quitting unless the user keeps Lilo open for agents. Then the window
+    /// hides, its questions wait in a notification, and the tap brings the window back to ask them.
+    func testClosingTheLastWindowKeepsLiloOpenForAgentsOnlyWhenAsked() async throws {
+        let posted = recordNotifications()
+        let tab = try await shopTab()
+        let engine = try engine(forTab: tab)
+        let session = try XCTUnwrap(control.sessions.first)
+        let hidden = try XCTUnwrap(window.window)
+        XCTAssertEqual(context.windows.windows.count, 1)
+        context.settingsStore!.set("agentControlEnabled", value: "true")
+        XCTAssertTrue(window.windowShouldClose(hidden), "the switch is off: closing quits as before")
+
+        context.settingsStore!.set(AgentBackgroundHost.settingKey, value: "true")
+        XCTAssertFalse(window.windowShouldClose(hidden), "the window hides instead")
+        addTeardownBlock { @MainActor in self.control.backgroundHost.leave() }
+        XCTAssertTrue(control.backgroundHost.isOn)
+        XCTAssertFalse(hidden.isVisible, "ordered out, so its pages are throttled like any hidden window's")
+
+        let approval = Task { try await control.approveConsequentialAction("click", label: "Place order", frame: nil, engine: engine, session: session) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the question holds rather than going to a window nobody sees")
+        let requestId = try XCTUnwrap(control.pendingConsentAnswers.keys.first)
+        let notification = try XCTUnwrap(posted.requests.first)
+        XCTAssertEqual(notification.identifier, AgentControl.consentNotificationId(requestId))
+
+        control.revealConsent(requestId: requestId)
+        XCTAssertFalse(control.backgroundHost.isOn, "the tap leaves the background")
+        XCTAssertTrue(hidden.isVisible)
+        control.answerConsent(requestId, granted: true)
+
+        let released = try await approval.value
+        XCTAssertTrue(released, "the user's answer releases the held call")
+    }
+
     /// A question nobody answers expires in a notification as it does in a drawer.
     func testAQuestionHeldInANotificationStillExpires() async throws {
         _ = recordNotifications()

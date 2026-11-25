@@ -511,6 +511,11 @@
 				"description": "Eine lokale Datei listet jeden Aufruf, nie eingegebenen Text oder Seiteninhalt.",
 				"keywords": "agent protokoll verlauf audit aktionen wiedergabe"
 			},
+			"agentBackgroundHost": {
+				"title": "Für Agenten geöffnet bleiben",
+				"description": "Wenn du das letzte Fenster schließt, bleibt Lilo in der Menüleiste, damit Agenten es weiter nutzen können. Medien in deinen eigenen Tabs stoppen.",
+				"keywords": "agent hintergrund menüleiste dock fenster schließen weiterlaufen"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Immer erlaubt",
 				"description": "Auf diesen Websites handeln Agenten ohne Nachfrage.",
@@ -2089,6 +2094,8 @@
 		"Command failed": "Befehl fehlgeschlagen",
 		"Command finished": "Befehl beendet",
 		"Waiting for your answer": "Wartet auf deine Antwort",
+		"Open for agents": "Für Agenten geöffnet",
+		"Show Lilo": "Lilo anzeigen",
 		"Reply": "Antworten",
 		"Send": "Senden",
 		"%@ failed with exit code %d after %@.": "%@ ist mit Exit-Code %d nach %@ fehlgeschlagen.",

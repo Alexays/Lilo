@@ -180,6 +180,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// The floating PiP panel joins every Space, so AppKit counts it as a visible window; the Dock click still asks
     /// for a browser window, brought forward unless one already shows on this Space.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if browserContext.agentControl.backgroundHost.isOn {
+            browserContext.agentControl.backgroundHost.leave()
+            return false
+        }
         let browserWindowShown = sender.windows.contains { !($0 is NSPanel) && $0.isVisible && $0.isOnActiveSpace }
         guard !browserWindowShown, let window = mainWindowController?.window else { return true }
         window.makeKeyAndOrderFront(nil)

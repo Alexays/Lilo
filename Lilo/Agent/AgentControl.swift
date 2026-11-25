@@ -39,6 +39,7 @@ final class AgentControl {
     var endedTabNumbers: Set<Int> = []
     /// Tabs currently flagged `isAgentControlled`, to clear the ones that left a folder.
     var controlledTabIds: Set<UUID> = []
+    let backgroundHost = AgentBackgroundHost()
     /// Hosts agent tabs of a space no window shows: off screen, transparent, never key, out of
     /// Mission Control, and clickless for the user.
     lazy var parkingWindow: NSWindow = {
@@ -428,7 +429,7 @@ final class AgentControl {
             "action": action ?? NSNull()
         ]
         let windows = context.windows.windows
-        if windows.isEmpty {
+        if windows.isEmpty || backgroundHost.isOn {
             // Nothing on screen can ask: the question holds in a notification whose tap opens a window at it,
             // and waits for the user or expires. With notifications off, nothing can ask at all.
             // The notification names only the agent: a page's labels and titles stay off the lock screen.
@@ -471,10 +472,11 @@ final class AgentControl {
     /// drawer. The question stays held: the user answers it, never the notification itself.
     func revealConsent(requestId: String) {
         guard let pending = pendingConsentAnswers[requestId], let context else { return }
+        backgroundHost.leave()
         if context.windows.windows.isEmpty, let spaceId = context.spaceManager?.spaces.first?.id {
             context.openWindow(on: spaceId, opening: .nothing)
         }
-        NSApp.activate(ignoringOtherApps: true)
+        if !ProcessInfo.isRunningUnderXCTest { NSApp.activate() }
         for router in shows(pending.tabId, among: context.windows.windows).map(\.bridgeRouter) {
             router.send(event: "agentControlRequested", data: pending.request)
         }

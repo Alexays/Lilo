@@ -511,6 +511,11 @@
 				"description": "Een lokaal bestand somt elke aanroep op, nooit getypte tekst of pagina-inhoud.",
 				"keywords": "agent logboek geschiedenis audit acties herhalen"
 			},
+			"agentBackgroundHost": {
+				"title": "Open blijven voor agents",
+				"description": "Als je het laatste venster sluit, blijft Lilo in de menubalk zodat agents het nog kunnen gebruiken. Media in je eigen tabbladen stoppen.",
+				"keywords": "agent achtergrond menubalk dock venster sluiten"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Altijd toegestaan",
 				"description": "Agents voeren op deze websites acties uit zonder te vragen.",
@@ -2089,6 +2094,8 @@
 		"Command failed": "Commando mislukt",
 		"Command finished": "Commando voltooid",
 		"Waiting for your answer": "Wacht op je antwoord",
+		"Open for agents": "Open voor agents",
+		"Show Lilo": "Toon Lilo",
 		"Reply": "Antwoord",
 		"Send": "Verstuur",
 		"%@ failed with exit code %d after %@.": "%@ is mislukt met afsluitcode %d na %@.",

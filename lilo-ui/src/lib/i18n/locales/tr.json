@@ -511,6 +511,11 @@
 				"description": "Yerel bir dosya her çağrıyı listeler; yazılan metni ya da sayfa içeriğini asla içermez.",
 				"keywords": "ajan günlük geçmiş denetim eylemler yeniden oynatma"
 			},
+			"agentBackgroundHost": {
+				"title": "Ajanlar için açık kal",
+				"description": "Son pencereyi kapattığınızda Lilo menü çubuğunda kalır, böylece ajanlar onu kullanmaya devam edebilir. Kendi sekmelerinizdeki medya durur.",
+				"keywords": "ajan arka plan menü çubuğu dock pencere kapat"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Her zaman izin verilenler",
 				"description": "Ajanlar bu sitelerde sormadan işlem yapar.",
@@ -2089,6 +2094,8 @@
 		"Command failed": "Komut başarısız oldu",
 		"Command finished": "Komut tamamlandı",
 		"Waiting for your answer": "Yanıtınız bekleniyor",
+		"Open for agents": "Ajanlar için açık",
+		"Show Lilo": "Lilo'yu Göster",
 		"Reply": "Yanıtla",
 		"Send": "Gönder",
 		"%@ failed with exit code %d after %@.": "%@, %d çıkış koduyla %@ sonra başarısız oldu.",

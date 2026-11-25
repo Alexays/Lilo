@@ -1231,7 +1231,7 @@ extension BrowserStateStore {
     }
 
     /// Every space's live engines, keyed by tab.
-    private var enginesAcrossSpaces: [UUID: WKWebViewTab] {
+    var enginesAcrossSpaces: [UUID: WKWebViewTab] {
         var engines: [UUID: WKWebViewTab] = [:]
         for snapshot in spaces.values { engines.merge(snapshot.engines) { _, new in new } }
         return engines

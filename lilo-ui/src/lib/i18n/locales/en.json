@@ -511,6 +511,11 @@
 				"description": "A local file lists each call, never typed text or page content.",
 				"keywords": "agent log history audit actions replay record"
 			},
+			"agentBackgroundHost": {
+				"title": "Stay open for agents",
+				"description": "Closing the last window keeps Lilo in the menu bar, so agents can still use it. Media in your own tabs stops.",
+				"keywords": "agent background menu bar dock window close keep running"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Always allowed",
 				"description": "Agents act on these sites without asking.",
@@ -2089,6 +2094,8 @@
 		"Command failed": "Command failed",
 		"Command finished": "Command finished",
 		"Waiting for your answer": "Waiting for your answer",
+		"Open for agents": "Open for agents",
+		"Show Lilo": "Show Lilo",
 		"Reply": "Reply",
 		"Send": "Send",
 		"%@ failed with exit code %d after %@.": "%@ failed with exit code %d after %@.",
