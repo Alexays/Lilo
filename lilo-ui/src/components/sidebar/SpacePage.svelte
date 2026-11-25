@@ -267,6 +267,18 @@
     background: var(--sidebar-bg);
   }
 
+  /* An opaque band would cut across glass or grain, so the material shows through while nothing
+     sits under the strip. `:where` keeps both rules below App.svelte's transparent swipe rule. */
+  :global(html:where([data-material='glass'], [data-material='grain'])) .favorites-section.pinned {
+    background: transparent;
+  }
+
+  /* Once tabs scroll under it, a near-opaque layer of the Space color keeps their labels from
+     reading through the favorites; the material still tints it. */
+  :global(html:where([data-material='glass'], [data-material='grain'])) .favorites-section.pinned.scrolled {
+    background: color-mix(in srgb, var(--sidebar-bg) 93%, transparent);
+  }
+
   /* The edge the tabs scroll under, once they do. */
   .favorites-section::after {
     content: "";
