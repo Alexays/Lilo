@@ -591,6 +591,13 @@
 				"description": "在分頁中與 Claude Code、Codex、Gemini 等代理程式對話，使用你自己的訂閱。",
 				"keywords": "代理程式 AI ACP 聊天 對話 詢問 Claude Codex Gemini Copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "對話位置",
+				"description": "從提問列啟動的對話顯示的位置。",
+				"keywords": "代理程式 對話 詢問列 位置 迷你 分頁 開啟",
+				"mini": "迷你對話",
+				"tab": "完整分頁"
+			},
 			"agentsNotifyDone": {
 				"title": "代理程式完成時通知",
 				"description": "你未在檢視的對話完成時發出通知。",

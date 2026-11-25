@@ -591,6 +591,13 @@
 				"description": "Talk to Claude Code, Codex, Gemini and other agents in a tab, with your own subscriptions.",
 				"keywords": "agent ai acp chat conversation ask claude codex gemini copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "Conversation placement",
+				"description": "Where a conversation started from the ask bar appears.",
+				"keywords": "agent conversation ask bar mini card tab",
+				"mini": "Mini conversation",
+				"tab": "Full tab"
+			},
 			"agentsNotifyDone": {
 				"title": "Notify when an agent finishes",
 				"description": "A notification when a conversation you are not looking at is done.",

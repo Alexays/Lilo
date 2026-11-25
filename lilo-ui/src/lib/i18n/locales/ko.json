@@ -591,6 +591,13 @@
 				"description": "Claude Code, Codex, Gemini 등 여러 에이전트와 내 구독으로 탭에서 대화합니다.",
 				"keywords": "에이전트 AI ACP 채팅 대화 질문 Claude Codex Gemini Copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "대화 위치",
+				"description": "Ask Bar에서 시작한 대화가 표시되는 위치입니다.",
+				"keywords": "에이전트 대화 질문 막대 위치 미니 탭 열기",
+				"mini": "미니 대화",
+				"tab": "전체 탭"
+			},
 			"agentsNotifyDone": {
 				"title": "에이전트가 끝나면 알림",
 				"description": "보고 있지 않은 대화가 끝나면 알려 줍니다.",

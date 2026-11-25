@@ -591,6 +591,13 @@
 				"description": "Converse com Claude Code, Codex, Gemini e outros agentes em uma aba, com suas próprias assinaturas.",
 				"keywords": "agente ia acp chat conversa perguntar claude codex gemini copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "Posição das conversas",
+				"description": "Onde aparece uma conversa iniciada na barra Perguntar.",
+				"keywords": "agente conversa barra perguntar posição mini aba abrir",
+				"mini": "Mini conversa",
+				"tab": "Aba inteira"
+			},
 			"agentsNotifyDone": {
 				"title": "Notificar quando um agente terminar",
 				"description": "Uma notificação quando uma conversa que você não está vendo termina.",

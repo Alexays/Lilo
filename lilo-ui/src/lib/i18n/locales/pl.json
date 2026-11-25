@@ -591,6 +591,13 @@
 				"description": "Rozmawiaj z Claude Code, Codex, Gemini i innymi agentami w karcie, korzystając z własnych subskrypcji.",
 				"keywords": "agent ai acp czat rozmowa zapytaj claude codex gemini copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "Umiejscowienie rozmów",
+				"description": "Gdzie pojawia się rozmowa rozpoczęta na pasku zapytań.",
+				"keywords": "agent rozmowa pasek zapytaj umiejscowienie mini karta otwórz",
+				"mini": "Mini rozmowa",
+				"tab": "Pełna karta"
+			},
 			"agentsNotifyDone": {
 				"title": "Powiadom, gdy agent skończy",
 				"description": "Powiadomienie, gdy skończy się rozmowa, której nie oglądasz.",
