@@ -321,7 +321,8 @@ final class PageWebView: WKWebView {
     /// A drag started by events `AgentInput` sent must not enter AppKit's session: it tracks the hardware
     /// mouse in a modal loop and never ends for sent events, freezing the app until a real click.
     /// `AgentInput` plays the session's half through the drag destination instead; the session answered
-    /// here is one that never tracked anything. A user's own drag keeps the native session.
+    /// here is one AppKit never set up, on which WebKit only sets properties. A user's own drag keeps the
+    /// native session.
     override func beginDraggingSession(with items: [NSDraggingItem], event: NSEvent, source: NSDraggingSource) -> NSDraggingSession {
         if MainActor.assumeIsolated({ AgentInput.sentMouseEvents.contains(event) }) { return NSDraggingSession() }
         return super.beginDraggingSession(with: items, event: event, source: source)
