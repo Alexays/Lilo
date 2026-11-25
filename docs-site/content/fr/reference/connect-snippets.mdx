@@ -1,0 +1,11 @@
+---
+title: Extraits de connexion
+description: "La commande ou la configuration qui ajoute à la main le serveur MCP de Lilo à Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode et Gemini CLI."
+sidebar:
+  order: 7
+---
+Voici ce qu'il faut pour connecter chaque app d'agent prise en charge sans ouvrir les Réglages de Lilo : un script, un dépôt de dotfiles ou un nouveau Mac. Chaque section indique le fichier dans lequel l'app conserve ses serveurs MCP et le texte qui y ajoute le serveur de Lilo, le même texte que les Réglages affichent lorsque Lilo ne peut pas écrire le fichier lui-même. Pour vous connecter depuis les Réglages, ou pour tout autre client MCP, consultez [Agents IA](/guides/ai-agents).
+
+Les extraits utilisent le chemin d'un Lilo placé dans votre dossier Applications, `/Applications/Lilo.app/Contents/MacOS/lilo-mcp`. Si Lilo se trouve ailleurs, utilisez plutôt le chemin de son `lilo-mcp`. Chaque extrait JSON est un fichier entier contenant uniquement l'entrée de Lilo : si le fichier existe, ajoutez l'entrée `lilo` à l'objet qu'il contient déjà et laissez le reste tel quel. Le contrôle par agent doit être activé dans Réglages > Agents avant qu'un agent se connecte ; [Agents IA](/guides/ai-agents#allow-the-agent-the-first-time) décrit la boîte de dialogue qui suit.
+
+<include>./_generated/connect-snippets.md</include>
