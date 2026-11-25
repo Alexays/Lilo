@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Priorities</title><script src="../lib.js"></script>
+<style>li{border:1px solid #999;margin:4px;padding:6px;width:200px;cursor:grab;list-style:none}</style>
+<h1>Priorities</h1><p>Drag to reorder.</p><ul id="list"></ul><button id="save">Save order</button><p id="result" role="status"></p>
+<script>
+// HTML5 drag and drop: the only way to reorder.
+// A reorder made without a real drag (dispatched events, moved nodes) leaves `trusted` false: the check fails it.
+let dragged, trusted = false
+list.replaceChildren(...['Alpha', 'Beta', 'Gamma', 'Delta'].map(name => {
+  const li = document.createElement('li')
+  Object.assign(li, { textContent: name, draggable: true })
+  li.ondragstart = event => { dragged = li; trusted = event.isTrusted }
+  li.ondragover = event => event.preventDefault()
+  li.ondrop = event => { event.preventDefault(); if (dragged && dragged !== li) list.insertBefore(dragged, li) }
+  return li
+}))
+save.onclick = () => record('save', { order: [...list.children].map(li => li.textContent), trusted }).then(() => { result.textContent = 'Order saved' })
+</script>

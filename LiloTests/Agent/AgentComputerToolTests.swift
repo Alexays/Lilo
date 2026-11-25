@@ -183,6 +183,30 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(Set(moves), ["move buttons 1"], "a drag moves with the left button held, not as a hover")
     }
 
+    /// WebKit must not hand an agent drag to AppKit's modal session, which tracks the hardware mouse and
+    /// parks the main thread until a real click: the HTML5 sequence runs through the drag destination.
+    func testDragRunsTheHTML5DragAndDrop() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0">
+            <div id="item" draggable="true" style="position:absolute;left:20px;top:20px;width:100px;height:40px">Item</div>
+            <div id="zone" style="position:absolute;left:20px;top:200px;width:200px;height:100px"></div>
+            <script>
+            window.events = []
+            item.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "item"); events.push("dragstart") })
+            item.addEventListener("dragend", () => events.push("dragend"))
+            zone.addEventListener("dragenter", e => { e.preventDefault(); events.push("dragenter") })
+            zone.addEventListener("dragover", e => e.preventDefault())
+            zone.addEventListener("drop", e => { e.preventDefault(); events.push("drop " + e.dataTransfer.getData("text/plain")) })
+            </script></body>
+            """)
+
+        _ = await client.callTool("computer", ["tabId": tab, "action": "left_click_drag", "start_coordinate": [70, 40], "coordinate": [120, 250]])
+        await pollUntil(timeout: 5) { ((try? await self.js("events", tab: tab)) as? [String])?.contains("dragend") == true }
+
+        let events = try await js("events", tab: tab) as? [String]
+        XCTAssertEqual(events, ["dragstart", "dragenter", "drop item", "dragend"])
+    }
+
     func testAPressHoldsItsButton() async throws {
         let tab = try await agentTab(showing: Self.page)
 

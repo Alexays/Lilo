@@ -40,19 +40,103 @@ enum AgentInput {
         send(mouse(.mouseMoved, webView, point), to: webView)
     }
 
+    /// Presses at `start`, moves to `end` and releases. Once the page starts a drag (it wrote the drag pasteboard),
+    /// `PageWebView` keeps WebKit from handing it to an AppKit session: that session tracks the hardware mouse in
+    /// a modal loop, freezing the app until a real click. The session's own half is played through the web view's
+    /// drag destination instead, so `dragenter`, `dragover`, `drop` and `dragend` fire.
     static func drag(_ webView: WKWebView, from start: CGPoint, to end: CGPoint) async {
+        let pasteboard = NSPasteboard(name: .drag)
+        let before = pasteboard.changeCount
         AgentCursorView.show(in: webView, at: start, pressed: true)
         await press(webView, at: start, down: mouse(.leftMouseDown, webView, start), up: nil)
+        let drag = SyntheticDrag(webView, pasteboard: pasteboard)
         let steps = 10
         for step in 1...steps {
             let t = CGFloat(step) / CGFloat(steps)
             let point = CGPoint(x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t)
-            send(mouse(.leftMouseDragged, webView, point), to: webView)
+            if drag.started {
+                drag.update(to: point)
+            } else {
+                send(mouse(.leftMouseDragged, webView, point), to: webView)
+                // The page's dragstart handler runs in its process: the drag pasteboard changing is the news.
+                // A user's drag elsewhere during these 160 ms would read the same; rare, and only this drag is affected.
+                if pasteboard.changeCount != before { drag.begin(at: point) }
+            }
             AgentCursorView.show(in: webView, at: point)
             try? await Task.sleep(for: .milliseconds(16))
         }
-        send(mouse(.leftMouseUp, webView, end), to: webView)
+        if drag.started {
+            // WebKit answers a drag update with what the page decided at the one before: the last one is heard first.
+            _ = try? await webView.callAsyncJavaScript("return 0", arguments: [:], in: nil, contentWorld: world)
+            drag.finish(at: end)
+        } else {
+            send(mouse(.leftMouseUp, webView, end), to: webView)
+        }
         await afterPendingEvents(webView, "_doAfterProcessingAllPendingMouseEvents:")
+    }
+
+    /// The `NSDraggingInfo` of a drag AppKit never ran, answering what WebKit asks of its drop target.
+    @MainActor private final class SyntheticDrag: NSObject, @MainActor NSDraggingInfo {
+        private let webView: WKWebView
+        private let pasteboard: NSPasteboard
+        private var location = CGPoint.zero
+        private var operation = NSDragOperation()
+        private(set) var started = false
+
+        init(_ webView: WKWebView, pasteboard: NSPasteboard) {
+            self.webView = webView
+            self.pasteboard = pasteboard
+        }
+
+        func begin(at point: CGPoint) {
+            started = true
+            move(to: point)
+            operation = webView.draggingEntered(self)
+        }
+
+        func update(to point: CGPoint) {
+            move(to: point)
+            operation = webView.draggingUpdated(self)
+        }
+
+        /// The drop when a target took the drag, then the source's end: both ways WebKit resets its mouse state.
+        func finish(at point: CGPoint) {
+            update(to: point)
+            if !operation.isEmpty, webView.prepareForDragOperation(self), webView.performDragOperation(self) {
+                webView.concludeDragOperation(self)
+            } else {
+                webView.draggingExited(self)
+                operation = []
+            }
+            // The drag source's end (`dragend`, and WebKit's drag state reset): a legacy selector WKWebView still answers.
+            let ended = Selector(("draggedImage:endedAt:operation:"))
+            guard webView.responds(to: ended) else { return }
+            typealias Ended = @convention(c) (AnyObject, Selector, NSImage?, NSPoint, NSDragOperation) -> Void
+            let screen = unsafe webView.window?.convertPoint(toScreen: location) ?? location
+            unsafe unsafeBitCast(webView.method(for: ended), to: Ended.self)(webView, ended, nil, screen, operation)
+        }
+
+        private func move(to point: CGPoint) { location = windowPoint(webView, point) }
+
+        var draggingDestinationWindow: NSWindow? { unsafe webView.window }
+        var draggingSourceOperationMask: NSDragOperation { .every }
+        var draggingLocation: NSPoint { location }
+        var draggedImageLocation: NSPoint { location }
+        var draggedImage: NSImage? { nil }
+        var draggingPasteboard: NSPasteboard { pasteboard }
+        var draggingSource: Any? { webView }
+        var draggingSequenceNumber: Int { 1 }
+        var draggingFormation: NSDraggingFormation = .default
+        var animatesToDestination = false
+        var numberOfValidItemsForDrop = 1
+        var springLoadingHighlight: NSSpringLoadingHighlight { .none }
+        func slideDraggedImage(to screenPoint: NSPoint) {}
+        func resetSpringLoading() {}
+        override func namesOfPromisedFilesDropped(atDestination dropDestination: URL) -> [String]? { nil }
+        func enumerateDraggingItems(
+            options enumOpts: NSDraggingItemEnumerationOptions, for view: NSView?, classes classArray: [AnyClass],
+            searchOptions: [NSPasteboard.ReadingOptionKey: Any], using block: (NSDraggingItem, Int, UnsafeMutablePointer<ObjCBool>) -> Void
+        ) {}
     }
 
     /// Positive `deltaY` scrolls the page down, positive `deltaX` scrolls it right.
@@ -172,6 +256,10 @@ enum AgentInput {
     /// The key downs sent to a web view, which `LiloApplication` keeps from the menu bar. Weak: WebKit holds
     /// each one only until the page has handled it.
     static let sentKeyDowns = NSHashTable<NSEvent>(options: [.weakMemory, .objectPointerPersonality])
+
+    /// The mouse events sent to a web view, by which `PageWebView` tells a drag the agent started (one
+    /// whose AppKit session must not begin) from a user's, which keeps the native session.
+    static let sentMouseEvents = NSHashTable<NSEvent>(options: [.weakMemory, .objectPointerPersonality])
 
     /// Shortcuts AppKit runs from the menu bar, which never sees a key sent straight to an agent tab.
     private static let menuCommands: [String: Selector] = [
@@ -342,6 +430,7 @@ enum AgentInput {
 
     private static func send(_ event: NSEvent?, to webView: WKWebView) {
         guard let event else { return }
+        sentMouseEvents.add(event)
         // WebKit reads an event's `buttons` from `NSEvent.pressedMouseButtons`, the hardware state: unless the
         // button reads as held there, a sent press or drag reaches the page with no button down.
         let held = switch event.type {

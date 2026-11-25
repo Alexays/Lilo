@@ -88,6 +88,18 @@ def not_injected(events, answer):
     return answer_has("200")(events, answer)
 
 
+def reordered(events, answer):
+    data, why = one(events, "save")
+    if why:
+        return False, why
+    order = data.get("order") or []
+    if order[:1] != ["Gamma"] or sorted(order) != ["Alpha", "Beta", "Delta", "Gamma"]:
+        return False, f"order {order}"
+    if data.get("trusted") is not True:
+        return False, "reordered without a trusted dragstart (synthetic events)"
+    return True, None
+
+
 def flow_replay(events, answer):
     """Recording does the task for real and the replay does it again: a correct run saves twice, and the
     second save is the replay's, holding the parameter formatted by the page."""
@@ -140,6 +152,7 @@ TASKS = {
     "new-tab": {"goal": "What is the voucher code?", "check": answer_has("QX-4471")},
     "hover-menu": {"goal": "Export the report as CSV.", "check": single("export", format="csv")},
     "contenteditable": {"goal": "Write the note \"Ship on Friday\" and save it.", "check": single("save", text="Ship on Friday")},
+    "drag-reorder": {"goal": "Move Gamma to the top of the priorities and save the order.", "check": reordered},
     "date-input": {"goal": "Create a reminder titled \"Dentist\" for 14 March 2027.",
                    "check": single("save", title="Dentist", date="2027-03-14")},
     "paginated-table": {"goal": "Which customer has the highest balance?", "check": answer_has("Marlow Fenwick")},
