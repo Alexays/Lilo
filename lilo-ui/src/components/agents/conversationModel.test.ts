@@ -694,16 +694,16 @@ test("a URL elicitation draws a sign-in link and settles with its answer", async
       cwd: "/",
       checkpoints: [],
       updates: [
-        { sessionUpdate: "lilo_sign_in_link", requestId: "link1", url: "https://example.com/connect", message: "Sign in" },
+        { sessionUpdate: "lilo_sign_in_link", requestId: "link1", host: "example.com", path: "/connect", message: "Sign in" },
         { sessionUpdate: "lilo_permission_resolved", requestId: "link1", answer: { action: "accept" } },
       ],
     } as never,
     [],
   );
   const [item] = conversation.thread.items;
-  assert.deepEqual([item?.kind, item?.kind === "signInLink" && item.url, item?.kind === "signInLink" && item.answer?.action], [
+  assert.deepEqual([item?.kind, item?.kind === "signInLink" && item.host + item.path, item?.kind === "signInLink" && item.answer?.action], [
     "signInLink",
-    "https://example.com/connect",
+    "example.com/connect",
     "accept",
   ]);
 });

@@ -109,7 +109,7 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			addQuestion(thread, String(update.requestId), String(update.message ?? ""), update.requestedSchema, typeof update.toolCallId === "string" ? update.toolCallId : undefined);
 			break;
 		case "lilo_sign_in_link":
-			addSignInLink(thread, String(update.requestId), String(update.message ?? ""), String(update.url ?? ""));
+			addSignInLink(thread, String(update.requestId), String(update.message ?? ""), String(update.host ?? ""), String(update.path ?? ""));
 			break;
 		case "lilo_permission_resolved": {
 			// A question settles with the form's answer; a sign-in link with its consent; one the agent dropped settles as cancelled.

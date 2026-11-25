@@ -251,13 +251,14 @@ export interface QuestionItem {
   answer: QuestionAnswer | null;
 }
 
-/** One of the agent's URL elicitations: a page it asks the user to open (a browser sign-in). */
+/** One of the agent's URL elicitations: a page it asks the user to open (a browser sign-in). Lilo opens it. */
 export interface SignInLinkItem {
   kind: "signInLink";
   id: number;
   requestId: string | number;
   message: string;
-  url: string;
+  host: string;
+  path: string;
   answer: QuestionAnswer | null;
 }
 
@@ -931,8 +932,8 @@ export function resolveQuestion(state: ConversationState, requestId: string | nu
 }
 
 /** A URL elicitation: the page the agent asks the user to open, out of band. */
-export function addSignInLink(state: ConversationState, requestId: string | number, message: string, url: string): ConversationState {
-  state.items.push({ kind: "signInLink", id: state.nextId++, requestId, message, url, answer: null });
+export function addSignInLink(state: ConversationState, requestId: string | number, message: string, host: string, path: string): ConversationState {
+  state.items.push({ kind: "signInLink", id: state.nextId++, requestId, message, host, path, answer: null });
   return state;
 }
 

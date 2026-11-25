@@ -1145,6 +1145,11 @@ final class ConversationHost {
                 conversation.connection?.respond(id: id, errorCode: -32601, message: "Method not found: \(method)")
                 return
             }
+            // An agent may only ask to open a web page, with no userinfo to pass another host off as its own.
+            if Self.isUrlElicitation(params), Self.signInURL(params) == nil {
+                conversation.connection?.respond(id: id, result: ["action": "cancel"])
+                return
+            }
             let requestId = UUID().uuidString
             var params = params
             // v2 titles the request itself and names what it is about in `subject`: a tool call, or a command.
@@ -1159,11 +1164,11 @@ final class ConversationHost {
                 params["toolCall"] = call
             }
             conversation.permissions.append((ACPConnection.Payload(value: ["id": id]), requestId, params))
-            if Self.isUrlElicitation(params) {
-                // A URL mode elicitation: the agent asks the user to open a page (a browser sign-in).
+            if let url = Self.signInURL(params) {
+                // The log keeps no query: a sign-in URL carries its state and challenge there.
                 append(conversation, [
-                    "sessionUpdate": "lilo_sign_in_link", "requestId": requestId,
-                    "url": params["url"] ?? "", "message": params["message"] ?? ""
+                    "sessionUpdate": "lilo_sign_in_link", "requestId": requestId, "message": params["message"] ?? "",
+                    "host": url.host() ?? "", "path": url.path()
                 ])
             } else {
                 append(conversation, Self.isQuestion(params) ? [
@@ -1193,8 +1198,13 @@ final class ConversationHost {
         guard let conversation = conversations[tabId],
               let question = conversation.permissions.first(where: { $0.requestId == requestId }), Self.isElicitation(question.params) else { return }
         var result: [String: Any] = ["action": action]
-        // A URL elicitation carries no content: the user consents to open the page, the interaction happens out of band.
         if action == "accept", Self.isQuestion(question.params) { result["content"] = content ?? [:] }
+        // A URL's accept tells the agent the page opened: in the conversation window's current space, whose
+        // profile keeps the sign-in.
+        if action == "accept", Self.isUrlElicitation(question.params),
+           Self.signInURL(question.params).flatMap({ context?.windows.window(forTab: tabId)?.createTabStateFirst(url: $0) }) == nil {
+            result["action"] = "cancel"
+        }
         conversation.connection?.respond(id: question.id.value["id"] as Any, result: result)
         resolve(conversation, requestId: requestId, optionId: nil, answer: result)
     }
@@ -1204,6 +1214,14 @@ final class ConversationHost {
 
     /// An `elicitation/create` URL mode: the agent asks the user to open a page (a browser sign-in) out of band.
     private static func isUrlElicitation(_ params: [String: Any]) -> Bool { params["mode"] as? String == "url" }
+
+    /// The web page a URL elicitation asks to open, unless it has another scheme or a userinfo.
+    private static func signInURL(_ params: [String: Any]) -> URL? {
+        guard isUrlElicitation(params), let string = params["url"] as? String, let components = URLComponents(string: string),
+              ["http", "https"].contains(components.scheme?.lowercased() ?? ""), components.host?.isEmpty == false,
+              components.user == nil, components.password == nil else { return nil }
+        return components.url
+    }
 
     /// An elicitation the user answers in the conversation, with no options to offer: a form or a URL.
     private static func isElicitation(_ params: [String: Any]) -> Bool { isQuestion(params) || isUrlElicitation(params) }
