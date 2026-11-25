@@ -15,7 +15,7 @@ final class ConversationHost {
 
     final class Conversation {
         let tabId: UUID
-        let agentId: String
+        var agentId: String
         var cwd: String
         var sessionId: String?
         var connection: ACPConnection?
@@ -29,6 +29,8 @@ final class ConversationHost {
         var permissions: [(id: ACPConnection.Payload, requestId: String, params: [String: Any])] = []
         /// Prompts waiting for the running turn, each with the checkpoint index `send` reserved for it.
         var queued: [(blocks: [[String: Any]], checkpoint: Int)] = []
+        /// What the agent switched to is told about the thread, sent ahead of its first prompt.
+        var handoff: String?
         /// The prompt a sign-in holds back, sent again once it succeeds.
         var awaitingSignIn: [[String: Any]]?
         /// A sign-in in a terminal was already offered for this prompt: a second refusal shows the error.
@@ -352,7 +354,7 @@ final class ConversationHost {
     }
 
     /// The call that started the sub-agent an update comes from, which the chrome draws apart.
-    private static func parentToolUse(of update: [String: Any]) -> String? {
+    nonisolated static func parentToolUse(of update: [String: Any]) -> String? {
         ((update["_meta"] as? [String: Any])?["claudeCode"] as? [String: Any])?["parentToolUseId"] as? String
     }
 
@@ -731,7 +733,10 @@ final class ConversationHost {
 
     private func persistSession(_ conversation: Conversation) {
         guard let window = context?.windows.window(forTab: conversation.tabId) else { return }
-        _ = window.updateRuntimeTab(id: conversation.tabId) { $0.agentSessionId = conversation.sessionId }
+        _ = window.updateRuntimeTab(id: conversation.tabId) {
+            $0.agentId = conversation.agentId
+            $0.agentSessionId = conversation.sessionId
+        }
         window.profileContext?.sessionPersistence?.scheduleSave()
     }
 
@@ -785,7 +790,49 @@ final class ConversationHost {
             }
             return
         }
-        Task { await runTurn(conversation, blocks: blocks, checkpoint: index) }
+        startTurn(conversation, blocks: blocks, checkpoint: index)
+    }
+
+    /// Opens the turn at once, so a prompt sent before its task first runs queues behind it, not beside it.
+    private func startTurn(_ conversation: Conversation, blocks: [[String: Any]], checkpoint: Int?) {
+        conversation.turnOpen = true
+        setState(conversation, .busy)
+        Task { await runTurn(conversation, blocks: blocks, checkpoint: checkpoint) }
+    }
+
+    /// Hands the conversation to another agent between turns: the thread, its checkpoints and its project stay,
+    /// and the new agent starts a session on the next prompt, told about the thread by a summary.
+    func switchAgent(_ tabId: UUID, to agentId: String) {
+        // The composer offers no switch while a turn runs or the agent starts: its old process would come back.
+        guard let conversation = conversations[tabId], agentId != conversation.agentId, catalog.agent(id: agentId) != nil,
+              !conversation.turnOpen, conversation.starting == nil, conversation.state != .busy else { return }
+        conversation.idleStop?.cancel()
+        let connection = conversation.connection
+        conversation.connection = nil
+        connection?.terminate()
+        stopSignIn(conversation)
+        clearBackground(conversation)
+        for permission in conversation.permissions {
+            append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": permission.requestId, "optionId": NSNull()])
+        }
+        conversation.permissions = []
+        conversation.awaitingSignIn = nil
+        // Switched twice before a prompt, the summary stays the first one: the thread has not changed since.
+        if conversation.handoff == nil {
+            conversation.handoff = ConversationHandoff.summary(log: conversation.log.map(\.value), from: catalog.agent(id: conversation.agentId)?.name)
+        }
+        conversation.agentId = agentId
+        conversation.sessionId = nil
+        conversation.authMethods = []
+        conversation.signInOffered = false
+        conversation.flowsSkillSent = false
+        conversation.lastError = nil
+        // The new agent's command list follows the switch in the log, so a replay shows its commands, not the old ones.
+        conversation.latest["available_commands_update"] = nil
+        append(conversation, ["sessionUpdate": "lilo_agent", "agentId": agentId, "handoff": conversation.handoff != nil])
+        persistSession(conversation)
+        save(conversation)
+        setState(conversation, .idle)
     }
 
     /// `checkpoint` is the index `send` reserved for this prompt: its snapshot is taken as the turn starts, once
@@ -817,10 +864,12 @@ final class ConversationHost {
             guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
             setState(conversation, .busy)
             // Only once started does Lilo know whether the agent takes images.
-            let content = conversation.acceptsImages ? blocks : blocks.filter { $0["type"] as? String != "image" }
+            var content = conversation.acceptsImages ? blocks : blocks.filter { $0["type"] as? String != "image" }
+            if let handoff = conversation.handoff { content.insert(["type": "text", "text": handoff], at: 0) }
             let result = try await withAuthentication(conversation, connection: connection) {
                 try await connection.request("session/prompt", ["sessionId": sessionId, "prompt": content])
             }
+            conversation.handoff = nil
             conversation.signInOffered = false
             // v2 answers once the prompt is taken in: its idle `state_update` ends the turn.
             if conversation.protocolVersion >= 2 { return }
@@ -858,7 +907,7 @@ final class ConversationHost {
         if !conversation.queued.isEmpty {
             let next = conversation.queued.removeFirst()
             append(conversation, ["sessionUpdate": "lilo_queued", "count": conversation.queued.count])
-            Task { await runTurn(conversation, blocks: next.blocks, checkpoint: next.checkpoint) }
+            startTurn(conversation, blocks: next.blocks, checkpoint: next.checkpoint)
             return
         }
         if !isShown(conversation.tabId) {

@@ -2763,9 +2763,13 @@
 			"notice": {
 				"restored": "Archivos restaurados a este punto",
 				"restoreFailed": "No se pudieron restaurar los archivos",
-				"signedIn": "Sesión iniciada"
+				"signedIn": "Sesión iniciada",
+				"switched": "Cambiado a {agent}",
+				"handoff": "Cambiado a {agent}, que recibe un resumen de esta conversación"
 			},
 			"moreOptions": "Más opciones",
+			"switchBusy": "Disponible cuando termine la respuesta",
+			"switchNote": "El nuevo agente recibe un resumen de esta conversación, no el historial completo.",
 			"signInHint": "Inicia sesión con el agente: tu mensaje se envía en cuanto inicies sesión.",
 			"branch": "Rama {branch}",
 			"jumpToLatest": "Ir al final",

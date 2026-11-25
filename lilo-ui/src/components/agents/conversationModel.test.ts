@@ -629,3 +629,58 @@ test("v2: a turn the agent started keeps its duration when the thread is replaye
   const end = conversation.thread.items.at(-1);
   assert.deepEqual([end?.kind, end?.kind === "turnEnd" && end.durationMs], ["turnEnd", 3000]);
 });
+
+test("a failed turn drops the prompts queued behind it", async () => {
+  const { openConversation } = await import("./conversationThread");
+  const conversation = openConversation(
+    {
+      tabId: "t",
+      agentId: "a",
+      cwd: "/",
+      checkpoints: [],
+      updates: [
+        { sessionUpdate: "lilo_user", text: "First" },
+        { sessionUpdate: "lilo_user", text: "Second" },
+        { sessionUpdate: "lilo_queued", count: 1 },
+        { sessionUpdate: "lilo_error", message: "The agent stopped." },
+      ],
+    } as never,
+    [],
+  );
+  assert.equal(conversation.queued, 0);
+});
+
+test("switching agents swaps the conversation's agent, clears its pickers and commands and keeps the thread", async () => {
+  const { openConversation } = await import("./conversationThread");
+  const conversation = openConversation(
+    {
+      tabId: "t",
+      agentId: "claude-acp",
+      cwd: "/",
+      checkpoints: [],
+      updates: [
+        { sessionUpdate: "lilo_user", text: "Hi" },
+        agentText("Hello."),
+        { sessionUpdate: "lilo_turn_end", stopReason: "end_turn" },
+        { sessionUpdate: "available_commands_update", availableCommands: [{ name: "review", description: "Review" }] },
+        {
+          sessionUpdate: "lilo_session",
+          modes: { currentModeId: "plan", availableModes: [{ id: "plan", name: "Plan" }] },
+          configOptions: [{ id: "model", name: "Model", type: "select", currentValue: "a", options: [{ value: "a", name: "A" }] }],
+        },
+        { sessionUpdate: "lilo_error", message: "The agent stopped." },
+        { sessionUpdate: "lilo_agent", agentId: "codex-acp", handoff: true },
+      ],
+    } as never,
+    [],
+  );
+  assert.equal(conversation.agentId, "codex-acp");
+  assert.deepEqual(conversation.modes, []);
+  assert.equal(conversation.thread.modeId, null);
+  assert.deepEqual(conversation.thread.configOptions, []);
+  assert.deepEqual(conversation.thread.commands, []);
+  assert.equal(conversation.error, null);
+  assert.deepEqual(conversation.thread.items.map((item) => item.kind), ["user", "agent", "turnEnd", "notice"]);
+  const last = conversation.thread.items.at(-1);
+  assert.deepEqual(last?.kind === "notice" && [last.text, last.agentId], ["handoff", "codex-acp"]);
+});

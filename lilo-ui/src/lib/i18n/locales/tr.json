@@ -2763,9 +2763,13 @@
 			"notice": {
 				"restored": "Dosyalar bu noktaya geri yüklendi",
 				"restoreFailed": "Dosyalar geri yüklenemedi",
-				"signedIn": "Oturum açıldı"
+				"signedIn": "Oturum açıldı",
+				"switched": "{agent} ajanına geçildi",
+				"handoff": "{agent} ajanına geçildi; bu konuşmanın bir özetini alacak"
 			},
 			"moreOptions": "Diğer seçenekler",
+			"switchBusy": "Yanıt bittiğinde kullanılabilir",
+			"switchNote": "Yeni ajan, tüm geçmişi değil bu konuşmanın bir özetini alır.",
 			"signInHint": "Ajanla oturum açın: oturum açtığınızda mesajınız gönderilir.",
 			"branch": "Dal {branch}",
 			"jumpToLatest": "En yeniye git",

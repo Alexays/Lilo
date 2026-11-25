@@ -24,6 +24,7 @@
   import type { ThreadItem } from "./conversationModel";
   import Icon from "../ui/Icon.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
+  import { getAgent } from "../../stores/conversations.svelte";
   import { getOpenTabs } from "../../stores/tabs.svelte";
   import Markdown from "./Markdown.svelte";
   import PlanTray from "./PlanTray.svelte";
@@ -264,6 +265,7 @@
     </span>
   </div>
 {:else if view.kind === "notice"}
+  {@const agent = view.agentId ? (getAgent(view.agentId)?.name ?? view.agentId) : ""}
   <div class="notice">
     {view.text === "restored"
       ? t("agents.conversation.notice.restored")
@@ -271,7 +273,11 @@
         ? t("agents.conversation.notice.restoreFailed")
         : view.text === "signedIn"
           ? t("agents.conversation.notice.signedIn")
-          : view.text}
+          : view.text === "switched"
+            ? t("agents.conversation.notice.switched", { agent })
+            : view.text === "handoff"
+              ? t("agents.conversation.notice.handoff", { agent })
+              : view.text}
   </div>
 {/if}
 

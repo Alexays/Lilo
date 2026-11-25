@@ -255,6 +255,8 @@ export interface NoticeItem {
   kind: "notice";
   id: number;
   text: string;
+  /** The agent a `switched` or `handoff` notice names. */
+  agentId?: string;
 }
 
 export type ThreadItem =
@@ -917,7 +919,7 @@ export function resolveQuestion(state: ConversationState, requestId: string | nu
   return state;
 }
 
-export function addNotice(state: ConversationState, text: string): ConversationState {
-  state.items.push({ kind: "notice", id: state.nextId++, text });
+export function addNotice(state: ConversationState, text: string, agentId?: string): ConversationState {
+  state.items.push({ kind: "notice", id: state.nextId++, text, ...(agentId && { agentId }) });
   return state;
 }

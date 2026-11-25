@@ -122,6 +122,7 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 		case "lilo_error":
 			// A failed turn drops the prompts queued behind it: they no longer wait for anything.
 			for (const item of thread.items) if (item.kind === "user") delete item.queued;
+			conversation.queued = 0;
 			thread.turnStartedAt = null;
 			conversation.error = String(update.message ?? "");
 			conversation.signingIn = null;
@@ -151,6 +152,18 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			conversation.error = null;
 			conversation.authMethods = [];
 			conversation.signingIn = null;
+			break;
+		case "lilo_agent":
+			// The agent changed between turns: its pickers and commands come back with its next session.
+			conversation.agentId = String(update.agentId ?? conversation.agentId);
+			conversation.modes = [];
+			thread.modeId = null;
+			thread.configOptions = [];
+			thread.commands = [];
+			conversation.error = null;
+			conversation.authMethods = [];
+			conversation.signingIn = null;
+			addNotice(thread, update.handoff ? "handoff" : "switched", conversation.agentId);
 			break;
 		case "lilo_queued":
 			conversation.queued = Number(update.count ?? 0);

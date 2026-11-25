@@ -10,7 +10,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
         "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
-        "loadConversationCommands",
+        "loadConversationCommands", "switchConversationAgent",
         "searchConversationFiles", "previewConversationArtifact", "openConversationFile"
     ]
 
@@ -99,6 +99,8 @@ final class ConversationBridgeHandler: BridgeHandler {
             if let tabId { host.openSignInTerminal(tabId) }
         case "loadConversationCommands":
             if let tabId { host.loadCommands(tabId) }
+        case "switchConversationAgent":
+            if let tabId, let agentId = payload["agentId"] as? String { host.switchAgent(tabId, to: agentId) }
         case "openConversationChanges":
             if let tabId { window.openChanges(forConversation: tabId) }
         case "openConversationFile":

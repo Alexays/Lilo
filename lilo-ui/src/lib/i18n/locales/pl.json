@@ -2763,9 +2763,13 @@
 			"notice": {
 				"restored": "Przywrócono pliki do tego miejsca",
 				"restoreFailed": "Nie udało się przywrócić plików",
-				"signedIn": "Zalogowano"
+				"signedIn": "Zalogowano",
+				"switched": "Przełączono na {agent}",
+				"handoff": "Przełączono na {agent}, który dostaje podsumowanie tej rozmowy"
 			},
 			"moreOptions": "Więcej opcji",
+			"switchBusy": "Dostępne po zakończeniu odpowiedzi",
+			"switchNote": "Nowy agent dostaje podsumowanie tej rozmowy, a nie pełną historię.",
 			"signInHint": "Zaloguj się w agencie: wiadomość zostanie wysłana, gdy się zalogujesz.",
 			"branch": "Gałąź {branch}",
 			"jumpToLatest": "Przejdź do najnowszych",

@@ -2763,9 +2763,13 @@
 			"notice": {
 				"restored": "ファイルをこの時点に復元しました",
 				"restoreFailed": "ファイルを復元できませんでした",
-				"signedIn": "サインインしました"
+				"signedIn": "サインインしました",
+				"switched": "{agent} に切り替えました",
+				"handoff": "{agent} に切り替えました。この会話の要約が渡されます"
 			},
 			"moreOptions": "その他のオプション",
+			"switchBusy": "応答が終わると選べます",
+			"switchNote": "新しいエージェントには、会話の全履歴ではなく要約が渡されます。",
 			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
 			"branch": "ブランチ {branch}",
 			"jumpToLatest": "最新へ移動",

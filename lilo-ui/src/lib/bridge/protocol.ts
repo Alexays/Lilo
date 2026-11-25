@@ -877,6 +877,8 @@ export interface BridgeCommandPayloadMap {
 	openConversationChanges: { tabId: string };
 	openConversationFile: { tabId: string; path: string; reveal: boolean };
 	authenticateConversation: { tabId: string; methodId: string };
+	/** Hands the conversation to another agent between turns; the thread stays, and the new agent gets a summary of it. */
+	switchConversationAgent: { tabId: string; agentId: string };
 	/** Starts the agent of a conversation whose `/` commands are not known yet: its session lists them. */
 	loadConversationCommands: { tabId: string };
 	/** Types into the agent's sign-in Lilo runs on a hidden terminal: a menu's key, or a line ending with Return. */

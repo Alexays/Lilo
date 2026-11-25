@@ -25,6 +25,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { conversationActions } from "./conversationActions";
   import { announce } from "../../lib/announce";
+  import { parseHiddenAgents } from "../../lib/agentCommands";
   import type { BridgeSplitPaneFrame } from "../../lib/bridge/protocol";
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -35,6 +36,7 @@
   import {
     addLocalPrompt,
     getAgent,
+    getAgents,
     getConversationState,
     getConversationSummary,
     getConversationVersion,
@@ -42,6 +44,7 @@
     hideConversation,
     showConversation,
   } from "../../stores/conversations.svelte";
+  import { getSetting } from "../../stores/settings.svelte";
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
@@ -133,6 +136,18 @@
   let readTop = 0;
   // The agent lists its `/` commands once its session opens: asked once per view.
   let commandsRequested = false;
+  // Another agent has other commands: asked again once the conversation changes hands.
+  $effect(() => {
+    void header.agentId;
+    untrack(() => (commandsRequested = false));
+  });
+  // A hidden agent leaves the picker, but the conversation's own stays listed.
+  const switchOptions = $derived.by(() => {
+    const hidden = parseHiddenAgents(getSetting("agentsHidden", "[]"));
+    return getAgents()
+      .filter((agent) => agent.id === header.agentId || !hidden.has(agent.id))
+      .map((agent) => ({ value: agent.id, label: agent.name, detail: agent.description || undefined, agentId: agent.id }));
+  });
   let text = $state(untrack(() => drafts[tabId]?.text ?? ""));
   let attachments = $state.raw<AttachmentDraft[]>(untrack(() => drafts[tabId]?.attachments ?? []));
   onDestroy(() => {
@@ -881,6 +896,21 @@
             use:tooltip={t("agents.composer.addContext")}
             onclick={() => field?.startMention()}
           ><Icon name="at" size={14} /></button>
+          {#if switchOptions.length > 1}
+            <MenuPicker
+              value={header.agentId}
+              options={switchOptions}
+              ariaLabel={t("agents.ask.agent")}
+              searchPlaceholder={t("agents.ask.searchAgents")}
+              searchEmptyLabel={t("agents.ask.noMatches")}
+              disabledReason={working ? t("agents.conversation.switchBusy") : undefined}
+              note={t("agents.conversation.switchNote")}
+              onchange={(agentId) => conversationActions.switchAgent(tabId, agentId)}
+            >
+              <AgentTile agentId={header.agentId} />
+              <span class="picker-label">{header.agentName}</span>
+            </MenuPicker>
+          {/if}
           {#if header.modes.length > 1}
             <MenuPicker
               value={header.modeId}

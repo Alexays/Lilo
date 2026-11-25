@@ -20,6 +20,7 @@ export const conversationActions = {
 	openFile: (tabId: string, path: string, reveal: boolean): void => emit("openConversationFile", { tabId, path, reveal }),
 	previewArtifact: (tabId: string, code: string, language: string): void => emit("previewConversationArtifact", { tabId, code, language }),
 	authenticate: (tabId: string, methodId: string): void => emit("authenticateConversation", { tabId, methodId }),
+	switchAgent: (tabId: string, agentId: string): void => emit("switchConversationAgent", { tabId, agentId }),
 	loadCommands: (tabId: string): void => emit("loadConversationCommands", { tabId }),
 	answerSignIn: (tabId: string, text: string): void => emit("answerConversationSignIn", { tabId, text }),
 	openSignInTerminal: (tabId: string): void => emit("openConversationSignInTerminal", { tabId }),

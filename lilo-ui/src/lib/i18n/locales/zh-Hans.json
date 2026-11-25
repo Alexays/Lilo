@@ -2763,9 +2763,13 @@
 			"notice": {
 				"restored": "文件已恢复到此处",
 				"restoreFailed": "无法恢复文件",
-				"signedIn": "已登录"
+				"signedIn": "已登录",
+				"switched": "已切换到 {agent}",
+				"handoff": "已切换到 {agent}，它会收到本对话的摘要"
 			},
 			"moreOptions": "更多选项",
+			"switchBusy": "回复结束后可用",
+			"switchNote": "新智能体会收到本对话的摘要，而不是完整历史。",
 			"signInHint": "请使用智能体登录：登录后即发送你的消息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新",
