@@ -2550,6 +2550,7 @@
 		"Screenshot of %@": "%@ 的屏幕快照",
 		"Selection from %@": "%@ 中的所选内容",
 		"The agent stopped (code %d).": "智能体已停止（代码 %d）。",
+		"The agent did not answer in time.": "代理未能及时响应。",
 		"This agent is no longer in the ACP registry.": "此智能体已不在 ACP 注册表中。",
 		"The agent stopped.": "代理已停止。",
 		"The agent is not running.": "代理未在运行。",
@@ -2839,6 +2840,17 @@
 			"featuredAgents": "精选",
 			"registryAgents": "注册表",
 			"noMatches": "没有匹配的智能体"
+		},
+		"readiness": {
+			"ready": "就绪",
+			"needsSignIn": "需要登录",
+			"unavailable": "不可用",
+			"unverified": "无法检查",
+			"checking": "正在检查...",
+			"check": "立即检查",
+			"signIn": "登录",
+			"signInWith": "使用 {method} 登录",
+			"model": "模型"
 		},
 		"row": {
 			"untitled": "新对话",

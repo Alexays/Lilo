@@ -172,6 +172,35 @@ export interface BridgeConversationSummary {
 	lastActivity?: number;
 }
 
+/** A model an agent's session offers. */
+export interface BridgeAgentChoice {
+	id: string;
+	name: string;
+	description?: string;
+}
+
+export interface BridgeAgentAuthMethod {
+	id: string;
+	name: string;
+	/** `agent`: the agent signs in itself; `terminal`: Lilo runs a command in a terminal. */
+	type: string;
+	description?: string;
+}
+
+/**
+ * What Lilo last learned of an agent, from a conversation it started or a check. `unverified`: the check
+ * itself failed, the agent may work. No state keeps an agent from being picked.
+ */
+export interface BridgeAgentReadiness {
+	state: "ready" | "needsSignIn" | "unavailable" | "unverified";
+	reason?: string;
+	/** With `modelConfigId`, the session option that sets the model. */
+	models?: BridgeAgentChoice[];
+	modelConfigId?: string;
+	currentModel?: string;
+	authMethods?: BridgeAgentAuthMethod[];
+}
+
 export interface BridgeAgentInfo {
 	id: string;
 	name: string;
@@ -182,6 +211,9 @@ export interface BridgeAgentInfo {
 	featured?: boolean;
 	/** One of the user's own commands from Settings rather than a registry entry. */
 	command?: boolean;
+	readiness?: BridgeAgentReadiness;
+	/** A check or a sign-in runs. */
+	checking?: boolean;
 }
 
 export interface BridgeFolderLock {
@@ -859,6 +891,8 @@ export interface BridgeCommandPayloadMap {
 		text: string;
 		attachments: BridgeConversationAttachment[];
 		background: boolean;
+		/** One of the record's models, remembered as the agent's model before its session opens. */
+		model?: string;
 	};
 	sendConversationPrompt: { tabId: string; text: string; attachments: BridgeConversationAttachment[]; interrupt: boolean };
 	cancelConversation: { tabId: string };
@@ -873,6 +907,10 @@ export interface BridgeCommandPayloadMap {
 	restoreConversation: { tabId: string; checkpoint: number };
 	undoConversationFile: { tabId: string; path: string; checkpoint: number };
 	loadAgentCatalog: { refresh: boolean };
+	/** Starts the agent to check it; answered with `agentReadiness`. */
+	checkAgent: { agentId: string };
+	/** Signs in with one of the methods the agent's record lists, then checks it again. */
+	signInAgent: { agentId: string; methodId: string };
 	loadConversations: EmptyPayload;
 	chooseConversationProject: EmptyPayload;
 	openConversationChanges: { tabId: string };
@@ -1121,6 +1159,8 @@ export interface BridgeEventPayloadMap {
 	/** Every conversation of every Space, for the Agents badge and popover. */
 	conversationsChanged: { conversations: BridgeConversationSummary[] };
 	agentCatalog: { agents: BridgeAgentInfo[]; projects: string[]; home: string };
+	/** An agent's check started or ended, or its record changed. */
+	agentReadiness: { agentId: string; checking: boolean; readiness?: BridgeAgentReadiness };
 	conversationProjectChosen: { path: string };
 	/** Paths relative to `cwd`, best match first. */
 	conversationFiles: { cwd: string; query: string; files: string[] };

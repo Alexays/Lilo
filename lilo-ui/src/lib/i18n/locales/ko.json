@@ -2550,6 +2550,7 @@
 		"Screenshot of %@": "%@ 스크린샷",
 		"Selection from %@": "%@에서 선택한 내용",
 		"The agent stopped (code %d).": "에이전트가 중지되었습니다(코드 %d).",
+		"The agent did not answer in time.": "에이전트가 제시간에 응답하지 않았습니다.",
 		"This agent is no longer in the ACP registry.": "이 에이전트는 더 이상 ACP 레지스트리에 없습니다.",
 		"The agent stopped.": "에이전트가 중지되었습니다.",
 		"The agent is not running.": "에이전트가 실행 중이 아닙니다.",
@@ -2839,6 +2840,17 @@
 			"featuredAgents": "추천",
 			"registryAgents": "레지스트리",
 			"noMatches": "일치하는 에이전트 없음"
+		},
+		"readiness": {
+			"ready": "준비됨",
+			"needsSignIn": "로그인 필요",
+			"unavailable": "사용할 수 없음",
+			"unverified": "확인하지 못함",
+			"checking": "확인 중...",
+			"check": "지금 확인",
+			"signIn": "로그인",
+			"signInWith": "{method}(으)로 로그인",
+			"model": "모델"
 		},
 		"row": {
 			"untitled": "새 대화",

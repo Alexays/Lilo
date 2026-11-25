@@ -2550,6 +2550,7 @@
 		"Screenshot of %@": "%@ ekran resmi",
 		"Selection from %@": "%@ içinden seçim",
 		"The agent stopped (code %d).": "Ajan durdu (kod %d).",
+		"The agent did not answer in time.": "Ajan zamanında yanıt vermedi.",
 		"This agent is no longer in the ACP registry.": "Bu ajan artık ACP kayıt defterinde değil.",
 		"The agent stopped.": "Ajan durdu.",
 		"The agent is not running.": "Ajan çalışmıyor.",
@@ -2839,6 +2840,17 @@
 			"featuredAgents": "Öne çıkanlar",
 			"registryAgents": "Kayıt",
 			"noMatches": "Eşleşen ajan yok"
+		},
+		"readiness": {
+			"ready": "Hazır",
+			"needsSignIn": "Oturum açılmalı",
+			"unavailable": "Kullanılamıyor",
+			"unverified": "Denetlenemedi",
+			"checking": "Denetleniyor...",
+			"check": "Şimdi denetle",
+			"signIn": "Oturum Aç",
+			"signInWith": "{method} ile oturum aç",
+			"model": "Model"
 		},
 		"row": {
 			"untitled": "Yeni sohbet",

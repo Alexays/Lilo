@@ -2550,6 +2550,7 @@
 		"Screenshot of %@": "Capture d'écran de %@",
 		"Selection from %@": "Sélection de %@",
 		"The agent stopped (code %d).": "L'agent s'est arrêté (code %d).",
+		"The agent did not answer in time.": "L'agent n'a pas répondu à temps.",
 		"This agent is no longer in the ACP registry.": "Cet agent n'est plus dans le registre ACP.",
 		"The agent stopped.": "L'agent s'est arrêté.",
 		"The agent is not running.": "L'agent n'est pas lancé.",
@@ -2831,6 +2832,17 @@
 			"featuredAgents": "À la une",
 			"registryAgents": "Registre",
 			"noMatches": "Aucun agent correspondant"
+		},
+		"readiness": {
+			"ready": "Prêt",
+			"needsSignIn": "Connexion requise",
+			"unavailable": "Indisponible",
+			"unverified": "Vérification impossible",
+			"checking": "Vérification...",
+			"check": "Vérifier maintenant",
+			"signIn": "Se connecter",
+			"signInWith": "Se connecter avec {method}",
+			"model": "Modèle"
 		},
 		"row": {
 			"untitled": "Nouvelle conversation",

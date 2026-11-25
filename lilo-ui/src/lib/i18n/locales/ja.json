@@ -2550,6 +2550,7 @@
 		"Screenshot of %@": "%@ のスクリーンショット",
 		"Selection from %@": "%@ からの選択範囲",
 		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
+		"The agent did not answer in time.": "エージェントが時間内に応答しませんでした。",
 		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
 		"The agent stopped.": "エージェントが停止しました。",
 		"The agent is not running.": "エージェントが実行されていません。",
@@ -2839,6 +2840,17 @@
 			"featuredAgents": "注目",
 			"registryAgents": "レジストリ",
 			"noMatches": "一致するエージェントがありません"
+		},
+		"readiness": {
+			"ready": "準備完了",
+			"needsSignIn": "サインインが必要",
+			"unavailable": "利用不可",
+			"unverified": "確認できませんでした",
+			"checking": "確認中...",
+			"check": "今すぐ確認",
+			"signIn": "サインイン",
+			"signInWith": "{method}でサインイン",
+			"model": "モデル"
 		},
 		"row": {
 			"untitled": "新しい会話",

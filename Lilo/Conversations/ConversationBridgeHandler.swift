@@ -10,7 +10,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
         "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
-        "loadConversationCommands", "switchConversationAgent",
+        "loadConversationCommands", "switchConversationAgent", "checkAgent", "signInAgent",
         "searchConversationFiles", "previewConversationArtifact", "openConversationFile"
     ]
 
@@ -30,6 +30,10 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "startConversation":
             guard let agentId = payload["agentId"] as? String, let cwd = payload["cwd"] as? String else { return nil }
             let background = payload["background"] as? Bool ?? false
+            // The Ask bar's default model, which the session then opens with, before the prompt goes.
+            if let model = payload["model"] as? String, let configId = host.readiness.record(for: agentId)?.modelConfigId {
+                host.remember(agentId, configId, model)
+            }
             guard let tab = await window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
             await prompt(tab.id, payload, interrupt: false)
         case "sendConversationPrompt":
@@ -59,22 +63,20 @@ final class ConversationBridgeHandler: BridgeHandler {
             }
         case "loadAgentCatalog":
             if payload["refresh"] as? Bool ?? false { await host.catalog.load() }
-            let featuredIds = Set(ACPAgentCatalog.featured.map(\.id))
             window.bridgeRouter.send(event: "agentCatalog", data: [
-                "agents": await host.catalog.runnableAgents().map { agent in
-                    var data: [String: Any] = ["id": agent.id, "name": agent.name, "description": agent.description]
-                    if case .command = agent.distribution {
-                        data["featured"] = true
-                        data["command"] = true
-                    } else if featuredIds.contains(agent.id) {
-                        data["featured"] = true
-                    }
-                    if let icon = host.catalog.iconDataURL(for: agent.id) { data["icon"] = icon }
-                    return data
-                },
+                "agents": await host.catalog.runnableAgents().map(host.agentPayload),
                 "projects": projects(),
                 "home": NSHomeDirectory()
             ])
+        case "checkAgent":
+            // Answers through the `agentReadiness` event, to every window. Not awaited: a check can take a minute.
+            if let agentId = payload["agentId"] as? String, let agent = host.catalog.agent(id: agentId) {
+                Task { await host.readiness.check(agent) }
+            }
+        case "signInAgent":
+            if let agentId = payload["agentId"] as? String, let methodId = payload["methodId"] as? String, let agent = host.catalog.agent(id: agentId) {
+                Task { await host.readiness.signIn(agent, methodId: methodId, in: window) }
+            }
         case "loadConversations":
             window.bridgeRouter.send(event: "conversationsChanged", data: ["conversations": host.summaries()])
         case "chooseConversationProject":

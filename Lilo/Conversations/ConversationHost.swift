@@ -86,12 +86,13 @@ final class ConversationHost {
         }
     }
 
-    static let protocolVersion = 2
+    nonisolated static let protocolVersion = 2
     static let idleDelay: TimeInterval = 600
     private static let logger = Logger(liloCategory: "conversations")
 
     weak var context: BrowserContext?
     let catalog: ACPAgentCatalog
+    let readiness: ACPAgentReadinessStore
     let projectFiles = ConversationProjectFiles()
     private(set) var conversations: [UUID: Conversation] = [:]
     /// The conversations each window's chrome shows, so updates go only where they are seen.
@@ -116,8 +117,11 @@ final class ConversationHost {
     private let saveQueue = DispatchQueue(label: "lilo.conversations.save", qos: .utility)
 
     init(directory: URL) {
-        catalog = ACPAgentCatalog(directory: directory)
+        let catalog = ACPAgentCatalog(directory: directory)
+        self.catalog = catalog
+        readiness = ACPAgentReadinessStore(directory: directory) { agent in try await catalog.launch(agent) }
         threads = directory.appending(path: "Conversations")
+        readiness.onChange = { [weak self] id in self?.broadcastReadiness(id) }
         catalog.commandsSetting = { [weak self] in self?.context?.settingsStore?.get("agentCommands") }
     }
 
@@ -397,29 +401,11 @@ final class ConversationHost {
         try Task.checkCancellation()
         try connection.start()
         conversation.connection = connection
-        let info = ["name": "lilo", "title": "Lilo", "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""]
-        let latest = Self.protocolVersion
-        // A v1 agent answers 1 and reads its own fields, ignoring the v2 ones; a v1 agent that rejects the
-        // unknown fields gets the v1 request alone.
-        let request: @Sendable (_ v2: Bool) -> [String: Any] = { v2 in
-            var params: [String: Any] = [
-                "protocolVersion": 1,
-                "clientCapabilities": ["fs": ["readTextFile": false, "writeTextFile": false], "terminal": false, "auth": ["terminal": true],
-                                       "elicitation": ["form": [String: Any](), "url": [String: Any]()]],
-                "clientInfo": info
-            ]
-            if v2 {
-                params["protocolVersion"] = latest
-                params["info"] = info
-                params["capabilities"] = ["auth": ["terminal": [String: Any]()], "elicitation": ["form": [String: Any](), "url": [String: Any]()]]
-            }
-            return params
-        }
         let initialized: [String: Any]
         do {
-            initialized = try await connection.request("initialize", request(true))
+            initialized = try await connection.request("initialize", Self.initializeParams(v2: true))
         } catch let error as ACPConnection.RPCError where error.code != ACPConnection.RPCError.transport {
-            initialized = try await connection.request("initialize", request(false))
+            initialized = try await connection.request("initialize", Self.initializeParams(v2: false))
         }
         conversation.protocolVersion = initialized["protocolVersion"] as? Int ?? 1
         if conversation.protocolVersion >= 2 {
@@ -443,6 +429,27 @@ final class ConversationHost {
         }
         try await openSession(conversation, connection: connection)
         if conversation.state == .starting { setState(conversation, .idle) }
+    }
+
+    /// A v1 agent answers 1 and reads its own fields, ignoring the v2 ones; a v1 agent that rejects the
+    /// unknown fields gets the v1 request alone.
+    nonisolated static func initializeParams(v2: Bool) -> [String: Any] {
+        let info = ["name": "lilo", "title": "Lilo", "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""]
+        let elicitation: [String: Any] = ["form": [String: Any](), "url": [String: Any]()]
+        guard v2 else {
+            return [
+                "protocolVersion": 1, "clientInfo": info,
+                "clientCapabilities": ["fs": ["readTextFile": false, "writeTextFile": false], "terminal": false, "auth": ["terminal": true],
+                                       "elicitation": elicitation]
+            ]
+        }
+        return ["protocolVersion": protocolVersion, "info": info, "capabilities": ["auth": ["terminal": [String: Any]()], "elicitation": elicitation]]
+    }
+
+    /// The agent's launch command with `arguments`, for a terminal: every word quoted, `PATH` too.
+    static func shellCommand(_ launch: ACPAgentReadinessStore.Launch, arguments: [String]) -> String {
+        let quote = { (word: String) in "'" + word.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        return "PATH=" + quote(launch.environment["PATH"] ?? "") + " " + ([launch.executable.path] + launch.arguments + arguments).map(quote).joined(separator: " ")
     }
 
     /// Sent in place of the agent's own system prompt while Lilo's is chosen, and the user did not write theirs.
@@ -517,6 +524,7 @@ final class ConversationHost {
                     return try await connection.request(method, params)
                 }
                 applySessionState(conversation, loaded)
+                readiness.set(ACPAgentReadiness(session: loaded, authMethods: conversation.authMethods), for: conversation.agentId)
                 return
             } catch let error as ACPConnection.RPCError where error.code != -32000 && error.code != ACPConnection.RPCError.transport {
                 // A session the agent no longer has starts over in a new one.
@@ -542,14 +550,20 @@ final class ConversationHost {
             if value is Bool { params["type"] = "boolean" } else if conversation.protocolVersion >= 2 { params["type"] = "id" }
             // A value the agent no longer offers is forgotten, and the session keeps its default.
             guard let result = try? await connection.request("session/set_config_option", params) else {
-                agentChoices[conversation.agentId]?[configId] = nil
-                unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
+                remember(conversation.agentId, configId, nil)
                 continue
             }
             if let options = result["configOptions"] { state["configOptions"] = options }
         }
         applySessionState(conversation, state)
+        readiness.set(ACPAgentReadiness(session: state, authMethods: conversation.authMethods), for: conversation.agentId)
         persistSession(conversation)
+    }
+
+    /// Remembers a config choice for the agent's next sessions, the Ask bar's default model included.
+    func remember(_ agentId: String, _ configId: String, _ value: Any?) {
+        agentChoices[agentId, default: [:]][configId] = value
+        unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
     }
 
     /// The prompt waits on a sign-in in a terminal; `signInFinished` sends it again.
@@ -572,8 +586,10 @@ final class ConversationHost {
             if !conversation.signInOffered, let method = conversation.authMethods.first(where: { $0["type"] as? String == "terminal" }) {
                 conversation.signInOffered = true
                 signInInline(conversation, method: method)
+                readiness.set(ACPAgentReadiness(state: .needsSignIn, authMethods: conversation.authMethods), for: conversation.agentId)
                 throw SignInPending()
             }
+            readiness.set(ACPAgentReadiness(state: .needsSignIn, authMethods: conversation.authMethods), for: conversation.agentId)
             throw error
         }
     }
@@ -584,9 +600,7 @@ final class ConversationHost {
         Task {
             if let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow,
                let launch = try? await catalog.launch(agent) {
-                let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
-                let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
-                if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
+                if let tab = window.createTerminalTab(command: Self.shellCommand(launch, arguments: method["args"] as? [String] ?? [])) {
                     signInTerminals[tab.id] = conversation.tabId
                     return
                 }
@@ -696,6 +710,7 @@ final class ConversationHost {
 
     /// A terminal's command ended or its tab closed: a sign-in run there is done.
     func terminalFinished(_ terminalId: UUID) {
+        readiness.terminalFinished(terminalId)
         guard let tabId = signInTerminals.removeValue(forKey: terminalId), let conversation = conversations[tabId] else { return }
         signInFinished(conversation)
     }
@@ -1069,10 +1084,7 @@ final class ConversationHost {
                 if let options = result["configOptions"] as? [Any] {
                     append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
                     let category = options.lazy.compactMap { $0 as? [String: Any] }.first { Self.configId(of: $0) == configId }?["category"] as? String
-                    if category != "mode" {
-                        agentChoices[conversation.agentId, default: [:]][configId] = value
-                        unsafe UserDefaults.lilo.set(agentChoices, forKey: "agentConfigChoices")
-                    }
+                    if category != "mode" { remember(conversation.agentId, configId, value) }
                 }
                 scheduleIdleStop(conversation)
             } catch {
@@ -1216,7 +1228,7 @@ final class ConversationHost {
     private static func isUrlElicitation(_ params: [String: Any]) -> Bool { params["mode"] as? String == "url" }
 
     /// The web page a URL elicitation asks to open, unless it has another scheme or a userinfo.
-    private static func signInURL(_ params: [String: Any]) -> URL? {
+    static func signInURL(_ params: [String: Any]) -> URL? {
         guard isUrlElicitation(params), let string = params["url"] as? String, let components = URLComponents(string: string),
               ["http", "https"].contains(components.scheme?.lowercased() ?? ""), components.host?.isEmpty == false,
               components.user == nil, components.password == nil else { return nil }
