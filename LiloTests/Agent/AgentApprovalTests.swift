@@ -1,3 +1,4 @@
+import UserNotifications
 import XCTest
 @testable import Lilo
 
@@ -207,9 +208,57 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertEqual(result.meta["lilo/consent"] as? String, "denied")
     }
 
-    /// With no window to ask in, the agent is told so instead of that the user said no. No tool call gets this
-    /// far without a window, so the gate itself is asked directly.
-    func testAnOrderWithNoWindowSaysSo() async throws {
+    /// Records the consent notifications a question posts while no window can ask; `allowed` is
+    /// whether the user lets Lilo post notifications.
+    private final class PostedNotifications {
+        var requests: [UNNotificationRequest] = []
+    }
+
+    private func recordNotifications(allowed: Bool = true) -> PostedNotifications {
+        let posted = PostedNotifications()
+        let post = AgentControl.postConsentNotification
+        AgentControl.postConsentNotification = { posted.requests.append($0); return allowed }
+        addTeardownBlock { @MainActor in AgentControl.postConsentNotification = post }
+        return posted
+    }
+
+    /// With no window to ask in, the question waits in a notification; its tap opens a window at it
+    /// and the answer there resolves it. No tool call gets this far without a window, so the gate
+    /// itself is asked directly.
+    func testAnOrderWithNoWindowWaitsInANotification() async throws {
+        let posted = recordNotifications()
+        let tab = try await shopTab()
+        let engine = try engine(forTab: tab)
+        let session = try XCTUnwrap(control.sessions.first)
+        context.windows.remove(window)
+        defer { context.windows.add(window) }
+
+        let approval = Task { try await control.approveConsequentialAction("click", label: "Place order", frame: nil, engine: engine, session: session) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the question holds rather than failing")
+        let requestId = try XCTUnwrap(control.pendingConsentAnswers.keys.first)
+        let notification = try XCTUnwrap(posted.requests.first)
+        XCTAssertEqual(notification.identifier, AgentControl.consentNotificationId(requestId))
+        XCTAssertEqual(notification.content.userInfo["agentConsentRequestId"] as? String, requestId)
+        XCTAssertEqual(notification.content.title, AgentControl.displayName(session.clientName))
+        let shown = notification.content.title + notification.content.body
+        XCTAssertFalse(shown.contains("Place order"), "the page's labels stay off the lock screen: \(shown)")
+
+        // The notification's tap: a window opens at the held question, which its drawer asks again.
+        control.revealConsent(requestId: requestId)
+        let answerer = try XCTUnwrap(context.windows.windows.first { $0 !== window })
+        addTeardownBlock { @MainActor in answerer.window?.close() }
+        control.answerConsent(requestId, granted: true)
+
+        let released = try await approval.value
+        XCTAssertTrue(released, "the user's answer releases the held call")
+    }
+
+    /// A question nobody answers expires in a notification as it does in a drawer.
+    func testAQuestionHeldInANotificationStillExpires() async throws {
+        _ = recordNotifications()
+        AgentControl.actionConsentTimeout = 0.3
+        defer { AgentControl.actionConsentTimeout = 45 }
         let tab = try await shopTab()
         let engine = try engine(forTab: tab)
         let session = try XCTUnwrap(control.sessions.first)
@@ -221,10 +270,31 @@ final class AgentApprovalTests: AgentToolTestCase {
             XCTFail("the order needs the user")
         } catch let error as AgentToolError {
             XCTAssertEqual(error.code, "needs_user")
-            XCTAssertEqual(error.consent, .unavailable)
-            XCTAssertTrue(error.message.contains("no window"), error.message)
+            XCTAssertEqual(error.consent, .expired)
         }
-        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "nothing was shown")
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "the question is withdrawn")
+    }
+
+    /// With no window and notifications off, nothing can ask: the agent is told so at once, not after the wait.
+    func testAnOrderWithNoWindowAndNotificationsOffSaysSo() async throws {
+        _ = recordNotifications(allowed: false)
+        let tab = try await shopTab()
+        let engine = try engine(forTab: tab)
+        let session = try XCTUnwrap(control.sessions.first)
+        context.windows.remove(window)
+        defer { context.windows.add(window) }
+
+        let started = Date()
+        do {
+            _ = try await control.approveConsequentialAction("click", label: "Place order", frame: nil, engine: engine, session: session)
+            XCTFail("the order needs the user")
+        } catch let error as AgentToolError {
+            XCTAssertEqual(error.code, "needs_user")
+            XCTAssertEqual(error.consent, .unavailable)
+            XCTAssertTrue(error.message.contains("notifications are off"), error.message)
+        }
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5, "without the wait")
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "nothing was asked")
     }
 
     /// A call the client cancelled withdraws its question from the drawers.

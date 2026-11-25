@@ -1,0 +1,3 @@
+kind: Added
+body: 'An agent question asked while no Lilo window is open waits in a notification: clicking it opens a window at the question'
+time: 2026-11-23T13:39:36.029365-08:00

@@ -426,8 +426,12 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         let conversationTabId = (userInfo["conversationTabId"] as? String).flatMap(UUID.init(uuidString:))
         let webNotification = userInfo["webNotification"] as? String
         let webTabId = (userInfo["webTabId"] as? String).flatMap(UUID.init(uuidString:))
+        let agentConsentRequestId = userInfo["agentConsentRequestId"] as? String
         let typedReply = (response as? UNTextInputNotificationResponse)?.userText
         Task { @MainActor in
+            if let agentConsentRequestId, actionId == UNNotificationDefaultActionIdentifier {
+                self.browserContext.agentControl.revealConsent(requestId: agentConsentRequestId)
+            }
             if let terminalTabId {
                 if actionId.hasPrefix(UNNotificationCategory.terminalChoicePrefix) {
                     self.mainWindowController?.answerTerminal(terminalTabId, with: String(actionId.dropFirst(UNNotificationCategory.terminalChoicePrefix.count)))

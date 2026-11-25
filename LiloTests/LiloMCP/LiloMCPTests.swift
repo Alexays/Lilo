@@ -89,7 +89,10 @@ final class LiloMCPTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         let control = AgentControl(context: browserContext.context, socketURL: directory.appending(path: "agent.sock"))
         control.setEnabled(true)
+        let post = AgentControl.postConsentNotification
+        AgentControl.postConsentNotification = { _ in true }
         defer {
+            AgentControl.postConsentNotification = post
             control.setEnabled(false)
             browserContext.tearDown()
         }
@@ -104,7 +107,7 @@ final class LiloMCPTests: XCTestCase {
         let call = await receive(output)?["result"] as? [String: Any]
         XCTAssertEqual((call?["_meta"] as? [String: Any])?["lilo/errorCode"] as? String, "needs_user")
         let text = ((call?["content"] as? [[String: Any]])?.first?["text"] as? String) ?? ""
-        XCTAssertTrue(text.hasPrefix("[needs_user] Lilo has no window to ask the user to allow Newcomer in"), text)
+        XCTAssertTrue(text.hasPrefix("[needs_user] Lilo asked the user in a notification to allow Newcomer"), text)
         XCTAssertFalse(control.sessions.contains { $0.isRefused }, "no window is no refusal")
     }
 
