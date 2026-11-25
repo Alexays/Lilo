@@ -591,6 +591,13 @@
 				"description": "Sprich in einem Tab mit Claude Code, Codex, Gemini und anderen Agenten, mit deinen eigenen Abos.",
 				"keywords": "agent ki acp chat unterhaltung fragen claude codex gemini copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "Konversationsposition",
+				"description": "Wo eine Konversation erscheint, die in der Ask-Leiste gestartet wird.",
+				"keywords": "agent konversation fragen leiste mini karte tab öffnen",
+				"mini": "Mini-Konversation",
+				"tab": "Ganzer Tab"
+			},
 			"agentsNotifyDone": {
 				"title": "Benachrichtigen, wenn ein Agent fertig ist",
 				"description": "Eine Mitteilung, wenn eine Unterhaltung fertig ist, die du gerade nicht ansiehst.",
@@ -2770,6 +2777,7 @@
 			"moreOptions": "Weitere Optionen",
 			"switchBusy": "Verfügbar, sobald die Antwort fertig ist",
 			"switchNote": "Der neue Agent erhält eine Zusammenfassung dieser Unterhaltung, nicht den vollständigen Verlauf.",
+			"openInTab": "In Tab öffnen",
 			"signInHint": "Melde dich beim Agenten an: Deine Nachricht wird gesendet, sobald du angemeldet bist.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Zum Neuesten",

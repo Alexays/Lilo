@@ -591,6 +591,13 @@
 				"description": "Parlez à Claude Code, Codex, Gemini et d'autres agents dans un onglet, avec vos propres abonnements.",
 				"keywords": "agent ia acp chat conversation demander claude codex gemini copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "Emplacement des conversations",
+				"description": "Où apparaît une conversation lancée depuis la barre Demander.",
+				"keywords": "agent conversation barre demander emplacement mini carte onglet ouvrir",
+				"mini": "Mini conversation",
+				"tab": "Onglet complet"
+			},
 			"agentsNotifyDone": {
 				"title": "Notifier quand un agent a fini",
 				"description": "Une notification quand une conversation que vous ne regardez pas est terminée.",
@@ -2762,6 +2769,7 @@
 			"moreOptions": "Plus d'options",
 			"switchBusy": "Disponible une fois la réponse terminée",
 			"switchNote": "Le nouvel agent reçoit un résumé de cette conversation, pas l'historique complet.",
+			"openInTab": "Ouvrir dans un onglet",
 			"signInHint": "Connectez-vous avec l'agent : votre message part dès que vous êtes connecté.",
 			"branch": "Branche {branch}",
 			"jumpToLatest": "Aller aux derniers messages",

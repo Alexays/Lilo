@@ -26,6 +26,7 @@
   import { getSetting } from "../stores/settings.svelte";
   import { getSplitPanes } from "../stores/splitPanes.svelte";
   import { getActiveTab, getTabsById } from "../stores/tabs.svelte";
+  import { on } from "../lib/bridge";
   import type { BridgeSplitPaneFrame } from "../lib/bridge/protocol";
   import { isAskBarOpen } from "../stores/conversations.svelte";
 
@@ -66,6 +67,19 @@
     }
     const tab = getActiveTab();
     return tab?.kind === "agent" ? [{ tabId: tab.id, x: 0, y: 0, width: 1, height: 1 }] : [];
+  });
+  // Mini conversation cards: the conversation's tab id by the page tab it floats over. Held here, out of
+  // the first frame: a card only follows an Ask bar start.
+  const conversationCards: Record<string, string> = $state({});
+  on("openConversationCard", (data) => {
+    conversationCards[data.sourceTabId] = data.tabId;
+  });
+  // A mini conversation shows over the page it was asked from, while that page is active and the conversation lives.
+  const conversationCard = $derived.by(() => {
+    const tab = agentsEnabled ? getActiveTab() : undefined;
+    const tabId = tab && conversationCards[tab.id];
+    const conversation = tabId ? getTabsById().get(tabId) : undefined;
+    return tab && conversation && !conversation.isClosed ? { sourceTabId: tab.id, tabId: conversation.id } : null;
   });
 </script>
 
@@ -111,6 +125,11 @@
     {/each}
   {/await}
 {/if}
+{#each conversationCard ? [conversationCard] : [] as card (card.tabId)}
+  {#await import("./agents/ConversationCard.svelte") then module}
+    <module.default tabId={card.tabId} onclose={() => delete conversationCards[card.sourceTabId]} />
+  {/await}
+{/each}
 {#if agentsEnabled && askBarLoaded}
   {#await import("./agents/AskBar.svelte") then askBar}
     <askBar.default />

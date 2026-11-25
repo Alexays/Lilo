@@ -591,6 +591,13 @@
 				"description": "在标签页中与 Claude Code、Codex、Gemini 等智能体对话，使用你自己的订阅。",
 				"keywords": "智能体 AI ACP 聊天 对话 询问 Claude Codex Gemini Copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "会话位置",
+				"description": "从提问栏启动的会话显示的位置。",
+				"keywords": "智能体 会话 询问栏 位置 迷你 标签页 打开",
+				"mini": "迷你会话",
+				"tab": "完整标签页"
+			},
 			"agentsNotifyDone": {
 				"title": "智能体完成时通知",
 				"description": "你未在查看的对话完成时发送通知。",
@@ -2770,6 +2777,7 @@
 			"moreOptions": "更多选项",
 			"switchBusy": "回复结束后可用",
 			"switchNote": "新智能体会收到本对话的摘要，而不是完整历史。",
+			"openInTab": "在标签页中打开",
 			"signInHint": "请使用智能体登录：登录后即发送你的消息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新",

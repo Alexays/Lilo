@@ -323,6 +323,16 @@
         ariaLabel={title}
         onchange={(value) => setSetting("externalLinkDefault", value)}
       />
+    {:else if id === "agentConversationPlacement"}
+      <UiSelect
+        value={getSetting("agentConversationPlacement", "mini")}
+        options={[
+          { value: "mini", label: t("settings.items.agentConversationPlacement.mini") },
+          { value: "tab", label: t("settings.items.agentConversationPlacement.tab") },
+        ]}
+        ariaLabel={title}
+        onchange={(value) => setSetting("agentConversationPlacement", value)}
+      />
     {:else if id === "searchEngine"}
       <UiSelect
         value={getSetting("searchEngine", "google")}

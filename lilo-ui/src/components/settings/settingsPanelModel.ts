@@ -107,6 +107,7 @@ export type SettingId =
   | "checkExtensionUpdates"
   | "passwordManager"
   | "agentsEnabled"
+  | "agentConversationPlacement"
   | "agentsNotifyDone"
   | "agentSystemPrompt"
   | "agentSystemPromptText"
@@ -243,6 +244,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "checkExtensionUpdates", section: "extensions", groupKey: "settings.groups.updates" },
   { id: "passwordManager", section: "extensions", groupKey: "settings.groups.passwords" },
   { id: "agentsEnabled", section: "agents", groupKey: "settings.groups.agentConversations" },
+  { id: "agentConversationPlacement", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentsNotifyDone", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentSystemPrompt", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentSystemPromptText", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },

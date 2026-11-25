@@ -591,6 +591,13 @@
 				"description": "Claude Code、Codex、Gemini などのエージェントと、ご自身のサブスクリプションでタブ内で会話できます。",
 				"keywords": "エージェント AI ACP チャット 会話 質問 Claude Codex Gemini Copilot"
 			},
+			"agentConversationPlacement": {
+				"title": "会話の表示場所",
+				"description": "アスクバーから開始した会話の表示場所。",
+				"keywords": "エージェント 会話 質問 バー 表示 ミニ タブ 開く",
+				"mini": "ミニ会話",
+				"tab": "タブ全体"
+			},
 			"agentsNotifyDone": {
 				"title": "エージェントの完了時に通知",
 				"description": "表示していない会話が完了したときに通知します。",
@@ -2770,6 +2777,7 @@
 			"moreOptions": "その他のオプション",
 			"switchBusy": "応答が終わると選べます",
 			"switchNote": "新しいエージェントには、会話の全履歴ではなく要約が渡されます。",
+			"openInTab": "タブで開く",
 			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
 			"branch": "ブランチ {branch}",
 			"jumpToLatest": "最新へ移動",

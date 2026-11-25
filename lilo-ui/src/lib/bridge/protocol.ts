@@ -1111,6 +1111,8 @@ export interface BridgeEventPayloadMap {
 	tabGlancePointer: { inside: boolean };
 	// The host gave the glanced tab its view back on its own (tab shown, closed, Space left), or could not glance it.
 	tabGlanceEnded: EmptyPayload;
+	/** A conversation the Ask bar started, to show as a card over the page tab it was asked from. */
+	openConversationCard: { tabId: string; sourceTabId: string };
 	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
 	conversationOpened: BridgeConversationOpened;
 	/** Updates of one conversation since the last delivery, oldest first. */
