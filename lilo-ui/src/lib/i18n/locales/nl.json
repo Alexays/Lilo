@@ -2551,7 +2551,6 @@
 		"Selection from %@": "Selectie uit %@",
 		"The agent stopped (code %d).": "De agent is gestopt (code %d).",
 		"The agent did not answer in time.": "De agent reageerde niet op tijd.",
-		"The agent could not open a session: %@": "De agent kon geen sessie openen: %@",
 		"This agent is no longer in the ACP registry.": "Deze agent staat niet meer in het ACP-register.",
 		"The agent stopped.": "De agent is gestopt.",
 		"The agent is not running.": "De agent draait niet.",
@@ -2851,11 +2850,7 @@
 			"check": "Nu controleren",
 			"signIn": "Aanmelden",
 			"signInWith": "Aanmelden met {method}",
-			"model": "Model",
-			"modelDefault": "Standaardmodel",
-			"modelCustom": "Model instellen",
-			"modelPlaceholder": "Model-ID",
-			"modelHint": "Deze agent toont geen modellen. Typ de ID van een model om te gebruiken."
+			"model": "Model"
 		},
 		"row": {
 			"untitled": "Nieuw gesprek",

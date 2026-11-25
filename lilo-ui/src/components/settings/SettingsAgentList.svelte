@@ -2,7 +2,6 @@
   import { untrack } from "svelte";
   import "../../lib/i18n/agentsCatalog";
   import { t } from "../../lib/i18n/state.svelte";
-  import { agentNote, agentStatus, signInMethods } from "../../lib/agentReadiness";
   import type { BridgeAgentInfo } from "../../lib/bridge/protocol";
   import { type AgentCommand, parseAgentCommands, parseHiddenAgents } from "../../lib/agentCommands";
   import { getAgent, getAgents } from "../../stores/conversations.svelte";
@@ -67,20 +66,16 @@
 
   const TONES = { ready: "success", needsSignIn: "accent", unavailable: "danger", unverified: "neutral" } as const;
 
-  // What the last probe found, and why when it is not simply ready. An agent nobody probed shows nothing.
-  function noteFor(agent: BridgeAgentInfo): string | undefined {
-    return agentNote(agent, {
-      needsSignIn: t("agents.readiness.needsSignIn"),
-      unavailable: t("agents.readiness.unavailable"),
-      unverified: t("agents.readiness.unverified"),
-    });
+  // The methods Lilo can run: one that is neither `agent` nor `terminal` is left out.
+  function signInMethods(agent: BridgeAgentInfo) {
+    return (agent.readiness?.authMethods ?? []).filter((method) => method.type === "agent" || method.type === "terminal");
   }
 
   function readinessMenu(agent: BridgeAgentInfo | undefined): { label: string; onclick: () => void }[] {
     if (!agent) return [];
     const methods = signInMethods(agent);
     return [
-      { label: t("agents.readiness.check"), onclick: () => conversationActions.probeAgent(agent.id, true) },
+      { label: t("agents.readiness.check"), onclick: () => conversationActions.checkAgent(agent.id) },
       ...(methods.length > 1
         ? methods.map((method) => ({ label: t("agents.readiness.signInWith", { method: method.name }), onclick: () => conversationActions.signInAgent(agent.id, method.id) }))
         : []),
@@ -95,17 +90,17 @@
 {#snippet status(agent: BridgeAgentInfo | undefined)}
   {#if agent?.checking}
     <span class="status-line">{t("agents.readiness.checking")}</span>
-  {:else if agent && agentStatus(agent) !== "unknown"}
-    {@const state = agentStatus(agent)}
+  {:else if agent?.readiness}
+    {@const state = agent.readiness.state}
     <span class="status-line">
-      <UiBadge tone={TONES[state as keyof typeof TONES]}>{t(`agents.readiness.${state}`)}</UiBadge>
-      {#if state !== "ready" && state !== "needsSignIn"}{noteFor(agent)}{/if}
+      <UiBadge tone={TONES[state]}>{t(`agents.readiness.${state}`)}</UiBadge>
+      {#if state === "unavailable" || state === "unverified"}{agent.readiness.reason}{/if}
     </span>
   {/if}
 {/snippet}
 
 {#snippet signIn(agent: BridgeAgentInfo | undefined)}
-  {#if agent && agentStatus(agent) === "needsSignIn" && !agent.checking}
+  {#if agent && agent.readiness?.state === "needsSignIn" && !agent.checking}
     {@const method = signInMethods(agent)[0]}
     {#if method}<UiButton onclick={() => conversationActions.signInAgent(agent.id, method.id)}>{t("agents.readiness.signIn")}</UiButton>{/if}
   {/if}

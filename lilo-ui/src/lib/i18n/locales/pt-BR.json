@@ -2551,7 +2551,6 @@
 		"Selection from %@": "Seleção de %@",
 		"The agent stopped (code %d).": "O agente parou (código %d).",
 		"The agent did not answer in time.": "O agente não respondeu a tempo.",
-		"The agent could not open a session: %@": "O agente não conseguiu abrir uma sessão: %@",
 		"This agent is no longer in the ACP registry.": "Este agente não está mais no registro do ACP.",
 		"The agent stopped.": "O agente parou.",
 		"The agent is not running.": "O agente não está em execução.",
@@ -2851,11 +2850,7 @@
 			"check": "Verificar agora",
 			"signIn": "Entrar",
 			"signInWith": "Entrar com {method}",
-			"model": "Modelo",
-			"modelDefault": "Modelo padrão",
-			"modelCustom": "Definir modelo",
-			"modelPlaceholder": "ID do modelo",
-			"modelHint": "Este agente não lista modelos. Digite o ID de um para usar."
+			"model": "Modelo"
 		},
 		"row": {
 			"untitled": "Nova conversa",

@@ -2551,7 +2551,6 @@
 		"Selection from %@": "%@ içinden seçim",
 		"The agent stopped (code %d).": "Ajan durdu (kod %d).",
 		"The agent did not answer in time.": "Ajan zamanında yanıt vermedi.",
-		"The agent could not open a session: %@": "Ajan bir oturum açamadı: %@",
 		"This agent is no longer in the ACP registry.": "Bu ajan artık ACP kayıt defterinde değil.",
 		"The agent stopped.": "Ajan durdu.",
 		"The agent is not running.": "Ajan çalışmıyor.",
@@ -2851,11 +2850,7 @@
 			"check": "Şimdi denetle",
 			"signIn": "Oturum Aç",
 			"signInWith": "{method} ile oturum aç",
-			"model": "Model",
-			"modelDefault": "Varsayılan model",
-			"modelCustom": "Modeli ayarla",
-			"modelPlaceholder": "Model kimliği",
-			"modelHint": "Bu ajan hiç model listelemiyor. Kullanmak istediğiniz modelin kimliğini yazın."
+			"model": "Model"
 		},
 		"row": {
 			"untitled": "Yeni sohbet",

@@ -13,8 +13,6 @@
     agentId?: string;
     /** Shown checked, for a menu whose `value` does not name its choice (several settings in one menu). */
     checked?: boolean;
-    /** Listed with its `detail` as the reason, and out of the keyboard's and the pointer's reach. */
-    disabled?: boolean;
   }
 </script>
 
@@ -91,11 +89,10 @@
       filterField()?.focus();
       return;
     }
-    (menuEl.querySelector<HTMLElement>("[aria-checked='true']:not(:disabled)") ?? menuEl.querySelector<HTMLElement>("[role='menuitemradio']:not(:disabled)"))?.focus();
+    (menuEl.querySelector<HTMLElement>("[aria-checked='true']") ?? menuEl.querySelector<HTMLElement>("[role='menuitemradio']"))?.focus();
   });
 
   function choose(option: MenuOption): void {
-    if (option.disabled) return;
     open = false;
     buttonEl?.focus();
     if (option.value !== value) onchange(option.value);
@@ -112,10 +109,10 @@
       buttonEl?.focus();
       return;
     }
-    const rows = Array.from(menuEl?.querySelectorAll<HTMLElement>("[role='menuitemradio']:not(:disabled)") ?? []);
+    const rows = Array.from(menuEl?.querySelectorAll<HTMLElement>("[role='menuitemradio']") ?? []);
     const active = document.activeElement as HTMLElement;
     if (searchable && active?.tagName === "INPUT") {
-      const first = filtered.find((option) => !option.disabled);
+      const first = filtered[0];
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         (event.key === "ArrowDown" ? rows[0] : rows[rows.length - 1])?.focus();
@@ -220,7 +217,6 @@
           class:detailed={!!option.detail}
           role="menuitemradio"
           aria-checked={checked}
-          disabled={option.disabled}
           use:tooltip={{ text: option.label, subtitle: option.detail, placement: "right", disabled: !option.detail }}
           onclick={() => choose(option)}
         >
@@ -333,15 +329,10 @@
     height: 40px;
   }
 
-  .item:not(:disabled):hover,
+  .item:hover,
   .item:focus-visible {
     background: var(--float-hover);
     outline: none;
-  }
-
-  .item:disabled {
-    opacity: var(--disabled-opacity);
-    cursor: default;
   }
 
   .glyph {

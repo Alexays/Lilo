@@ -1,7 +1,7 @@
 import XCTest
 @testable import Lilo
 
-/// Probes a small agent written in Python that answers ACP over stdio the way its scenario says.
+/// Checks a small agent written in Python that answers ACP over stdio the way its scenario says.
 @MainActor
 final class ACPAgentReadinessTests: XCTestCase {
     private let directory = FileManager.default.temporaryDirectory.appending(path: "lilo-readiness-\(UUID().uuidString)")
@@ -18,10 +18,14 @@ final class ACPAgentReadinessTests: XCTestCase {
         time.sleep(600)
     def send(message):
         sys.stdout.write(json.dumps(message) + "\n"); sys.stdout.flush()
+    signed_in = False
     for line in sys.stdin:
         message = json.loads(line)
         method, id = message.get("method"), message.get("id")
-        if method == "initialize":
+        if method == "authenticate":
+            signed_in = True
+            send({"jsonrpc": "2.0", "id": id, "result": {}})
+        elif method == "initialize":
             result = {"protocolVersion": 1, "agentCapabilities": {}}
             if scenario == "signin":
                 result["authMethods"] = [
@@ -29,14 +33,11 @@ final class ACPAgentReadinessTests: XCTestCase {
                     {"id": "cli", "name": "Terminal", "type": "terminal", "args": ["login"]}]
             send({"jsonrpc": "2.0", "id": id, "result": result})
         elif method == "session/new":
-            if scenario == "signin":
+            if scenario == "signin" and not signed_in:
                 send({"jsonrpc": "2.0", "id": id, "error": {"code": -32000, "message": "auth_required"}})
             elif scenario == "broken":
                 send({"jsonrpc": "2.0", "id": id, "error": {"code": -32603, "message": "boom"}})
-            elif scenario == "legacy":
-                send({"jsonrpc": "2.0", "id": id, "result": {"sessionId": "s1",
-                    "models": {"currentModelId": "fast", "availableModels": [{"modelId": "fast", "name": "Fast"}, {"modelId": "deep", "name": "Deep", "description": "Slow"}]}}})
-            elif scenario == "bare":
+            elif scenario in ("bare", "signin"):
                 send({"jsonrpc": "2.0", "id": id, "result": {"sessionId": "s1"}})
             else:
                 send({"jsonrpc": "2.0", "id": id, "result": {"sessionId": "s1",
@@ -63,12 +64,16 @@ final class ACPAgentReadinessTests: XCTestCase {
         return (URL(fileURLWithPath: try XCTUnwrap(python)), [script.path, scenario] + extra, ProcessInfo.processInfo.environment)
     }
 
-    private func probe(_ scenario: String, timeout: TimeInterval = 10) async throws -> ACPAgentReadiness {
+    private func probe(_ scenario: String, signingInWith methodId: String? = nil, timeout: TimeInterval = 10) async throws -> ACPAgentReadiness {
         let launch = try launch(scenario)
-        return await ACPAgentProbe.run(launching: { launch }, timeout: timeout)
+        return await ACPAgentProbe.run(launching: { launch }, signingInWith: methodId, open: { _ in }, timeout: timeout)
     }
 
-    func testASessionAgentIsReadyWithItsModelsAndModes() async throws {
+    private func agent(_ id: String = "example") -> ACPAgentCatalog.Agent {
+        ACPAgentCatalog.Agent(id: id, name: id, description: "", version: "", distribution: .command(executable: "/bin/echo", args: [], environment: ""))
+    }
+
+    func testASessionAgentIsReadyWithItsModels() async throws {
         let result = try await probe("ready")
 
         XCTAssertEqual(result.state, .ready)
@@ -77,16 +82,6 @@ final class ACPAgentReadinessTests: XCTestCase {
         XCTAssertEqual(result.models.first?.description, "Small")
         XCTAssertEqual(result.currentModel, "m1")
         XCTAssertEqual(result.modelConfigId, "model")
-        XCTAssertEqual(result.modes.map(\.name), ["Ask", "Code"])
-    }
-
-    func testTheModelsBesideASessionAreReadToo() async throws {
-        let result = try await probe("legacy")
-
-        XCTAssertEqual(result.state, .ready)
-        XCTAssertEqual(result.models.map(\.name), ["Fast", "Deep"])
-        XCTAssertEqual(result.currentModel, "fast")
-        XCTAssertNil(result.modelConfigId, "the earlier shape has no option to set a model through")
     }
 
     func testAnAgentWithNoModelsIsReadyWithNone() async throws {
@@ -94,7 +89,7 @@ final class ACPAgentReadinessTests: XCTestCase {
 
         XCTAssertEqual(result.state, .ready)
         XCTAssertTrue(result.models.isEmpty)
-        XCTAssertTrue(result.modes.isEmpty)
+        XCTAssertNil(result.payload["models"])
     }
 
     func testARefusedSessionNeedsSignInAndKeepsTheMethodsTheAgentDeclares() async throws {
@@ -106,103 +101,86 @@ final class ACPAgentReadinessTests: XCTestCase {
         XCTAssertEqual(result.authMethods.last?.args, ["login"])
     }
 
+    func testASignInThroughTheAgentLeavesItReady() async throws {
+        let result = try await probe("signin", signingInWith: "browser")
+
+        XCTAssertEqual(result.state, .ready)
+    }
+
     func testAnErrorReplyToTheSessionLeavesTheAgentUnverifiedNotUnavailable() async throws {
         let result = try await probe("broken")
 
         XCTAssertEqual(result.state, .unverified)
-        XCTAssertTrue(result.reason?.contains("boom") == true)
+        XCTAssertEqual(result.reason, "boom")
     }
 
     func testAProgramThatCannotBeLaunchedIsUnavailableWithTheReason() async {
         let result = await ACPAgentProbe.run(launching: {
             throw ACPAgentCatalog.LaunchError(message: "Example needs Node.js.")
-        }, timeout: 5)
+        }, signingInWith: nil, open: { _ in }, timeout: 5)
 
         XCTAssertEqual(result.state, .unavailable)
         XCTAssertEqual(result.reason, "Example needs Node.js.")
     }
 
-    func testAProgramThatExitsIsUnavailableWithItsLastWords() async throws {
+    func testAProgramThatExitsIsUnavailableWithoutWhatItWroteToStandardError() async throws {
         let result = try await probe("crash")
 
         XCTAssertEqual(result.state, .unavailable)
-        XCTAssertEqual(result.reason, "npm error 404 not found")
+        XCTAssertFalse(result.reason?.contains("npm") ?? true)
     }
 
     func testAnAgentThatNeverAnswersTimesOutUnverifiedAndIsStopped() async throws {
         let pidFile = directory.appending(path: "pid")
         let launch = try launch("hang", pidFile.path)
 
-        let result = await ACPAgentProbe.run(launching: { launch }, timeout: 1)
+        let result = await ACPAgentProbe.run(launching: { launch }, signingInWith: nil, open: { _ in }, timeout: 1)
 
         XCTAssertEqual(result.state, .unverified)
         let pid = try XCTUnwrap(Int32(String(contentsOf: pidFile, encoding: .utf8)))
         let deadline = Date().addingTimeInterval(5)
         while kill(pid, 0) == 0, Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }
-        XCTAssertNotEqual(kill(pid, 0), 0, "the probe left its agent process running")
+        XCTAssertNotEqual(kill(pid, 0), 0, "the check left its agent process running")
     }
 
     // MARK: - The store
 
     func testTheStoreKeepsRecordsOnDiskAcrossARelaunch() async throws {
         let launch = try launch("ready")
-        let agent = ACPAgentCatalog.Agent(id: "example", name: "Example", description: "", version: "", distribution: .command(executable: "/bin/echo", args: [], environment: ""))
         let store = ACPAgentReadinessStore(directory: directory) { _ in launch }
         XCTAssertNil(store.record(for: "example"))
-        XCTAssertTrue(store.isStale("example"))
 
-        await store.refresh(agent)
+        await store.check(agent())
 
         let reloaded = ACPAgentReadinessStore(directory: directory) { _ in launch }
         XCTAssertEqual(reloaded.record(for: "example")?.state, .ready)
         XCTAssertEqual(reloaded.record(for: "example")?.models.map(\.id), ["m1", "m0"])
-        XCTAssertFalse(reloaded.isStale("example"))
     }
 
-    func testAFreshRecordIsNotProbedAgainUnlessForced() async throws {
+    func testOneCheckRunsPerAgentAtATime() async throws {
         var launches = 0
         let launch = try launch("ready")
-        let agent = ACPAgentCatalog.Agent(id: "example", name: "Example", description: "", version: "", distribution: .command(executable: "/bin/echo", args: [], environment: ""))
         let store = ACPAgentReadinessStore(directory: directory) { _ in
             launches += 1
             return launch
         }
 
-        await store.refresh(agent)
-        await store.refresh(agent)
+        async let first: Void = store.check(agent())
+        async let second: Void = store.check(agent())
+        _ = await (first, second)
+
         XCTAssertEqual(launches, 1)
-
-        await store.refresh(agent, force: true)
-        XCTAssertEqual(launches, 2)
+        XCTAssertTrue(store.checking.isEmpty)
     }
 
-    func testARecordThatIsNotReadyIsLookedAtAgainSoonerThanOneThatIs() async throws {
-        let ready = try launch("ready"), crash = try launch("crash")
-        let store = ACPAgentReadinessStore(directory: directory) { $0.id == "good" ? ready : crash }
-        for id in ["good", "bad"] {
-            await store.refresh(ACPAgentCatalog.Agent(id: id, name: id, description: "", version: "", distribution: .command(executable: "/bin/echo", args: [], environment: "")))
-        }
-        XCTAssertEqual(store.record(for: "bad")?.state, .unavailable)
+    func testAnUnchangedRecordIsNotSavedOrAnnouncedAgain() async throws {
+        let store = ACPAgentReadinessStore(directory: directory) { _ in throw ACPAgentCatalog.LaunchError(message: "unused") }
+        var changes = 0
+        store.onChange = { _ in changes += 1 }
 
-        let later = Date().addingTimeInterval(ACPAgentReadinessStore.notReadyMaxAge + 5)
+        store.set(ACPAgentReadiness(state: .needsSignIn), for: "example")
+        store.set(ACPAgentReadiness(state: .needsSignIn), for: "example")
 
-        XCTAssertFalse(store.isStale("good", now: later))
-        XCTAssertTrue(store.isStale("bad", now: later))
-        XCTAssertTrue(store.isStale("good", now: Date().addingTimeInterval(ACPAgentReadinessStore.readyMaxAge + 5)))
-    }
-
-    func testThePayloadCarriesWhatTheChromeShows() {
-        let record = ACPAgentReadiness(
-            state: .needsSignIn, reason: nil, models: [.init(id: "m1", name: "One")], modelConfigId: "model", currentModel: "m1",
-            authMethods: [.init(id: "browser", name: "Browser", type: "agent")], probedAt: Date(timeIntervalSince1970: 100))
-
-        let payload = record.payload
-
-        XCTAssertEqual(payload["state"] as? String, "needsSignIn")
-        XCTAssertEqual(payload["probedAt"] as? Double, 100_000)
-        XCTAssertEqual((payload["models"] as? [[String: Any]])?.first?["id"] as? String, "m1")
-        XCTAssertEqual((payload["authMethods"] as? [[String: Any]])?.first?["type"] as? String, "agent")
-        XCTAssertEqual(payload["modelConfigId"] as? String, "model")
-        XCTAssertNil(payload["reason"])
+        XCTAssertEqual(changes, 1)
     }
 }

@@ -2551,7 +2551,6 @@
 		"Selection from %@": "%@ 中的所选内容",
 		"The agent stopped (code %d).": "智能体已停止（代码 %d）。",
 		"The agent did not answer in time.": "代理未能及时响应。",
-		"The agent could not open a session: %@": "代理无法打开会话：%@",
 		"This agent is no longer in the ACP registry.": "此智能体已不在 ACP 注册表中。",
 		"The agent stopped.": "代理已停止。",
 		"The agent is not running.": "代理未在运行。",
@@ -2851,11 +2850,7 @@
 			"check": "立即检查",
 			"signIn": "登录",
 			"signInWith": "使用 {method} 登录",
-			"model": "模型",
-			"modelDefault": "默认模型",
-			"modelCustom": "设置模型",
-			"modelPlaceholder": "模型 ID",
-			"modelHint": "此智能体未列出任何模型。请输入要使用的模型 ID。"
+			"model": "模型"
 		},
 		"row": {
 			"untitled": "新对话",

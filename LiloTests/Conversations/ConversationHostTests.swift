@@ -57,6 +57,7 @@ final class ConversationHostTests: XCTestCase {
     private var hosts: [ConversationHost] = []
 
     override func setUpWithError() throws {
+        UserDefaults.lilo.removeObject(forKey: "agentConfigChoices")
         directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-conversation-host-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try Data(#"{"version":"1.0.0","agents":[]}"#.utf8).write(to: directory.appending(path: "registry.json"))
@@ -71,7 +72,24 @@ final class ConversationHostTests: XCTestCase {
             for tabId in Array(host.conversations.keys) { host.close(tabId) }
         }
         hosts.removeAll()
+        UserDefaults.lilo.removeObject(forKey: "agentConfigChoices")
         try? FileManager.default.removeItem(at: directory)
+    }
+
+    func testAModelPickedBeforeTheSessionAppliesBeforeTheFirstPromptAndIsRecorded() async throws {
+        let model: [String: Any] = ["configId": "model", "name": "Model", "category": "model", "currentValue": "a",
+                                    "options": [["value": "a", "name": "A"], ["value": "b", "name": "B"]]]
+        try writeState(version: 2, configOptions: [model])
+        let host = makeHost()
+        host.remember(Self.agentId, "model", "b")
+        start(host, register(host))
+
+        let prompted = await waitForCall("session/prompt")
+        XCTAssertTrue(prompted)
+        let methods = callsMade().compactMap { $0["method"] as? String }
+        XCTAssertLessThan(try XCTUnwrap(methods.firstIndex(of: "session/set_config_option")), try XCTUnwrap(methods.firstIndex(of: "session/prompt")))
+        XCTAssertEqual(host.readiness.record(for: Self.agentId)?.state, .ready)
+        XCTAssertEqual(host.readiness.record(for: Self.agentId)?.modelConfigId, "model")
     }
 
     func testAURLElicitationOtherThanAWebPageIsCancelledUnseen() async throws {
@@ -151,9 +169,10 @@ final class ConversationHostTests: XCTestCase {
         for tabId in Array(host.conversations.keys) { host.close(tabId) }
     }
 
-    private func writeState(version: Int, ask: [String: Any]? = nil) throws {
+    private func writeState(version: Int, configOptions: [[String: Any]]? = nil, ask: [String: Any]? = nil) throws {
         var object: [String: Any] = ["protocol": version]
         if let ask { object["ask"] = ask }
+        if let configOptions { object["configOptions"] = configOptions }
         try JSONSerialization.data(withJSONObject: object).write(to: state, options: .atomic)
     }
 
@@ -162,5 +181,9 @@ final class ConversationHostTests: XCTestCase {
         return lines.split(separator: "\n").compactMap { line in
             (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any]
         }
+    }
+
+    private func waitForCall(_ method: String) async -> Bool {
+        await pollUntil(timeout: 15) { callsMade().contains { $0["method"] as? String == method } }
     }
 }

@@ -7,8 +7,6 @@
   import { dismissable } from "../../lib/actions/dismissable";
   import { conversationActions } from "./conversationActions";
   import { parseHiddenAgents } from "../../lib/agentCommands";
-  import { agentNote, agentStatus, isPickable, modelControl } from "../../lib/agentReadiness";
-  import type { BridgeAgentInfo } from "../../lib/bridge/protocol";
   import Icon from "../ui/Icon.svelte";
   import { modelLogo } from "./modelLogos";
   import { t } from "../../lib/i18n/state.svelte";
@@ -37,7 +35,7 @@
   let text = $state("");
   let attachments = $state.raw<AttachmentDraft[]>([]);
   let agentId = $state("");
-  // A model of the agent's record, set once its session opens; empty keeps the agent's default.
+  // A model picked here, remembered as the agent's own before its session opens; empty keeps the one it has.
   let model = $state("");
   let project = $state("");
   let pageTabId = $state<string | null>(null);
@@ -97,25 +95,9 @@
 
   $effect(() => {
     const agents = enabledAgents;
-    if (agents.length === 0 || agents.some((agent) => agent.id === agentId && isPickable(agent))) return;
-    // An agent that cannot start is never the default: the last one used, else the first that can.
+    if (agents.length === 0 || agents.some((agent) => agent.id === agentId)) return;
     const last = getSetting("agentsLastAgent", "");
-    const pickable = agents.filter(isPickable);
-    agentId = (pickable.find((agent) => agent.id === last) ?? pickable[0] ?? agents[0]).id;
-  });
-
-  // The agent in front is looked at once per opening: the host answers from its record when that is recent.
-  let probedAgents: string[] = [];
-  $effect(() => {
-    if (!open) {
-      probedAgents = [];
-      return;
-    }
-    // Picking another agent in the same opening looks at it too; going back to one already looked at does not.
-    if (agentId && !probedAgents.includes(agentId)) {
-      probedAgents.push(agentId);
-      conversationActions.probeAgent(agentId);
-    }
+    agentId = agents.some((agent) => agent.id === last) ? last : agents[0].id;
   });
 
   $effect(() => {
@@ -148,39 +130,19 @@
     return [...featured, ...rest].map((candidate) => ({
       value: candidate.id,
       label: candidate.name,
-      // What keeps an agent from starting, or asks something of the user, replaces its description.
-      detail: noteFor(candidate) ?? (candidate.description || undefined),
-      disabled: !isPickable(candidate),
+      // What the last start or check found in the way replaces the description; the agent stays pickable.
+      detail: candidate.readiness?.state === "needsSignIn" ? t("agents.readiness.needsSignIn")
+        : candidate.readiness?.state === "unavailable" ? (candidate.readiness.reason ?? t("agents.readiness.unavailable"))
+        : candidate.description || undefined,
       agentId: candidate.id,
       group: grouped ? t(candidate.featured ? "agents.ask.featuredAgents" : "agents.ask.registryAgents") : undefined,
     }));
   });
   const agent = $derived(getAgents().find((candidate) => candidate.id === agentId));
-  const canStart = $derived(!!agentId && !!agent && isPickable(agent) && text.trim().length > 0);
-  // The models the agent offered when last looked at, before any session exists to ask.
-  const models = $derived.by(() => {
-    const control = modelControl(agent, { hasModels: false, opened: false });
-    return control?.kind === "list" ? control.options : [];
-  });
-  const modelOptions = $derived([
-    { value: "", label: t("agents.readiness.modelDefault"), icon: "sparkle" as const },
-    ...models.map((option) => ({
-      value: option.id,
-      label: option.name,
-      detail: option.description,
-      icon: "sparkle" as const,
-      logo: modelLogo(`${option.id} ${option.name}`),
-    })),
-  ]);
-  const modelChoice = $derived(models.find((option) => option.id === model));
-
-  function noteFor(candidate: BridgeAgentInfo): string | undefined {
-    return agentNote(candidate, {
-      needsSignIn: t("agents.readiness.needsSignIn"),
-      unavailable: t("agents.readiness.unavailable"),
-      unverified: t("agents.readiness.unverified"),
-    });
-  }
+  const canStart = $derived(!!agentId && text.trim().length > 0);
+  // The models the agent's last session offered, when it named the option that sets them.
+  const models = $derived(agent?.readiness?.modelConfigId ? (agent.readiness.models ?? []) : []);
+  const modelChoice = $derived(models.find((option) => option.id === (model || agent?.readiness?.currentModel)));
 
   function start(background: boolean): void {
     if (!canStart) return;
@@ -253,9 +215,6 @@
           {#if agent}<AgentTile agentId={agent.id} />{/if}
           {#if agent}
             <span class="picker-label">{agent.name}</span>
-            {#if agentStatus(agent) === "needsSignIn" || agentStatus(agent) === "unavailable"}
-              <span class="picker-label quiet">{t(`agents.readiness.${agentStatus(agent)}`)}</span>
-            {/if}
           {:else if catalogLoaded}
             <span class="picker-label quiet">{t("agents.ask.noAgents")}</span>
           {:else}
@@ -263,14 +222,25 @@
           {/if}
         </MenuPicker>
         {#if models.length > 0}
-          <MenuPicker value={model} options={modelOptions} ariaLabel={t("agents.readiness.model")} onchange={(value) => (model = value)}>
+          <MenuPicker
+            value={modelChoice?.id ?? ""}
+            options={models.map((option) => ({
+              value: option.id,
+              label: option.name,
+              detail: option.description,
+              icon: "sparkle" as const,
+              logo: modelLogo(`${option.id} ${option.name}`),
+            }))}
+            ariaLabel={t("agents.readiness.model")}
+            onchange={(value) => (model = value)}
+          >
             {@const logo = modelChoice ? modelLogo(`${modelChoice.id} ${modelChoice.name}`) : undefined}
             {#if logo}
               <svg class="model-logo" viewBox="0 0 24 24" aria-hidden="true" style:color={logo.color}><path d={logo.path} /></svg>
             {:else}
               <Icon name="sparkle" size={13} />
             {/if}
-            <span class="picker-label" class:quiet={!modelChoice}>{modelChoice?.name ?? t("agents.readiness.modelDefault")}</span>
+            <span class="picker-label">{modelChoice?.name ?? t("agents.readiness.model")}</span>
           </MenuPicker>
         {/if}
         <button

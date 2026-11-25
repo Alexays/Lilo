@@ -172,7 +172,7 @@ export interface BridgeConversationSummary {
 	lastActivity?: number;
 }
 
-/** A model or a mode an agent's session offers. */
+/** A model an agent's session offers. */
 export interface BridgeAgentChoice {
 	id: string;
 	name: string;
@@ -188,20 +188,17 @@ export interface BridgeAgentAuthMethod {
 }
 
 /**
- * What the last probe of an agent found. `unverified`: the probe itself failed, the agent may work.
- * `unavailable`: it cannot start. A record is never required to start an agent.
+ * What Lilo last learned of an agent, from a conversation it started or a check. `unverified`: the check
+ * itself failed, the agent may work. No state keeps an agent from being picked.
  */
 export interface BridgeAgentReadiness {
 	state: "ready" | "needsSignIn" | "unavailable" | "unverified";
 	reason?: string;
+	/** With `modelConfigId`, the session option that sets the model. */
 	models?: BridgeAgentChoice[];
-	/** The session option that sets the model: where a model chosen before the first prompt goes. */
 	modelConfigId?: string;
 	currentModel?: string;
-	modes?: BridgeAgentChoice[];
 	authMethods?: BridgeAgentAuthMethod[];
-	/** Epoch milliseconds. */
-	probedAt: number;
 }
 
 export interface BridgeAgentInfo {
@@ -215,7 +212,7 @@ export interface BridgeAgentInfo {
 	/** One of the user's own commands from Settings rather than a registry entry. */
 	command?: boolean;
 	readiness?: BridgeAgentReadiness;
-	/** A probe is running. */
+	/** A check or a sign-in runs. */
 	checking?: boolean;
 }
 
@@ -894,7 +891,7 @@ export interface BridgeCommandPayloadMap {
 		text: string;
 		attachments: BridgeConversationAttachment[];
 		background: boolean;
-		/** A model of the agent's record, set once its session opens; absent keeps the agent's default. */
+		/** One of the record's models, remembered as the agent's model before its session opens. */
 		model?: string;
 	};
 	sendConversationPrompt: { tabId: string; text: string; attachments: BridgeConversationAttachment[]; interrupt: boolean };
@@ -910,9 +907,9 @@ export interface BridgeCommandPayloadMap {
 	restoreConversation: { tabId: string; checkpoint: number };
 	undoConversationFile: { tabId: string; path: string; checkpoint: number };
 	loadAgentCatalog: { refresh: boolean };
-	/** Probes an agent unless its record is recent (`force` always); answered with `agentReadiness`. */
-	probeAgent: { agentId: string; force?: boolean };
-	/** Signs in with one of the methods the agent's record lists, then probes it again. */
+	/** Starts the agent to check it; answered with `agentReadiness`. */
+	checkAgent: { agentId: string };
+	/** Signs in with one of the methods the agent's record lists, then checks it again. */
 	signInAgent: { agentId: string; methodId: string };
 	loadConversations: EmptyPayload;
 	chooseConversationProject: EmptyPayload;
@@ -1162,7 +1159,7 @@ export interface BridgeEventPayloadMap {
 	/** Every conversation of every Space, for the Agents badge and popover. */
 	conversationsChanged: { conversations: BridgeConversationSummary[] };
 	agentCatalog: { agents: BridgeAgentInfo[]; projects: string[]; home: string };
-	/** An agent's probe started or ended, or its record changed. */
+	/** An agent's check started or ended, or its record changed. */
 	agentReadiness: { agentId: string; checking: boolean; readiness?: BridgeAgentReadiness };
 	conversationProjectChosen: { path: string };
 	/** Paths relative to `cwd`, best match first. */

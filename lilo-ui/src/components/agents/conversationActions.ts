@@ -14,7 +14,7 @@ export const conversationActions = {
 	restore: (tabId: string, checkpoint: number): void => emit("restoreConversation", { tabId, checkpoint }),
 	undoFile: (tabId: string, path: string, checkpoint: number): void => emit("undoConversationFile", { tabId, path, checkpoint }),
 	loadCatalog: (refresh: boolean): void => emit("loadAgentCatalog", { refresh }),
-	probeAgent: (agentId: string, force = false): void => emit("probeAgent", force ? { agentId, force } : { agentId }),
+	checkAgent: (agentId: string): void => emit("checkAgent", { agentId }),
 	signInAgent: (agentId: string, methodId: string): void => emit("signInAgent", { agentId, methodId }),
 	loadSummaries: (): void => emit("loadConversations"),
 	chooseProject: (): void => emit("chooseConversationProject"),

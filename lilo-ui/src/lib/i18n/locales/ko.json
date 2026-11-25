@@ -2551,7 +2551,6 @@
 		"Selection from %@": "%@에서 선택한 내용",
 		"The agent stopped (code %d).": "에이전트가 중지되었습니다(코드 %d).",
 		"The agent did not answer in time.": "에이전트가 제시간에 응답하지 않았습니다.",
-		"The agent could not open a session: %@": "에이전트가 세션을 열지 못했습니다: %@",
 		"This agent is no longer in the ACP registry.": "이 에이전트는 더 이상 ACP 레지스트리에 없습니다.",
 		"The agent stopped.": "에이전트가 중지되었습니다.",
 		"The agent is not running.": "에이전트가 실행 중이 아닙니다.",
@@ -2851,11 +2850,7 @@
 			"check": "지금 확인",
 			"signIn": "로그인",
 			"signInWith": "{method}(으)로 로그인",
-			"model": "모델",
-			"modelDefault": "기본 모델",
-			"modelCustom": "모델 설정",
-			"modelPlaceholder": "모델 ID",
-			"modelHint": "이 에이전트는 모델 목록을 제공하지 않습니다. 사용할 모델의 ID를 입력하세요."
+			"model": "모델"
 		},
 		"row": {
 			"untitled": "새 대화",

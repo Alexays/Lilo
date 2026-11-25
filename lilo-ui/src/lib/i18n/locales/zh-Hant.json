@@ -2551,7 +2551,6 @@
 		"Selection from %@": "%@ 中的所選內容",
 		"The agent stopped (code %d).": "代理程式已停止（代碼 %d）。",
 		"The agent did not answer in time.": "代理程式未能及時回應。",
-		"The agent could not open a session: %@": "代理程式無法開啟工作階段：%@",
 		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
 		"The agent stopped.": "代理程式已停止。",
 		"The agent is not running.": "代理程式未在執行。",
@@ -2851,11 +2850,7 @@
 			"check": "立即檢查",
 			"signIn": "登入",
 			"signInWith": "使用 {method} 登入",
-			"model": "模型",
-			"modelDefault": "預設模型",
-			"modelCustom": "設定模型",
-			"modelPlaceholder": "模型 ID",
-			"modelHint": "此代理程式未列出任何模型。請輸入要使用的模型 ID。"
+			"model": "模型"
 		},
 		"row": {
 			"untitled": "新對話",
