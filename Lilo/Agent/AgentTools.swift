@@ -181,6 +181,7 @@ enum AgentTools {
                 engine.loadURL(url)
             }
             let settled = await waitForLoad(engine, capture: control.captures[tab.id])
+            if control.profilingTabIds.contains(tab.id) { _ = try? await control.inspectors[tab.id]?.script("profileFollows") }
             try Task.checkCancellation()
             var reply = "Navigated to \(engine.currentURL?.absoluteString ?? "") - \(engine.currentTitle ?? "")"
             if !settled {

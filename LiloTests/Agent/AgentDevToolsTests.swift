@@ -172,9 +172,12 @@ final class AgentDevToolsTests: AgentToolTestCase {
     func testEmulateReachesTheNewPageAfterAProfileSwitch() async throws {
         let tab = try await agentTab(showing: "<p>x</p>")
         _ = await client.callTool("emulate", ["tabId": tab, "media": "print"])
+        // The web view left behind can outlive the switch, its inspector still connected.
+        let left = try engine(forTab: tab).wkWebView
         await switchToUserProfile()
 
         let reply = await client.callTool("emulate", ["tabId": tab, "deviceScaleFactor": 3])
+        withExtendedLifetime(left) {}
 
         XCTAssertFalse(reply.isError, reply.text)
         let ratio = try await js("devicePixelRatio", tab: tab) as? NSNumber

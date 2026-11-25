@@ -448,12 +448,14 @@ extension AgentControl {
     func moveFolders(of session: AgentSession, from source: Space, to target: Space) throws {
         guard let context else { return }
         for folderId in session.folders.values where tabFolder(folderId, in: source.id) != nil {
+            let ids = Set(tabs(inFolder: folderId, spaceId: source.id).map(\.id))
+            // The tabs get new engines: an inspector kept on a web view that outlives the move answers nothing.
+            for id in ids { inspectors.removeValue(forKey: id)?.disconnect() }
             if let host = context.windows.windows(showing: source.id).first {
                 try host.moveToSpace(.folder, id: folderId, targetSpaceId: target.id)
                 continue
             }
             guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
-            let ids = Set(tabs(inFolder: folderId, spaceId: source.id).map(\.id))
             context.browserState.discardParkedEngines(ids, spaceId: source.id) { context.discardEngine($0) }
             _ = try commander.applyBrowserCommand(.moveFolderToSpace(
                 folderId: folderId, sourceSpaceId: source.id, targetSpaceId: target.id, allowsPinnedTabs: true

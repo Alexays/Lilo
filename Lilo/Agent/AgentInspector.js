@@ -715,13 +715,19 @@
     if (profile && !profile.capped && target.ScriptProfilerAgent) {
       profile.targets.push(target)
       profile.processes.push(target)
-      startInstruments(target).catch(() => {})
+      // Settles when the target goes too.
+      const started = Promise.withResolvers()
+      startInstruments(target).catch(() => {}).then(started.resolve)
+      profile.starting.set(target, started)
     }
   })
 
   // A command to a gone target never answers.
   WI.targetManager.addEventListener(WI.TargetManager.Event.TargetRemoved, event => {
-    if (profile) profile.targets = profile.targets.filter(target => target !== event.data.target)
+    if (!profile) return
+    profile.targets = profile.targets.filter(target => target !== event.data.target)
+    profile.starting.get(event.data.target)?.resolve()
+    profile.starting.delete(event.data.target)
   })
 
   // Timings come from the network: the event of a response reaches the frontend once the page's busy
@@ -1158,7 +1164,7 @@
       if (profile) throw new Error('A profile is already running: call performance stop')
       const target = WI.mainTarget
       // `targets` drops the ones gone; `processes` keeps them, so each message's index stays its process.
-      profile = { startedAt: Date.now(), messages: [], targets: [target], processes: [target], screenshots }
+      profile = { startedAt: Date.now(), messages: [], targets: [target], processes: [target], starting: new Map(), screenshots }
       lastProfile = null
       try {
         await startInstruments(target)
@@ -1167,6 +1173,13 @@
         profile = null
         throw error
       }
+    },
+    // Called once Lilo saw a load end: the backend told the frontend of the page's new process before that, so
+    // any later reply comes after it, and the profile then runs in that process before the agent acts on it.
+    async profileFollows() {
+      if (!profile) return
+      await WI.backendTarget?.TargetAgent?.sendMessageToTarget.invoke({ targetId: '', message: '{}' }).catch(() => {})
+      await profile?.starting.get(WI.mainTarget)?.promise
     },
     async stopProfile(options) {
       if (!profile) throw new Error('Call performance start first')
