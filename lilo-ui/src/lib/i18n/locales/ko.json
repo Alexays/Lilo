@@ -2861,6 +2861,11 @@
 			"skip": "건너뛰기",
 			"skipped": "건너뜀"
 		},
+		"signInLink": {
+			"open": "새 탭에서 열기",
+			"decline": "열지 않기",
+			"opened": "열림"
+		},
 		"badge": {
 			"title": "에이전트",
 			"waiting": "{count, plural, one{에이전트, #개가 확인 대기 중} other{에이전트, #개가 확인 대기 중}}",

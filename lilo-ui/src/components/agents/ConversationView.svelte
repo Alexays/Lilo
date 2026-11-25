@@ -48,7 +48,7 @@
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
-  import type { ImageRef, PermissionItem, QuestionItem, ThreadItem, ToolCallItem, UserMessageItem } from "./conversationModel";
+  import type { ImageRef, PermissionItem, QuestionItem, SignInLinkItem, ThreadItem, ToolCallItem, UserMessageItem } from "./conversationModel";
   import Icon from "../ui/Icon.svelte";
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
@@ -57,6 +57,7 @@
   import PromptField from "./PromptField.svelte";
   import QuestionForm from "./QuestionForm.svelte";
   import SignInCard from "./SignInCard.svelte";
+  import SignInLinkCard from "./SignInLinkCard.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
   import { formatDuration, itemSignature } from "./threadView";
   import WorkBlock, { describe } from "./WorkBlock.svelte";
@@ -491,7 +492,17 @@
     }
     return null;
   });
-  const asking = $derived(pending !== null || pendingQuestion !== null);
+  // A URL the agent asks the user to open (a browser sign-in): the link card waits over the composer.
+  const pendingSignInLink = $derived.by((): SignInLinkItem | null => {
+    void version;
+    const items = conversation?.thread.items ?? [];
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      if (item.kind === "signInLink" && item.answer === null) return item;
+    }
+    return null;
+  });
+  const asking = $derived(pending !== null || pendingQuestion !== null || pendingSignInLink !== null);
   // VoiceOver hears what the eye sees change: a turn ending, a question waiting. An error is its own alert.
   let wasBusy = false;
   $effect(() => {
@@ -572,6 +583,14 @@
       : permission.options.find((candidate) => candidate.kind === "reject_once") ?? permission.options.find((candidate) => candidate.kind === "reject_always");
     if (allow && !option) return false;
     conversationActions.answer(tabId, String(permission.requestId), option?.optionId);
+    return true;
+  }
+
+  /** Esc declines the waiting sign-in link: only its card's button confirms. */
+  function declineSignInLink(): boolean {
+    const link = pendingSignInLink;
+    if (!link) return false;
+    conversationActions.answerQuestion({ tabId, requestId: String(link.requestId), action: "cancel" });
     return true;
   }
 </script>
@@ -868,6 +887,10 @@
         {#key pendingQuestion.requestId}
           <QuestionForm bind:this={questionForm} {tabId} item={pendingQuestion} agentId={header.agentId} />
         {/key}
+      {:else if pendingSignInLink}
+        {#key pendingSignInLink.requestId}
+          <SignInLinkCard {tabId} item={pendingSignInLink} agentId={header.agentId} />
+        {/key}
       {/if}
       <div class="composer float-surface">
         <PromptField
@@ -886,7 +909,7 @@
           }}
           onsubmit={send}
           onemptyreturn={(always) => attachments.length === 0 && (answerPending(true, always) || (questionForm?.answer("accept") ?? false))}
-          onescape={() => answerPending(false) || (questionForm?.answer("decline") ?? false) || (onclose ? (onclose(), true) : stop())}
+          onescape={() => answerPending(false) || (questionForm?.answer("decline") ?? false) || declineSignInLink() || (onclose ? (onclose(), true) : stop())}
           onemptykey={(key) => questionForm?.pick(key) ?? false}
           onemptyup={() => {
             const items = conversation?.thread.items ?? [];

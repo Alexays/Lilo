@@ -2861,6 +2861,11 @@
 			"skip": "Omitir",
 			"skipped": "Omitida"
 		},
+		"signInLink": {
+			"open": "Abrir en una pestaña nueva",
+			"decline": "No abrir",
+			"opened": "Abierto"
+		},
 		"badge": {
 			"title": "Agentes",
 			"waiting": "{count, plural, one{Agentes, # te espera} other{Agentes, # te esperan}}",

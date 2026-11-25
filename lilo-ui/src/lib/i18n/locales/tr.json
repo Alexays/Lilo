@@ -2861,6 +2861,11 @@
 			"skip": "Atla",
 			"skipped": "Atlandı"
 		},
+		"signInLink": {
+			"open": "Yeni sekmede aç",
+			"decline": "Açma",
+			"opened": "Açıldı"
+		},
 		"badge": {
 			"title": "Ajanlar",
 			"waiting": "{count, plural, one{Ajanlar, # tanesi sizi bekliyor} other{Ajanlar, # tanesi sizi bekliyor}}",

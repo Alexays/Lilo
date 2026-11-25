@@ -405,13 +405,13 @@ final class ConversationHost {
             var params: [String: Any] = [
                 "protocolVersion": 1,
                 "clientCapabilities": ["fs": ["readTextFile": false, "writeTextFile": false], "terminal": false, "auth": ["terminal": true],
-                                       "elicitation": ["form": [String: Any]()]],
+                                       "elicitation": ["form": [String: Any](), "url": [String: Any]()]],
                 "clientInfo": info
             ]
             if v2 {
                 params["protocolVersion"] = latest
                 params["info"] = info
-                params["capabilities"] = ["auth": ["terminal": [String: Any]()], "elicitation": ["form": [String: Any]()]]
+                params["capabilities"] = ["auth": ["terminal": [String: Any]()], "elicitation": ["form": [String: Any](), "url": [String: Any]()]]
             }
             return params
         }
@@ -1013,7 +1013,7 @@ final class ConversationHost {
         guard let sessionId = conversation.sessionId else { return }
         // Newest first, so settling them never offers the next one in a notification.
         for permission in conversation.permissions.reversed() {
-            let unanswered: [String: Any] = Self.isQuestion(permission.params) ? ["action": "cancel"] : ["outcome": ["outcome": "cancelled"]]
+            let unanswered: [String: Any] = Self.isElicitation(permission.params) ? ["action": "cancel"] : ["outcome": ["outcome": "cancelled"]]
             conversation.connection?.respond(id: permission.id.value["id"] as Any, result: unanswered)
             resolve(conversation, requestId: permission.requestId, optionId: nil)
         }
@@ -1145,6 +1145,11 @@ final class ConversationHost {
                 conversation.connection?.respond(id: id, errorCode: -32601, message: "Method not found: \(method)")
                 return
             }
+            // An agent may only ask to open a web page, with no userinfo to pass another host off as its own.
+            if Self.isUrlElicitation(params), Self.signInURL(params) == nil {
+                conversation.connection?.respond(id: id, result: ["action": "cancel"])
+                return
+            }
             let requestId = UUID().uuidString
             var params = params
             // v2 titles the request itself and names what it is about in `subject`: a tool call, or a command.
@@ -1159,14 +1164,22 @@ final class ConversationHost {
                 params["toolCall"] = call
             }
             conversation.permissions.append((ACPConnection.Payload(value: ["id": id]), requestId, params))
-            append(conversation, Self.isQuestion(params) ? [
-                "sessionUpdate": "lilo_question", "requestId": requestId,
-                "message": params["message"] ?? "", "requestedSchema": params["requestedSchema"] ?? [:],
-                "toolCallId": params["toolCallId"] ?? NSNull()
-            ] : [
-                "sessionUpdate": "lilo_permission", "requestId": requestId,
-                "toolCall": params["toolCall"] ?? [:], "options": params["options"] ?? []
-            ])
+            if let url = Self.signInURL(params) {
+                // The log keeps no query: a sign-in URL carries its state and challenge there.
+                append(conversation, [
+                    "sessionUpdate": "lilo_sign_in_link", "requestId": requestId, "message": params["message"] ?? "",
+                    "host": url.host() ?? "", "path": url.path()
+                ])
+            } else {
+                append(conversation, Self.isQuestion(params) ? [
+                    "sessionUpdate": "lilo_question", "requestId": requestId,
+                    "message": params["message"] ?? "", "requestedSchema": params["requestedSchema"] ?? [:],
+                    "toolCallId": params["toolCallId"] ?? NSNull()
+                ] : [
+                    "sessionUpdate": "lilo_permission", "requestId": requestId,
+                    "toolCall": params["toolCall"] ?? [:], "options": params["options"] ?? []
+                ])
+            }
             updateTab(conversation)
             if conversation.permissions.count == 1, !isShown(conversation.tabId) { postPermissionNotification(conversation) }
         }
@@ -1183,15 +1196,35 @@ final class ConversationHost {
     /// Answers a question with `accept` and the form's values, `decline` or `cancel`.
     func answerQuestion(_ tabId: UUID, requestId: String, action: String, content: [String: Any]?) {
         guard let conversation = conversations[tabId],
-              let question = conversation.permissions.first(where: { $0.requestId == requestId }), Self.isQuestion(question.params) else { return }
+              let question = conversation.permissions.first(where: { $0.requestId == requestId }), Self.isElicitation(question.params) else { return }
         var result: [String: Any] = ["action": action]
-        if action == "accept" { result["content"] = content ?? [:] }
+        if action == "accept", Self.isQuestion(question.params) { result["content"] = content ?? [:] }
+        // A URL's accept tells the agent the page opened: in the conversation window's current space, whose
+        // profile keeps the sign-in.
+        if action == "accept", Self.isUrlElicitation(question.params),
+           Self.signInURL(question.params).flatMap({ context?.windows.window(forTab: tabId)?.createTabStateFirst(url: $0) }) == nil {
+            result["action"] = "cancel"
+        }
         conversation.connection?.respond(id: question.id.value["id"] as Any, result: result)
         resolve(conversation, requestId: requestId, optionId: nil, answer: result)
     }
 
     /// An `elicitation/create` form, as opposed to a permission request.
     private static func isQuestion(_ params: [String: Any]) -> Bool { params["requestedSchema"] != nil }
+
+    /// An `elicitation/create` URL mode: the agent asks the user to open a page (a browser sign-in) out of band.
+    private static func isUrlElicitation(_ params: [String: Any]) -> Bool { params["mode"] as? String == "url" }
+
+    /// The web page a URL elicitation asks to open, unless it has another scheme or a userinfo.
+    private static func signInURL(_ params: [String: Any]) -> URL? {
+        guard isUrlElicitation(params), let string = params["url"] as? String, let components = URLComponents(string: string),
+              ["http", "https"].contains(components.scheme?.lowercased() ?? ""), components.host?.isEmpty == false,
+              components.user == nil, components.password == nil else { return nil }
+        return components.url
+    }
+
+    /// An elicitation the user answers in the conversation, with no options to offer: a form or a URL.
+    private static func isElicitation(_ params: [String: Any]) -> Bool { isQuestion(params) || isUrlElicitation(params) }
 
     /// The option of the oldest open permission request that has this kind (`allow_once`, `reject_once`...).
     func option(of tabId: UUID, kind: String) -> (requestId: String, optionId: String)? {
@@ -1358,7 +1391,7 @@ final class ConversationHost {
                     "requestId": permission.requestId,
                     "title": (permission.params["toolCall"] as? [String: Any])?["title"] as? String ?? permission.params["message"] as? String ?? "",
                     "options": permission.params["options"] ?? [],
-                    "question": Self.isQuestion(permission.params),
+                    "question": Self.isElicitation(permission.params),
                     "count": conversation.permissions.count
                 ]
             }
@@ -1379,7 +1412,7 @@ final class ConversationHost {
         content.sound = .default
         content.threadIdentifier = conversation.tabId.uuidString
         // A question is answered in its form: the notification only opens the conversation.
-        if !Self.isQuestion(permission.params) { content.categoryIdentifier = UNNotificationCategory.conversationPermission }
+        if !Self.isElicitation(permission.params) { content.categoryIdentifier = UNNotificationCategory.conversationPermission }
         content.userInfo = ["conversationTabId": conversation.tabId.uuidString]
         UNUserNotificationCenter.requestAuthorizationAndAdd(
             UNNotificationRequest(identifier: Self.notificationId(conversation.tabId), content: content, trigger: nil)
