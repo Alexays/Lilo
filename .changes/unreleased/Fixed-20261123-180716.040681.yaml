@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'On a glass or grain Space, tabs scrolled under the pinned favorites strip no longer show through its labels, and the strip no longer paints a band of the Space color over the material: it frosts what scrolls beneath it, the way a native toolbar does.'
-time: 2026-11-23T18:07:16.040681-08:00

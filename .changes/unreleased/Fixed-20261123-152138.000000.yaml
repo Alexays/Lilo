@@ -1,3 +1,3 @@
 kind: Fixed
-body: "On a glass or grain Space, the pinned favorites strip no longer paints a solid band of the Space color over the sidebar material."
+body: "On a glass or grain Space, the pinned favorites strip no longer paints a solid band of the Space color over the sidebar material; once tabs scroll under it, it turns near-opaque so their labels do not read through the favorites."
 time: 2026-11-23T15:21:38.000000-08:00

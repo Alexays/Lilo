@@ -681,9 +681,8 @@
   }
 
   /* Painted with --sidebar-bg, which switches only at the midpoint: see-through while the background slides. */
-  .sidebar.swiping :global(:is(.pinned-tab-divider-shell, .favorites-section.pinned, .favorites-section.pinned.scrolled)) {
+  .sidebar.swiping :global(:is(.pinned-tab-divider-shell, .favorites-section.pinned)) {
     background: transparent;
-    backdrop-filter: none;
   }
 
   .sidebar.sidebar-hidden {
