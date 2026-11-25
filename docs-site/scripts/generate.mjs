@@ -29,12 +29,12 @@ const fail = (file, message) => {
 const LABELS = {
   en: {
     action: "Action", shortcut: "Shortcut", or: " or ", none: "—", setting: "Setting", description: "Description", default: "Default", on: "On", off: "Off",
-    store: (path) => `Its MCP servers of your user, in \`~/${path}\`, which only its \`claude\` command edits.`,
+    store: (path) => `Claude Code keeps your user-level MCP servers in \`~/${path}\`, which only its \`claude\` command edits.`,
     file: (path, where) => `\`~/${path}\`, ${where}.`,
     entry: (key) => `the \`lilo\` entry of \`${key}\``,
     table: "the table `[mcp_servers.lilo]`",
     consent: "The first time it connects, Lilo asks you to allow it. **Allow** is remembered for that program, not for the name it gives.",
-    source: (url, day) => `Shape checked on ${day} against [its documentation](${url}).`,
+    source: (url) => `See [its documentation](${url}) for the format.`,
     writes: "Writes",
     command: "Run in Terminal",
     snippet: "Add to a file that does not exist yet, or merge the `lilo` entry into the one you have",
@@ -42,12 +42,12 @@ const LABELS = {
   },
   fr: {
     action: "Action", shortcut: "Raccourci", or: " ou ", none: "—", setting: "Réglage", description: "Description", default: "Par défaut", on: "Activé", off: "Désactivé",
-    store: (path) => `Ses serveurs MCP d'utilisateur, dans \`~/${path}\`, que seule sa commande \`claude\` modifie.`,
+    store: (path) => `Claude Code conserve vos serveurs MCP d'utilisateur dans \`~/${path}\`, que seule sa commande \`claude\` modifie.`,
     file: (path, where) => `\`~/${path}\`, ${where}.`,
     entry: (key) => `l'entrée \`lilo\` de \`${key}\``,
     table: "la table `[mcp_servers.lilo]`",
     consent: "La première fois qu'il se connecte, Lilo vous demande de l'autoriser. **Autoriser** est retenu pour ce programme, pas pour le nom qu'il donne.",
-    source: (url, day) => `Forme vérifiée le ${day} d'après [sa documentation](${url}).`,
+    source: (url) => `Le format est décrit dans [sa documentation](${url}).`,
     writes: "Écrit",
     command: "À exécuter dans le Terminal",
     snippet: "À ajouter à un fichier qui n'existe pas encore, ou à fusionner (entrée `lilo`) dans celui que vous avez",
@@ -413,14 +413,14 @@ export function parseHarnesses(source, definition, file = SOURCES.harnesses) {
   for (const snippet of ['"claude mcp add --scope user lilo -- \\(helperPath)"', 'tomlTable([10])', 'newJSON(key: key, entry: entry)', '"command = \\"\\(helperPath)\\""', '"[mcp_servers.lilo]"']) {
     if (!definition.includes(snippet)) fail(SOURCES.clientConfig, `manualSnippet changed (no \`${snippet}\`): update parseHarnesses in docs-site/scripts/generate.mjs`);
   }
-  const all = source.match(/static let all = \[([^\]]*)\]/u)?.[1].split(",").map((name) => name.trim()) ?? fail(file, "no `static let all = [ … ]`");
+  const all = source.match(/static let all = \[([^\]]*)\]/u)?.[1].split(",").map((name) => name.trim()) ?? fail(file, "no `static let all = [...]`");
   const defined = [...source.matchAll(/static let (\w+) = Self\(/gu)].map((match) => match[1]);
   if (all.length === 0 || [...all].sort().join() !== [...defined].sort().join()) fail(file, `\`all\` lists ${all.join(", ")} but ${defined.join(", ")} are defined`);
   return all.map((name) => {
     const start = source.indexOf(`static let ${name} = Self(`);
     const body = source.slice(start, source.indexOf("\n        added:", start));
     const id = body.match(/id: "(\w+)"/u)?.[1] ?? fail(file, `${name} has no id`);
-    const docs = body.match(/docsURL: "([^"]+)", verified: "(\d{4}-\d{2}-\d{2})"/u) ?? fail(file, `${name} has no docsURL and verified date`);
+    const url = body.match(/docsURL: "([^"]+)"/u)?.[1] ?? fail(file, `${name} has no docsURL`);
     const config =
       body.match(/config: \.claudeCLI\(store: "([^"]+)"\)/u)?.slice(1) ??
       body.match(/config: \.toml\(path: "([^"]+)"\)/u)?.slice(1) ??
@@ -429,7 +429,7 @@ export function parseHarnesses(source, definition, file = SOURCES.harnesses) {
     const kind = body.includes("config: .claudeCLI") ? "claude" : body.includes("config: .toml") ? "toml" : "json";
     const entry = config[2] ?? "command";
     if (kind === "json" && !ENTRY_FIELDS[entry]) fail(file, `${name} uses the entry shape .${entry}, which the reference does not know`);
-    return { id, kind, path: config[0], key: config[1] ?? "mcpServers", entry, url: docs[1], verified: docs[2] };
+    return { id, kind, path: config[0], key: config[1] ?? "mcpServers", entry, url };
   });
 }
 
@@ -449,7 +449,7 @@ export function connectPartial(harnesses, catalog, locale) {
       const { language, text } = connectSnippet(harness);
       const writes = harness.kind === "claude" ? labels.store(harness.path) : labels.file(harness.path, harness.kind === "toml" ? labels.table : labels.entry(`${harness.key}`));
       const head = harness.kind === "claude" ? labels.command : labels.snippet;
-      return `## ${cell(name)} [#${anchor(harness.id)}]\n\n**${labels.writes}.** ${writes}\n\n**${head}:**\n\n\`\`\`${language}\n${text}\n\`\`\`\n\n**${labels.next}.** ${labels.consent} ${labels.source(harness.url, harness.verified)}\n`;
+      return `## ${cell(name)} [#${anchor(harness.id)}]\n\n**${labels.writes}.** ${writes}\n\n**${head}:**\n\n\`\`\`${language}\n${text}\n\`\`\`\n\n**${labels.next}.** ${labels.consent} ${labels.source(harness.url)}\n`;
     })
     .join("\n");
 }

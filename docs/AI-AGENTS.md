@@ -13,10 +13,13 @@ the name the client announces.
 
 ### Connect a harness without opening Lilo
 
-Every supported harness (Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI) can be connected from a shell, a script or a dotfiles repository.
-The documentation site lists the command or file entry for each one, with the file it writes and the consent step that follows: [Connect snippets](https://docs.getlilo.app/reference/connect-snippets).
-The page is generated from `Lilo/Agent/HarnessDefinition.swift` and `AgentClientConfig.swift`, the same source Settings uses, so it cannot drift from the app.
-Lilo still asks you to allow the harness the first time it connects, whichever way it was set up.
+Every supported harness (Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and
+Gemini CLI) can be connected from a shell, a script or a dotfiles repository. The documentation
+site lists the command or file entry for each one, with the file it writes and the consent step
+that follows: [Connect snippets](https://docs.getlilo.app/reference/connect-snippets). The page is
+generated from `Lilo/Agent/HarnessDefinition.swift` and `AgentClientConfig.swift`, the source
+Settings uses, and the docs build fails when the snippet code there changes shape. Lilo still asks
+you to allow the harness the first time it connects, whichever way it was set up.
 
 ## What agents can do
 
