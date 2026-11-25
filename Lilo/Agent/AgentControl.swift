@@ -416,9 +416,17 @@ final class AgentControl {
         ]
         let windows = context.windows.windows
         if windows.isEmpty {
-            // Nothing on screen can ask: the question holds in a notification whose tap opens a
-            // window at it. It is never answered by absence: it waits for the user or expires.
-            unsafe Self.consentNotificationPoster(Self.notification(requestId: requestId, request: request))
+            // Nothing on screen can ask: the question holds in a notification whose tap opens a window at it,
+            // and waits for the user or expires. With notifications off, nothing can ask at all.
+            // The notification names only the agent: a page's labels and titles stay off the lock screen.
+            let content = UNMutableNotificationContent()
+            content.title = Self.displayName(name)
+            content.body = "Waiting for your answer".localized
+            content.sound = .default
+            content.threadIdentifier = "lilo.agent.consent"
+            content.userInfo = ["agentConsentRequestId": requestId]
+            let notification = UNNotificationRequest(identifier: Self.consentNotificationId(requestId), content: content, trigger: nil)
+            guard await Self.postConsentNotification(notification) else { return .unavailable }
         } else {
             for window in shows(tabId, among: windows) { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
             if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
@@ -459,35 +467,15 @@ final class AgentControl {
         }
     }
 
-    /// Posts the notification of a question no window could show; tests substitute a recorder.
-    nonisolated(unsafe) static var consentNotificationPoster: (sending UNNotificationRequest) -> Void = { UNUserNotificationCenter.requestAuthorizationAndAdd($0) }
-
-    nonisolated static func consentNotificationId(_ requestId: String) -> String { "lilo.agent.consent.\(requestId)" }
-
-    /// The notification of a question no window could show, worded as the drawer asks it.
-    private nonisolated static func notification(requestId: String, request: [String: Any]) -> sending UNNotificationRequest {
-        let content = UNMutableNotificationContent()
-        let name = request["clientName"] as? String ?? ""
-        let profileName = request["profileName"] as? String ?? ""
-        if let action = request["action"] as? [String: String] {
-            let label = action["label"] ?? "", site = action["site"] ?? "", tab = action["tab"] ?? ""
-            content.title = switch action["kind"] {
-            case "enter": unsafe String(format: "%@ wants to press Enter to submit \"%@\" in %@ (%@).".localized, name, label, tab, site)
-            case "fetch": unsafe String(format: "%@ wants to send \"%@\" from %@ (%@), with your cookies.".localized, name, label, tab, site)
-            case "upload": unsafe String(format: "%@ wants to upload %@ to %@.".localized, name, label, site)
-            default: unsafe String(format: "%@ wants to click \"%@\" in %@ (%@).".localized, name, label, tab, site)
-            }
-        } else {
-            content.title = profileName.isEmpty
-                ? unsafe String(format: "%@ wants to control Lilo".localized, name)
-                : unsafe String(format: "%@ wants to use the profile %@".localized, name, profileName)
-        }
-        content.body = "Open Lilo to answer.".localized
-        content.sound = .default
-        content.threadIdentifier = "lilo.agent.consent"
-        content.userInfo = ["agentConsentRequestId": requestId]
-        return UNNotificationRequest(identifier: consentNotificationId(requestId), content: content, trigger: nil)
+    /// Posts the notification of a question no window could show, false when the user turned Lilo's
+    /// notifications off. The one seam the tests replace, as a test run cannot grant notifications.
+    static var postConsentNotification: @MainActor (sending UNNotificationRequest) async -> Bool = { request in
+        let center = UNUserNotificationCenter.current()
+        guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return false }
+        return (try? await center.add(request)) != nil
     }
+
+    static func consentNotificationId(_ requestId: String) -> String { "lilo.agent.consent.\(requestId)" }
 
     static let asksBeforeActionsKey = "agentAskBeforeActions"
     static let alwaysAllowedSitesKey = "agentAlwaysAllowedSites"
@@ -602,7 +590,7 @@ final class AgentControl {
 
     /// `needs_user` for a question no window could show.
     static var unavailableConsentError: AgentToolError {
-        AgentToolError("Lilo has no window to ask the user in: ask them to open one, then call again", code: "needs_user", consent: .unavailable)
+        AgentToolError("Lilo has no window to ask the user in and its notifications are off: ask them to open a Lilo window, then call again", code: "needs_user", consent: .unavailable)
     }
 
     /// The user's answer from a window's drawer, nil when nobody answered: the others drop the same question.
