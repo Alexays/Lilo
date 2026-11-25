@@ -92,20 +92,21 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertEqual(linkItem?.representedObject as? URL, URL(string: "https://example.com"))
         XCTAssertTrue(menu.items.contains { $0.title == "Open Link in New Private Space".localized })
         XCTAssertTrue(menu.items.contains { $0.title == "Open Link in New Window".localized })
-        XCTAssertTrue(menu.items.contains { $0.title == "Open Link in Split View".localized })
-        XCTAssertTrue(menu.items.contains { $0.title == "Open Link in Little Window".localized })
+        // Offered only when the tab's delegate says so.
+        XCTAssertFalse(menu.items.contains { $0.title == "Open Link in Split View".localized })
+        XCTAssertFalse(menu.items.contains { $0.title == "Open Link in Little Window".localized })
     }
 
-    func testLinkSplitAndLittleItemsRouteTheirURL() {
+    func testLinkSplitAndLittleItemsRouteTheirURL() throws {
         var split: URL?
         var little: URL?
         let linkURL = URL(string: "https://example.com/a")!
         let menu = NSMenu()
         // Retained: the items' target is weak.
         let builder = makeBuilder(onOpenInSplitView: { split = $0 }, onOpenInLittleWindow: { little = $0 })
-        builder.build(menu, linkURL: linkURL)
+        builder.build(menu, linkURL: linkURL, offersSplitView: true, offersLittleWindow: true)
         for title in ["Open Link in Split View".localized, "Open Link in Little Window".localized] {
-            let item = try! XCTUnwrap(menu.items.first { $0.title == title })
+            let item = try XCTUnwrap(menu.items.first { $0.title == title })
             _ = item.target?.perform(item.action, with: item)
         }
         XCTAssertEqual(split, linkURL)

@@ -59,6 +59,9 @@ final class WKWebViewTab: NSObject {
         /// Open a right-clicked link in a split view beside the tab, or in a Little window.
         func tab(_ tab: WKWebViewTab, openLinkInSplitView url: URL)
         func tab(_ tab: WKWebViewTab, openLinkInLittleWindow url: URL)
+        /// Whether the link menu offers those two items for this tab.
+        func tabOffersSplitView(_ tab: WKWebViewTab) -> Bool
+        func tabOffersLittleWindow(_ tab: WKWebViewTab) -> Bool
         /// Names the search engine in the page's context menu.
         var searchEngineName: String { get }
         /// Opens the default search engine's results for `text` in a new tab.
@@ -1702,6 +1705,8 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInSplitView url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInLittleWindow url: URL) {}
+    func tabOffersSplitView(_ tab: WKWebViewTab) -> Bool { false }
+    func tabOffersLittleWindow(_ tab: WKWebViewTab) -> Bool { false }
     var searchEngineName: String { "Google" }
     func tab(_ tab: WKWebViewTab, searchWebFor text: String) {}
     var imageSearchEngineName: String { "Google Lens" }
@@ -2478,7 +2483,7 @@ extension WKWebViewTab: WKUIDelegate {
             let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
             contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
             unsafe adoptExtensionContextMenuItems?(menu)
-            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), offersHideElement: delegate?.hidesElements ?? false, searchEngineName: delegate?.searchEngineName, imageSearchEngineName: delegate?.imageSearchEngineName)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), offersSplitView: delegate?.tabOffersSplitView(self) ?? false, offersLittleWindow: delegate?.tabOffersLittleWindow(self) ?? false, offersHideElement: delegate?.hidesElements ?? false, searchEngineName: delegate?.searchEngineName, imageSearchEngineName: delegate?.imageSearchEngineName)
             unsafe completionHandler(menu)
         }
     }

@@ -86,7 +86,7 @@ final class ContextMenuBuilder: NSObject {
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
     func build(
         _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil,
-        offersNewWindow: Bool = true, offersHideElement: Bool = false, searchEngineName: String? = nil,
+        offersNewWindow: Bool = true, offersSplitView: Bool = false, offersLittleWindow: Bool = false, offersHideElement: Bool = false, searchEngineName: String? = nil,
         imageSearchEngineName: String? = nil
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
@@ -119,10 +119,14 @@ final class ContextMenuBuilder: NSObject {
             // browser tab, window or private space instead.
             var linkItems = [
                 makeLinkItem("Open Link in New Tab", icon: .openInNewTab, action: #selector(contextMenuOpenLinkInNewTab(_:)), url: linkURL),
-                makeLinkItem("Open Link in New Private Space", icon: .newPrivateSpace, action: #selector(contextMenuOpenLinkInNewPrivateSpace(_:)), url: linkURL),
-                makeLinkItem("Open Link in Split View", icon: .openInSplit, action: #selector(contextMenuOpenLinkInSplitView(_:)), url: linkURL),
-                makeLinkItem("Open Link in Little Window", icon: .newLittleWindow, action: #selector(contextMenuOpenLinkInLittleWindow(_:)), url: linkURL)
+                makeLinkItem("Open Link in New Private Space", icon: .newPrivateSpace, action: #selector(contextMenuOpenLinkInNewPrivateSpace(_:)), url: linkURL)
             ]
+            if offersSplitView {
+                linkItems.append(makeLinkItem("Open Link in Split View", icon: .openInSplit, action: #selector(contextMenuOpenLinkInSplitView(_:)), url: linkURL))
+            }
+            if offersLittleWindow {
+                linkItems.append(makeLinkItem("Open Link in Little Window", icon: .newLittleWindow, action: #selector(contextMenuOpenLinkInLittleWindow(_:)), url: linkURL))
+            }
             if offersNewWindow {
                 linkItems.insert(makeLinkItem("Open Link in New Window", icon: .newWindow, action: #selector(contextMenuOpenLinkInNewWindow(_:)), url: linkURL), at: 1)
             }
