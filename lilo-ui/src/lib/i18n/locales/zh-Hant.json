@@ -512,9 +512,9 @@
 				"keywords": "代理程式 日誌 歷史 稽核 操作 重播"
 			},
 			"agentBackgroundHost": {
-				"title": "讓代理程式主機在背景執行",
-				"description": "關閉最後一個視窗後，Lilo 會繼續為代理程式服務，且不顯示 Dock 圖像。再次打開 Lilo 即可恢復視窗。",
-				"keywords": "代理程式 背景 主機 Dock 視窗 headless"
+				"title": "為代理程式保持開啟",
+				"description": "關閉最後一個視窗後，Lilo 會留在選單列中，代理程式仍可使用。你自己分頁中的媒體會停止播放。",
+				"keywords": "代理程式 背景 選單列 Dock 視窗 關閉"
 			},
 			"agentAlwaysAllowed": {
 				"title": "一律允許",
@@ -2087,6 +2087,8 @@
 		"Command failed": "指令失敗",
 		"Command finished": "指令已完成",
 		"Waiting for your answer": "等待你的回應",
+		"Open for agents": "為代理程式保持開啟",
+		"Show Lilo": "顯示 Lilo",
 		"Reply": "回覆",
 		"Send": "傳送",
 		"%@ failed with exit code %d after %@.": "%@ 失敗，結束代碼為 %d，耗時 %@。",

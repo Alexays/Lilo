@@ -512,9 +512,9 @@
 				"keywords": "agente registro histórico auditoria ações reproduzir"
 			},
 			"agentBackgroundHost": {
-				"title": "Manter o host de agentes em segundo plano",
-				"description": "Ao fechar a última janela, o Lilo continua atendendo os agentes, sem ícone no Dock. Abra o Lilo de novo para trazer a janela de volta.",
-				"keywords": "agente segundo plano host dock janela headless"
+				"title": "Continuar aberto para os agentes",
+				"description": "Ao fechar a última janela, o Lilo fica na barra de menus para que os agentes ainda possam usá-lo. A mídia das suas abas para.",
+				"keywords": "agente segundo plano barra de menus dock janela fechar"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre permitido",
@@ -2087,6 +2087,8 @@
 		"Command failed": "O comando falhou",
 		"Command finished": "Comando concluído",
 		"Waiting for your answer": "Aguardando sua resposta",
+		"Open for agents": "Aberto para os agentes",
+		"Show Lilo": "Mostrar Lilo",
 		"Reply": "Responder",
 		"Send": "Enviar",
 		"%@ failed with exit code %d after %@.": "%@ falhou com o código de saída %d após %@.",

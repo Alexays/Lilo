@@ -512,9 +512,9 @@
 				"keywords": "agent protokoll verlauf audit aktionen wiedergabe"
 			},
 			"agentBackgroundHost": {
-				"title": "Agenten-Host im Hintergrund weiterlaufen lassen",
-				"description": "Wenn du das letzte Fenster schließt, bedient Lilo Agenten weiter, ohne Dock-Symbol. Öffne Lilo erneut, um das Fenster zurückzuholen.",
-				"keywords": "agent hintergrund host dock fenster headless"
+				"title": "Für Agenten geöffnet bleiben",
+				"description": "Wenn du das letzte Fenster schließt, bleibt Lilo in der Menüleiste, damit Agenten es weiter nutzen können. Medien in deinen eigenen Tabs stoppen.",
+				"keywords": "agent hintergrund menüleiste dock fenster schließen weiterlaufen"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Immer erlaubt",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Befehl fehlgeschlagen",
 		"Command finished": "Befehl beendet",
 		"Waiting for your answer": "Wartet auf deine Antwort",
+		"Open for agents": "Für Agenten geöffnet",
+		"Show Lilo": "Lilo anzeigen",
 		"Reply": "Antworten",
 		"Send": "Senden",
 		"%@ failed with exit code %d after %@.": "%@ ist mit Exit-Code %d nach %@ fehlgeschlagen.",

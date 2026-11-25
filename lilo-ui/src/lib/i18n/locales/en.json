@@ -512,9 +512,9 @@
 				"keywords": "agent log history audit actions replay record"
 			},
 			"agentBackgroundHost": {
-				"title": "Run the agent host in the background",
-				"description": "Closing the last window keeps Lilo serving agents, with no Dock icon. Open Lilo again to bring the window back.",
-				"keywords": "agent background headless host dock window daemon"
+				"title": "Stay open for agents",
+				"description": "Closing the last window keeps Lilo in the menu bar, so agents can still use it. Media in your own tabs stops.",
+				"keywords": "agent background menu bar dock window close keep running"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Always allowed",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Command failed",
 		"Command finished": "Command finished",
 		"Waiting for your answer": "Waiting for your answer",
+		"Open for agents": "Open for agents",
+		"Show Lilo": "Show Lilo",
 		"Reply": "Reply",
 		"Send": "Send",
 		"%@ failed with exit code %d after %@.": "%@ failed with exit code %d after %@.",

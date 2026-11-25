@@ -34,7 +34,7 @@ enum AgentMCP {
                 if session.isUnanswered { ask(session, control: control) }
                 let text = if session.isRefused {
                     "The user did not allow \(session.clientName) to control Lilo: ask them to allow it, then reconnect the lilo MCP server"
-                } else if (control.context?.windows.windows.isEmpty ?? true) || Headless.isOn {
+                } else if (control.context?.windows.windows.isEmpty ?? true) || control.backgroundHost.isOn {
                     "Lilo asked the user in a notification to allow \(session.clientName): ask them to answer it (or to open a Lilo window if its notifications are off), then call the tool again"
                 } else {
                     "Lilo is waiting for the user to allow \(session.clientName): ask them to answer the prompt under Lilo's address bar, then call the tool again"

@@ -512,9 +512,9 @@
 				"keywords": "agent journal historique audit actions rejouer"
 			},
 			"agentBackgroundHost": {
-				"title": "Garder l'hôte des agents en arrière-plan",
-				"description": "Fermer la dernière fenêtre laisse Lilo servir les agents, sans icône dans le Dock. Rouvrez Lilo pour retrouver la fenêtre.",
-				"keywords": "agent arrière-plan hôte dock fenêtre headless"
+				"title": "Rester ouvert pour les agents",
+				"description": "Fermer la dernière fenêtre garde Lilo dans la barre des menus, pour que les agents puissent encore s'en servir. Les médias de vos propres onglets s'arrêtent.",
+				"keywords": "agent arrière-plan barre des menus dock fenêtre fermer"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Toujours autorisés",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Échec de la commande",
 		"Command finished": "Commande terminée",
 		"Waiting for your answer": "Attend votre réponse",
+		"Open for agents": "Ouvert pour les agents",
+		"Show Lilo": "Afficher Lilo",
 		"Reply": "Répondre",
 		"Send": "Envoyer",
 		"%@ failed with exit code %d after %@.": "%@ a échoué avec le code %d après %@.",

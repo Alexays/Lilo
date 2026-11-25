@@ -512,9 +512,9 @@
 				"keywords": "agente registro cronologia audit azioni riproduzione"
 			},
 			"agentBackgroundHost": {
-				"title": "Mantieni l'host degli agenti in background",
-				"description": "Chiudendo l'ultima finestra Lilo continua a servire gli agenti, senza icona nel Dock. Riapri Lilo per riavere la finestra.",
-				"keywords": "agente background host dock finestra headless"
+				"title": "Resta aperto per gli agenti",
+				"description": "Chiudendo l'ultima finestra Lilo resta nella barra dei menu, così gli agenti possono ancora usarlo. I contenuti multimediali delle tue schede si fermano.",
+				"keywords": "agente background barra dei menu dock finestra chiudere"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre consentiti",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Comando non riuscito",
 		"Command finished": "Comando terminato",
 		"Waiting for your answer": "In attesa di una tua risposta",
+		"Open for agents": "Aperto per gli agenti",
+		"Show Lilo": "Mostra Lilo",
 		"Reply": "Rispondi",
 		"Send": "Invia",
 		"%@ failed with exit code %d after %@.": "%@ non riuscito con codice di uscita %d dopo %@.",

@@ -512,9 +512,9 @@
 				"keywords": "agent logboek geschiedenis audit acties herhalen"
 			},
 			"agentBackgroundHost": {
-				"title": "De agenthost op de achtergrond laten draaien",
-				"description": "Als je het laatste venster sluit, blijft Lilo agents bedienen, zonder Dock-symbool. Open Lilo opnieuw om het venster terug te halen.",
-				"keywords": "agent achtergrond host dock venster headless"
+				"title": "Open blijven voor agents",
+				"description": "Als je het laatste venster sluit, blijft Lilo in de menubalk zodat agents het nog kunnen gebruiken. Media in je eigen tabbladen stoppen.",
+				"keywords": "agent achtergrond menubalk dock venster sluiten"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Altijd toegestaan",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Commando mislukt",
 		"Command finished": "Commando voltooid",
 		"Waiting for your answer": "Wacht op je antwoord",
+		"Open for agents": "Open voor agents",
+		"Show Lilo": "Toon Lilo",
 		"Reply": "Antwoord",
 		"Send": "Verstuur",
 		"%@ failed with exit code %d after %@.": "%@ is mislukt met afsluitcode %d na %@.",

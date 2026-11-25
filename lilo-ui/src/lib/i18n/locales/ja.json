@@ -512,9 +512,9 @@
 				"keywords": "エージェント ログ 履歴 監査 操作 再生"
 			},
 			"agentBackgroundHost": {
-				"title": "エージェントホストをバックグラウンドで実行し続ける",
-				"description": "最後のウインドウを閉じても、LiloはDockにアイコンを出さずにエージェントの処理を続けます。もう一度Liloを開くとウインドウが戻ります。",
-				"keywords": "エージェント バックグラウンド ホスト Dock ウインドウ headless"
+				"title": "エージェントのために開いたままにする",
+				"description": "最後のウインドウを閉じてもLiloはメニューバーに残り、エージェントは引き続き使用できます。自分のタブのメディアは停止します。",
+				"keywords": "エージェント バックグラウンド メニューバー Dock ウインドウ 閉じる"
 			},
 			"agentAlwaysAllowed": {
 				"title": "常に許可",
@@ -2087,6 +2087,8 @@
 		"Command failed": "コマンドが失敗しました",
 		"Command finished": "コマンドが完了しました",
 		"Waiting for your answer": "回答を待っています",
+		"Open for agents": "エージェント用に起動中",
+		"Show Lilo": "Liloを表示",
 		"Reply": "回答",
 		"Send": "送信",
 		"%@ failed with exit code %d after %@.": "%@ が失敗しました（終了コード %d、経過時間 %@）。",

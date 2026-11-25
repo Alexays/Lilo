@@ -506,9 +506,8 @@ run-ui-dev: app
 
 # LILO_AGENT_ALLOW_ALL lets any agent client in without asking, LILO_AGENT_CLICKS=allow|deny answers every
 # question before a send, payment or deletion yes or no at once, and LILO_HEADLESS keeps the app from taking
-# focus, a Dock icon or a visible window: only a Debug build reads them (any build takes the `--background`
-# argument LILO_HEADLESS stands for). agent-app sets all three so a run is unattended (CLICKS=deny refuses,
-# HEADLESS=0 keeps the window).
+# focus, a Dock icon or a visible window: only a Debug build reads them. agent-app sets all three so a run is
+# unattended (CLICKS=deny refuses, HEADLESS=0 keeps the window).
 AGENT_DATA = $(or $(LILO_APP_SUPPORT_DIR),$(HOME)/Library/Application Support/Lilo-Debug)
 # A fresh Debug profile has agent control off, and the app reads that setting only at launch: it is switched on
 # in the profile's database, which a first launch creates, before the app a client talks to starts.

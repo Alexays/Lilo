@@ -512,9 +512,9 @@
 				"keywords": "agent dziennik historia audyt działania odtwarzanie"
 			},
 			"agentBackgroundHost": {
-				"title": "Utrzymuj host agentów w tle",
-				"description": "Po zamknięciu ostatniego okna Lilo nadal obsługuje agentów, bez ikony w Docku. Otwórz Lilo ponownie, aby przywrócić okno.",
-				"keywords": "agent tło host dock okno headless"
+				"title": "Pozostań otwarty dla agentów",
+				"description": "Po zamknięciu ostatniego okna Lilo zostaje na pasku menu, aby agenci mogli dalej z niego korzystać. Multimedia w Twoich kartach zatrzymują się.",
+				"keywords": "agent tło pasek menu dock okno zamknij"
 			},
 			"agentAlwaysAllowed": {
 				"title": "Zawsze dozwolone",
@@ -2087,6 +2087,8 @@
 		"Command failed": "Polecenie nie powiodło się",
 		"Command finished": "Polecenie zakończone",
 		"Waiting for your answer": "Czeka na Twoją odpowiedź",
+		"Open for agents": "Otwarty dla agentów",
+		"Show Lilo": "Pokaż Lilo",
 		"Reply": "Odpowiedz",
 		"Send": "Wyślij",
 		"%@ failed with exit code %d after %@.": "%@ nie powiodło się (kod %d) po %@.",

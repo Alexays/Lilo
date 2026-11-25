@@ -661,7 +661,11 @@ final class MainWindowController: NSWindowController {
             window.center()
         }
         window.identifier = NSUserInterfaceItemIdentifier("LiloMainWindow")
-        if Headless.isOn { Headless.conceal(window) }
+        if Headless.isOn {
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.collectionBehavior = [.transient, .ignoresCycle, .stationary]
+        }
         window.restorationClass = MainWindowController.self
         return window
     }
@@ -842,8 +846,8 @@ extension MainWindowController: TabManager.Delegate {
 
 extension MainWindowController: NSWindowDelegate {
     /// A running command keeps Lilo alive: the window hides instead of closing, and the Dock icon
-    /// brings it back. An agent host the user keeps running goes to the background instead, and opening
-    /// Lilo again brings it back. With neither, closing it quits.
+    /// brings it back. With Settings > Agents > "Stay open for agents" on, it hides to the menu bar for the
+    /// agents instead. With neither, closing it quits.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         let host = tabManager.terminalHost
         guard context.windows.windows.count == 1 else { return true }
@@ -853,8 +857,8 @@ extension MainWindowController: NSWindowDelegate {
             return false
         }
         let settings = context.settingsStore
-        guard settings?.get("agentControlEnabled") == "true", settings?.get(Headless.keepRunningKey) == "true" else { return true }
-        Headless.enter(concealing: sender)
+        guard settings?.get("agentControlEnabled") == "true", settings?.get(AgentBackgroundHost.settingKey) == "true" else { return true }
+        context.agentControl.backgroundHost.enter(hiding: sender, context: context)
         return false
     }
 
@@ -997,6 +1001,7 @@ extension MainWindowController: NSWindowDelegate {
         // A window loaded before its setup (an extension's windows.create) can hear this before it has a router.
         bridgeRouter.isSilenced = !isVisible
         context.windowVisibilityChanged()
+        if isVisible { context.agentControl.backgroundHost.leave() }
     }
 
     /// `isWindowVisible` boots true, and a window ordered in fully obscured never emits an occlusion change, so adopt the real state here.
