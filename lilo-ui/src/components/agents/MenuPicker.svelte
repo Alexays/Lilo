@@ -38,10 +38,14 @@
     searchPlaceholder?: string;
     /** Shown when the filter leaves no option. */
     searchEmptyLabel?: string;
+    /** The menu cannot open now: this is why, as the button's tooltip. */
+    disabledReason?: string;
+    /** One line under the options. */
+    note?: string;
     children: Snippet;
   }
 
-  let { value, options, ariaLabel, onchange, searchPlaceholder, searchEmptyLabel, children }: Props = $props();
+  let { value, options, ariaLabel, onchange, searchPlaceholder, searchEmptyLabel, disabledReason, note, children }: Props = $props();
 
   const MARGIN = 8;
   // A filter field only helps a list that can get long, per docs/DESIGN.md.
@@ -62,6 +66,7 @@
   });
 
   function toggle(): void {
+    if (disabledReason) return;
     if (!open && buttonEl) {
       const rect = buttonEl.getBoundingClientRect();
       const up = rect.top > window.innerHeight / 2;
@@ -159,8 +164,11 @@
   type="button"
   class="menu-picker"
   class:open
+  class:disabled={!!disabledReason}
   bind:this={buttonEl}
   aria-label={ariaLabel}
+  aria-disabled={!!disabledReason}
+  use:tooltip={{ text: disabledReason ?? "", disabled: !disabledReason }}
   aria-haspopup="menu"
   aria-expanded={open}
   aria-controls={open ? menuId : undefined}
@@ -223,6 +231,7 @@
         {#if query && searchEmptyLabel}<p class="empty">{searchEmptyLabel}</p>{/if}
       {/each}
     </div>
+    {#if note}<p class="note">{note}</p>{/if}
   </div>
 {/if}
 
@@ -245,7 +254,12 @@
     transition: background var(--transition-fast), color var(--transition-fast);
   }
 
-  .menu-picker:hover,
+  .menu-picker.disabled {
+    opacity: var(--disabled-opacity);
+    cursor: default;
+  }
+
+  .menu-picker:hover:not(.disabled),
   .menu-picker.open {
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -364,6 +378,15 @@
     padding: var(--space-8);
     color: var(--float-text-muted);
     font-size: var(--font-size-sm);
+  }
+
+  .note {
+    flex: none;
+    margin: 0;
+    padding: var(--space-6) var(--space-8) var(--space-2);
+    border-top: 1px solid var(--float-separator);
+    color: var(--float-text-muted);
+    font-size: var(--font-size-xs);
   }
 
   .check {

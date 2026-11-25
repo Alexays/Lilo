@@ -2760,9 +2760,13 @@
 			"notice": {
 				"restored": "Bestanden hersteld naar dit punt",
 				"restoreFailed": "De bestanden konden niet worden hersteld",
-				"signedIn": "Ingelogd"
+				"signedIn": "Ingelogd",
+				"switched": "Overgeschakeld naar {agent}",
+				"handoff": "Overgeschakeld naar {agent}, die een samenvatting van dit gesprek krijgt"
 			},
 			"moreOptions": "Meer opties",
+			"switchBusy": "Beschikbaar zodra het antwoord klaar is",
+			"switchNote": "De nieuwe agent krijgt een samenvatting van dit gesprek, niet de volledige geschiedenis.",
 			"signInHint": "Log in bij de agent: je bericht wordt verstuurd zodra je bent ingelogd.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Naar nieuwste",

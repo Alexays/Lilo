@@ -1,0 +1,3 @@
+kind: Added
+body: 'Switch an agent conversation to another agent from its composer: the thread stays, and the new agent is given a summary of it with your next message'
+time: 2026-11-24T00:17:41.873154000Z

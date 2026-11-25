@@ -2760,9 +2760,13 @@
 			"notice": {
 				"restored": "Dateien auf diesen Stand zurückgesetzt",
 				"restoreFailed": "Die Dateien konnten nicht wiederhergestellt werden",
-				"signedIn": "Angemeldet"
+				"signedIn": "Angemeldet",
+				"switched": "Zu {agent} gewechselt",
+				"handoff": "Zu {agent} gewechselt, der eine Zusammenfassung dieser Unterhaltung erhält"
 			},
 			"moreOptions": "Weitere Optionen",
+			"switchBusy": "Verfügbar, sobald die Antwort fertig ist",
+			"switchNote": "Der neue Agent erhält eine Zusammenfassung dieser Unterhaltung, nicht den vollständigen Verlauf.",
 			"signInHint": "Melde dich beim Agenten an: Deine Nachricht wird gesendet, sobald du angemeldet bist.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Zum Neuesten",

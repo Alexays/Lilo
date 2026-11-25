@@ -2760,9 +2760,13 @@
 			"notice": {
 				"restored": "檔案已回復到此處",
 				"restoreFailed": "無法回復檔案",
-				"signedIn": "已登入"
+				"signedIn": "已登入",
+				"switched": "已切換到 {agent}",
+				"handoff": "已切換到 {agent}，它會收到此對話的摘要"
 			},
 			"moreOptions": "更多選項",
+			"switchBusy": "回覆結束後可用",
+			"switchNote": "新代理程式會收到此對話的摘要，而不是完整歷史。",
 			"signInHint": "請使用代理程式登入：登入後即傳送你的訊息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新",

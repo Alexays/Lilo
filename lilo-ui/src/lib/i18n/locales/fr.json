@@ -2752,9 +2752,13 @@
 			"notice": {
 				"restored": "Fichiers restaurés à ce point",
 				"restoreFailed": "Les fichiers n'ont pas pu être restaurés",
-				"signedIn": "Connecté"
+				"signedIn": "Connecté",
+				"switched": "Passé à {agent}",
+				"handoff": "Passé à {agent}, qui reçoit un résumé de cette conversation"
 			},
 			"moreOptions": "Plus d'options",
+			"switchBusy": "Disponible une fois la réponse terminée",
+			"switchNote": "Le nouvel agent reçoit un résumé de cette conversation, pas l'historique complet.",
 			"signInHint": "Connectez-vous avec l'agent : votre message part dès que vous êtes connecté.",
 			"branch": "Branche {branch}",
 			"jumpToLatest": "Aller aux derniers messages",
