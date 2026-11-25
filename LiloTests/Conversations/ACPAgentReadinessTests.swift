@@ -8,13 +8,12 @@ final class ACPAgentReadinessTests: XCTestCase {
     private var script: URL { directory.appending(path: "agent.py") }
 
     private static let agent = #"""
-    import json, os, sys, time
+    import json, sys, time
     scenario = sys.argv[1]
     if scenario == "crash":
         sys.stderr.write("npm error 404 not found\n")
         sys.exit(1)
     if scenario == "hang":
-        open(sys.argv[2], "w").write(str(os.getpid()))
         time.sleep(600)
     def send(message):
         sys.stdout.write(json.dumps(message) + "\n"); sys.stdout.flush()
@@ -59,9 +58,9 @@ final class ACPAgentReadinessTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    private func launch(_ scenario: String, _ extra: String...) throws -> ACPAgentReadinessStore.Launch {
+    private func launch(_ scenario: String) throws -> ACPAgentReadinessStore.Launch {
         let python = ["/usr/bin/python3", "/opt/homebrew/bin/python3"].first(where: FileManager.default.isExecutableFile(atPath:))
-        return (URL(fileURLWithPath: try XCTUnwrap(python)), [script.path, scenario] + extra, ProcessInfo.processInfo.environment)
+        return (URL(fileURLWithPath: try XCTUnwrap(python)), [script.path, scenario], ProcessInfo.processInfo.environment)
     }
 
     private func probe(_ scenario: String, signingInWith methodId: String? = nil, timeout: TimeInterval = 10) async throws -> ACPAgentReadiness {
@@ -132,7 +131,10 @@ final class ACPAgentReadinessTests: XCTestCase {
 
     func testAnAgentThatNeverAnswersTimesOutUnverifiedAndIsStopped() async throws {
         let pidFile = directory.appending(path: "pid")
-        let launch = try launch("hang", pidFile.path)
+        let python = try launch("hang")
+        // The shell writes the agent's pid before the interpreter starts, which a slow machine can take past the timeout.
+        let launch = (URL(fileURLWithPath: "/bin/sh"), ["-c", #"printf %s $$ > "$0"; exec "$@""#, pidFile.path, python.executable.path] + python.arguments,
+                      python.environment)
 
         let result = await ACPAgentProbe.run(launching: { launch }, signingInWith: nil, open: { _ in }, timeout: 1)
 
