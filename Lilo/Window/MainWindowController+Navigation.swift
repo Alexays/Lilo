@@ -440,6 +440,22 @@ extension MainWindowController: WKWebViewTab.Delegate {
         guard let spaceId = tabManager.currentSpaceId else { return }
         context.openWindow(on: spaceId, opening: .urls([url]))
     }
+    func tab(_ tab: WKWebViewTab, openLinkInSplitView url: URL) {
+        guard (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes else { return NSSound.beep() }
+        splitURL(url, at: tab.id, side: .edge(vertical: false, before: false))
+    }
+    func tab(_ tab: WKWebViewTab, openLinkInLittleWindow url: URL) {
+        openLittleWindow(url: url, opener: littleWindows[tab.id])
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    func tabOffersSplitView(_ tab: WKWebViewTab) -> Bool {
+        tab.id == tabManager.activeOpenTabId || tabManager.activeSplit?.layout.paneIds.contains(tab.id) == true
+    }
+    /// Never from a private Space: a Little window outlives it and loads in a shared Space's profile.
+    func tabOffersLittleWindow(_ tab: WKWebViewTab) -> Bool {
+        let spaceId = littleWindows[tab.id]?.spaceId ?? tabManager.tab(for: tab.id)?.spaceId
+        return spaceId.flatMap { context.spaceManager?.space(with: $0) }?.isPrivate == false
+    }
     var prefersSingleWindow: Bool { context.settingsStore?.singleWindow == true }
     func tabDidRequestClose(_ tab: WKWebViewTab) {
         if tab.id == sidePanel.engineId { return sidePanel.closePanel() }

@@ -5,13 +5,16 @@ import WebKit
 @MainActor
 final class ContextMenuBuilderTests: XCTestCase {
     private func makeBuilder(
-        onTranslate: @escaping () -> Void = {}, onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}, onSearchImage: @escaping (URL) -> Void = { _ in }
+        onTranslate: @escaping () -> Void = {}, onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}, onSearchImage: @escaping (URL) -> Void = { _ in },
+        onOpenInSplitView: @escaping (URL) -> Void = { _ in }, onOpenInLittleWindow: @escaping (URL) -> Void = { _ in }
     ) -> ContextMenuBuilder {
         ContextMenuBuilder(
             webView: WKWebView(frame: .zero),
             onOpenInNewTab: { _ in },
             onOpenInPrivateSpace: { _ in },
             onOpenInNewWindow: { _ in },
+            onOpenInSplitView: onOpenInSplitView,
+            onOpenInLittleWindow: onOpenInLittleWindow,
             onTogglePiP: {},
             onBookmark: {},
             onHideElement: {},
@@ -89,6 +92,25 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertEqual(linkItem?.representedObject as? URL, URL(string: "https://example.com"))
         XCTAssertTrue(menu.items.contains { $0.title == "Open Link in New Private Space".localized })
         XCTAssertTrue(menu.items.contains { $0.title == "Open Link in New Window".localized })
+        // Offered only when the tab's delegate says so.
+        XCTAssertFalse(menu.items.contains { $0.title == "Open Link in Split View".localized })
+        XCTAssertFalse(menu.items.contains { $0.title == "Open Link in Little Window".localized })
+    }
+
+    func testLinkSplitAndLittleItemsRouteTheirURL() throws {
+        var split: URL?
+        var little: URL?
+        let linkURL = URL(string: "https://example.com/a")!
+        let menu = NSMenu()
+        // Retained: the items' target is weak.
+        let builder = makeBuilder(onOpenInSplitView: { split = $0 }, onOpenInLittleWindow: { little = $0 })
+        builder.build(menu, linkURL: linkURL, offersSplitView: true, offersLittleWindow: true)
+        for title in ["Open Link in Split View".localized, "Open Link in Little Window".localized] {
+            let item = try XCTUnwrap(menu.items.first { $0.title == title })
+            _ = item.target?.perform(item.action, with: item)
+        }
+        XCTAssertEqual(split, linkURL)
+        XCTAssertEqual(little, linkURL)
     }
 
     func testBuildAddsWorkingDownloadImageItemWhenImagePresent() {

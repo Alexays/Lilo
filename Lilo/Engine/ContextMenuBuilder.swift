@@ -22,6 +22,8 @@ final class ContextMenuBuilder: NSObject {
     private let onOpenInNewTab: (URL) -> Void
     private let onOpenInPrivateSpace: (URL) -> Void
     private let onOpenInNewWindow: (URL) -> Void
+    private let onOpenInSplitView: (URL) -> Void
+    private let onOpenInLittleWindow: (URL) -> Void
     private let onTogglePiP: () -> Void
     private let onBookmark: () -> Void
     private let onHideElement: () -> Void
@@ -35,6 +37,8 @@ final class ContextMenuBuilder: NSObject {
         onOpenInNewTab: @escaping (URL) -> Void,
         onOpenInPrivateSpace: @escaping (URL) -> Void,
         onOpenInNewWindow: @escaping (URL) -> Void,
+        onOpenInSplitView: @escaping (URL) -> Void,
+        onOpenInLittleWindow: @escaping (URL) -> Void,
         onTogglePiP: @escaping () -> Void,
         onBookmark: @escaping () -> Void,
         onHideElement: @escaping () -> Void,
@@ -47,6 +51,8 @@ final class ContextMenuBuilder: NSObject {
         self.onOpenInNewTab = onOpenInNewTab
         self.onOpenInPrivateSpace = onOpenInPrivateSpace
         self.onOpenInNewWindow = onOpenInNewWindow
+        self.onOpenInSplitView = onOpenInSplitView
+        self.onOpenInLittleWindow = onOpenInLittleWindow
         self.onTogglePiP = onTogglePiP
         self.onBookmark = onBookmark
         self.onHideElement = onHideElement
@@ -80,7 +86,7 @@ final class ContextMenuBuilder: NSObject {
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
     func build(
         _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil,
-        offersNewWindow: Bool = true, offersHideElement: Bool = false, searchEngineName: String? = nil,
+        offersNewWindow: Bool = true, offersSplitView: Bool = false, offersLittleWindow: Bool = false, offersHideElement: Bool = false, searchEngineName: String? = nil,
         imageSearchEngineName: String? = nil
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
@@ -115,6 +121,12 @@ final class ContextMenuBuilder: NSObject {
                 makeLinkItem("Open Link in New Tab", icon: .openInNewTab, action: #selector(contextMenuOpenLinkInNewTab(_:)), url: linkURL),
                 makeLinkItem("Open Link in New Private Space", icon: .newPrivateSpace, action: #selector(contextMenuOpenLinkInNewPrivateSpace(_:)), url: linkURL)
             ]
+            if offersSplitView {
+                linkItems.append(makeLinkItem("Open Link in Split View", icon: .openInSplit, action: #selector(contextMenuOpenLinkInSplitView(_:)), url: linkURL))
+            }
+            if offersLittleWindow {
+                linkItems.append(makeLinkItem("Open Link in Little Window", icon: .newLittleWindow, action: #selector(contextMenuOpenLinkInLittleWindow(_:)), url: linkURL))
+            }
             if offersNewWindow {
                 linkItems.insert(makeLinkItem("Open Link in New Window", icon: .newWindow, action: #selector(contextMenuOpenLinkInNewWindow(_:)), url: linkURL), at: 1)
             }
@@ -250,6 +262,16 @@ final class ContextMenuBuilder: NSObject {
     @objc private func contextMenuOpenLinkInNewPrivateSpace(_ sender: NSMenuItem) {
         guard let url = sender.representedObject as? URL else { return }
         onOpenInPrivateSpace(url)
+    }
+
+    @objc private func contextMenuOpenLinkInSplitView(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        onOpenInSplitView(url)
+    }
+
+    @objc private func contextMenuOpenLinkInLittleWindow(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        onOpenInLittleWindow(url)
     }
 
     @objc private func contextMenuBack() { webView.goBack() }

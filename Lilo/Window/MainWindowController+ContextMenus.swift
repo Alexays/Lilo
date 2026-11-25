@@ -79,6 +79,30 @@ extension MainWindowController {
         menu.popUp(positioning: nil, at: NSPoint(x: r.minX, y: max(12, r.minY - 6)), in: hostView)
     }
 
+    /// The tabs' URLs on the pasteboard, one per line, in the order given.
+    private func copyTabLinks(_ tabIds: [UUID]) {
+        let urls = tabIds.compactMap { tabManager.tab(for: $0)?.url?.absoluteString }.filter { !$0.isEmpty }
+        guard !urls.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        let didCopy = NSPasteboard.general.setString(urls.joined(separator: "\n"), forType: .string)
+        bridgeRouter.send(event: didCopy ? "urlCopied" : "urlCopyFailed")
+    }
+
+    /// A copy-links entry, greyed while none of the tabs has a URL.
+    private func addCopyLinksItem(to menu: NSMenu, title: String, tabIds: [UUID]) {
+        let item = menu.addItem(title.localized, icon: .copyLink) { self.copyTabLinks(tabIds) }
+        if !tabIds.contains(where: { tabManager.tab(for: $0)?.url != nil }) { item.action = nil }
+    }
+
+    /// The folder's tabs in sidebar order, minus the subtree of a locked subfolder, which a copy must not reveal.
+    private func folderTabIds(for folder: TabFolder) -> [UUID] {
+        guard let spaceTab = context.browserState.space(id: folder.spaceId)?.spaceTab else { return [] }
+        let hidden = spaceTab.lockedFolderIds(inFolder: folder.id)
+            .filter { tabManager.folder(id: $0)?.isLocked == true }
+            .reduce(into: Set<UUID>()) { $0.formUnion(spaceTab.tabIds(inFolder: $1)) }
+        return spaceTab.tabIds(inFolder: folder.id).filter { !hidden.contains($0) }
+    }
+
     // MARK: - Tab Context Menu
 
     func showTabContextMenu(tabId: String, selectedIds: [String] = [], anchorRect: NSRect?) {
@@ -161,6 +185,7 @@ extension MainWindowController {
             }
             neverSleep.state = tab.neverSleep ? .on : .off
         }
+        addCopyLinksItem(to: menu, title: "Copy URL", tabIds: [uuid])
         // An item without an action is greyed out.
         let duplicate = menu.addItem("Duplicate Tab".localized, icon: .duplicate) { self.duplicateTab(tab) }
         if tab.url == nil { duplicate.action = nil }
@@ -205,6 +230,7 @@ extension MainWindowController {
                 self.applyContextMenuStateCommands(unbookmarked.map { .setBookmarked(spaceId: spaceId, tabId: $0.id, isBookmarked: true) })
             }
         }
+        addCopyLinksItem(to: menu, title: "Copy All URLs", tabIds: tabs.map(\.id))
         let spaceMenu = NSMenu(title: "Move Tabs to Space".localized)
         addMoveToSpaceItems(to: spaceMenu, tabIds: tabs.map(\.id))
         if !spaceMenu.items.isEmpty {
@@ -368,6 +394,7 @@ extension MainWindowController {
                 self.layoutSplitContent()
             }
             menu.addItem("Separate Split View".localized, icon: .separateSplit) { self.applyContextMenuStateCommands([.deleteFolder(spaceId: spaceId, folderId: uuid)]) }
+            addCopyLinksItem(to: menu, title: "Copy All URLs", tabIds: folderTabIds(for: folder))
             presentContextMenu(menu, anchorRect: anchorRect)
             return
         }
@@ -388,6 +415,7 @@ extension MainWindowController {
         if context.browserState.space(id: spaceId)?.spaceTab.canNestFolder(height: 1, in: uuid) == true {
             menu.addItem("New Folder".localized, icon: .newFolder) { self.createSubfolder(in: folder) }
         }
+        addCopyLinksItem(to: menu, title: "Copy All URLs", tabIds: folderTabIds(for: folder))
         menu.addItem(.separator())
         if folder.lock == nil {
             menu.addItem("Lock Folder…".localized, icon: .lock) { self.beginFolderLockSetup(uuid) }
@@ -486,6 +514,7 @@ extension MainWindowController {
             item.image = MenuIcon.moveToSpace.image
             item.submenu = spaceMenu
         }
+        addCopyLinksItem(to: menu, title: "Copy All URLs", tabIds: tabIds)
         menu.addItem(.separator())
         unsafe menu.addItem(String(format: "Don't Stack %@".localized, host), icon: .unstack) {
             self.bridgeRouter.send(event: "tabListMenuAction", data: ["action": "neverStack", "host": host])

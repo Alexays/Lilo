@@ -224,6 +224,7 @@ final class MenuIconTests: XCTestCase {
         webView.loadHTMLString("", baseURL: URL(string: "https://example.com/"))
         let builder = ContextMenuBuilder(
             webView: webView, onOpenInNewTab: { _ in }, onOpenInPrivateSpace: { _ in }, onOpenInNewWindow: { _ in },
+            onOpenInSplitView: { _ in }, onOpenInLittleWindow: { _ in },
             onTogglePiP: {}, onBookmark: {}, onHideElement: {}, onTranslate: {}, onDownload: { _ in }, onSearchWeb: {}, onSearchImage: { _ in }
         )
         let page = NSMenu()
