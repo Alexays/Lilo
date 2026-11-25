@@ -31,6 +31,7 @@ A piece of information takes the form of its family, never another.
 | Toast | Capsule at the bottom center of the page, one at a time, queued, 5 s (6 s for a notice to read) | Tab closed, screenshot copied or saved, capture cut short | Time, or its action |
 | Drawer | Floats over the content, anchored to its source by an arrow | Site permissions, agent or extension requests | Its buttons, Esc |
 | Popover | Anchored to its button | Extensions, Agents, archived tabs | Esc, click outside |
+| Card | Floats at the bottom center of the page, where the Ask bar was, the page usable around it | A conversation started from the Ask bar | Its close and expand buttons, Esc |
 | Modal | Centered on the page area, dimming it, blocking, no close button | Clear browsing data, agent connection, What's New; an unresponsive page | Its buttons, Esc |
 | System screen | With a sidebar, the sidebar becomes its navigation and the page area its content; with tabs at the top or bottom, a tab with the same navigation inside | Settings, History, Downloads, Processes | Its close button, Esc |
 | Sidebar editor | Inside the sidebar alone; the page stays visible and the sidebar repaints live as its own preview | New Space, Space editor | Its buttons, Esc |
@@ -138,7 +139,7 @@ A panel's title is 13 px semibold and a system screen's page title 20 px semibol
 
 | Surface | In | Out |
 |---|---|---|
-| Popover, drawer | `--motion-duration-overlay` with `--motion-ease-spring` from its source, scale 0.96 to 1 | `--motion-duration-fast` fade |
+| Popover, drawer, card | `--motion-duration-overlay` with `--motion-ease-spring` from its source, scale 0.96 to 1 | `--motion-duration-fast` fade |
 | Modal | `--motion-duration-overlay` with `--motion-ease-spring`, scale 0.96 to 1 while the page dims | `--motion-duration-fast` fade |
 | Toast | `--motion-duration-normal`, rises 8 px while fading in | `--motion-duration-fast` fade |
 | Space change | Horizontal slide | The same |
