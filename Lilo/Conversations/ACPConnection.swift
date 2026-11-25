@@ -132,11 +132,12 @@ final class ACPConnection: @unchecked Sendable {
         if process.isRunning { process.terminate() }
     }
 
-    /// Ends the agent like `terminate`, and kills it when it still runs after `grace` seconds.
+    /// Ends the agent like `terminate`, and kills its process group when it still runs after `grace` seconds.
     func terminate(killAfter grace: TimeInterval) {
         terminate()
         DispatchQueue.global().asyncAfter(deadline: .now() + grace) { [process] in
-            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+            // `Process` makes the agent a group leader and `terminate` signals that group; a live leader keeps the id ours.
+            if process.isRunning { kill(-process.processIdentifier, SIGKILL) }
         }
     }
 
