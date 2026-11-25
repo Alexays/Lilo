@@ -84,7 +84,9 @@ elif [ -n "$DEBUG_TEAM_ID" ]; then
     SIGNING_LABEL="$DEBUG_IDENTITY ($DEBUG_TEAM_ID)"
 else
     SIGNING="ad-hoc"
-    SIGNING_SETTINGS=("DEVELOPMENT_TEAM=" "CODE_SIGN_IDENTITY=-")
+    # Release.xcconfig enables the hardened runtime, whose library validation rejects the
+    # ad-hoc signed frameworks the bundle embeds (Sparkle): the app would crash in dyld.
+    SIGNING_SETTINGS=("DEVELOPMENT_TEAM=" "CODE_SIGN_IDENTITY=-" "ENABLE_HARDENED_RUNTIME=NO")
     SIGNING_LABEL="ad-hoc"
 fi
 
