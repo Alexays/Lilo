@@ -629,3 +629,23 @@ test("v2: a turn the agent started keeps its duration when the thread is replaye
   const end = conversation.thread.items.at(-1);
   assert.deepEqual([end?.kind, end?.kind === "turnEnd" && end.durationMs], ["turnEnd", 3000]);
 });
+
+test("a failed turn drops the prompts queued behind it", async () => {
+  const { openConversation } = await import("./conversationThread");
+  const conversation = openConversation(
+    {
+      tabId: "t",
+      agentId: "a",
+      cwd: "/",
+      checkpoints: [],
+      updates: [
+        { sessionUpdate: "lilo_user", text: "First" },
+        { sessionUpdate: "lilo_user", text: "Second" },
+        { sessionUpdate: "lilo_queued", count: 1 },
+        { sessionUpdate: "lilo_error", message: "The agent stopped." },
+      ],
+    } as never,
+    [],
+  );
+  assert.equal(conversation.queued, 0);
+});

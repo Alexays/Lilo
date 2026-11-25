@@ -785,7 +785,14 @@ final class ConversationHost {
             }
             return
         }
-        Task { await runTurn(conversation, blocks: blocks, checkpoint: index) }
+        startTurn(conversation, blocks: blocks, checkpoint: index)
+    }
+
+    /// Opens the turn at once, so a prompt sent before its task first runs queues behind it, not beside it.
+    private func startTurn(_ conversation: Conversation, blocks: [[String: Any]], checkpoint: Int?) {
+        conversation.turnOpen = true
+        setState(conversation, .busy)
+        Task { await runTurn(conversation, blocks: blocks, checkpoint: checkpoint) }
     }
 
     /// `checkpoint` is the index `send` reserved for this prompt: its snapshot is taken as the turn starts, once
@@ -858,7 +865,7 @@ final class ConversationHost {
         if !conversation.queued.isEmpty {
             let next = conversation.queued.removeFirst()
             append(conversation, ["sessionUpdate": "lilo_queued", "count": conversation.queued.count])
-            Task { await runTurn(conversation, blocks: next.blocks, checkpoint: next.checkpoint) }
+            startTurn(conversation, blocks: next.blocks, checkpoint: next.checkpoint)
             return
         }
         if !isShown(conversation.tabId) {

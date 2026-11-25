@@ -122,6 +122,7 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 		case "lilo_error":
 			// A failed turn drops the prompts queued behind it: they no longer wait for anything.
 			for (const item of thread.items) if (item.kind === "user") delete item.queued;
+			conversation.queued = 0;
 			thread.turnStartedAt = null;
 			conversation.error = String(update.message ?? "");
 			conversation.signingIn = null;
