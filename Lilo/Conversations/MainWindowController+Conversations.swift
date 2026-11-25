@@ -2,12 +2,14 @@ import AppKit
 import CryptoKit
 
 /// Agent tabs: a conversation is a folder of the Space it was started in, the agent tab first, then the
-/// pages the agent opens. The chrome draws the conversation over the tab's empty native view.
+/// pages the agent opens. The chrome draws the conversation over the tab's empty native view, or as a mini
+/// card over the page it was started from.
 extension MainWindowController {
     var agentsEnabled: Bool { context.settingsStore?.get("agentsEnabled") == "true" }
 
     /// Starts a conversation in the current Space, which a private Space never hosts. Without a project
-    /// it gets a folder of its own; in a repository another agent is working in, its own worktree.
+    /// it gets a folder of its own; in a repository another agent is working in, its own worktree. Activated,
+    /// it opens as a mini card over the active page unless the placement setting says a tab.
     @discardableResult
     func startConversation(agentId: String, cwd: String, activate: Bool) async -> Tab? {
         guard agentsEnabled, let spaceId = tabManager.currentSpaceId,
@@ -31,16 +33,22 @@ extension MainWindowController {
             directory = worktree ?? cwd
         }
         let activate = activate && tabManager.currentSpaceId == spaceId
+        let source = activate && context.settingsStore?.get("agentConversationPlacement") != "tab"
+            ? tabManager.activeTab.flatMap { $0.kind == .agent || $0.spaceId != spaceId ? nil : $0 } : nil
         let folder = TabFolder(spaceId: spaceId, name: "New Conversation".localized, color: "#795ceb", isCollapsed: true)
         let tab = Tab(title: "New Conversation".localized, spaceId: spaceId, kind: .agent, cwd: directory, agentId: agentId)
         do {
             try applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
-            try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: activate))
+            try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: activate && source == nil))
             try applyBrowserCommand(.moveSidebarItem(
                 spaceId: spaceId, kind: .tab, itemId: tab.id, parentFolderId: folder.id, section: .unpinned, insert: .index(0)
             ))
             context.conversations.register(tab, folderId: folder.id)
-            if activate { tabManager.activateTabRuntime(id: tab.id) }
+            if let source {
+                bridgeRouter.send(event: "openConversationCard", data: ["tabId": tab.id.uuidString, "sourceTabId": source.id.uuidString])
+            } else if activate {
+                tabManager.activateTabRuntime(id: tab.id)
+            }
             return tab
         } catch {
             Self.logger.error("start conversation failed: \(error.localizedDescription, privacy: .public)")
