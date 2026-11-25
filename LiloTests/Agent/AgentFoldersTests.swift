@@ -483,43 +483,6 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(animating.text, "true")
     }
 
-    func testACallHoldsAppNapOffOnlyUntilItSettles() async throws {
-        var begun = 0
-        var ended = 0
-        let beginNap = AgentControl.beginNapAssertion
-        let endNap = AgentControl.endNapAssertion
-        AgentControl.beginNapAssertion = { _, _ in begun += 1; return NSObject() }
-        AgentControl.endNapAssertion = { _ in ended += 1 }
-        defer {
-            AgentControl.beginNapAssertion = beginNap
-            AgentControl.endNapAssertion = endNap
-        }
-        let number = try await agentTab(showing: "<title>Nap</title>")
-
-        _ = await client.callTool("get_page_text", ["tabId": number])
-
-        XCTAssertGreaterThan(begun, 0, "a tool call on a tab takes the assertion in wake")
-        XCTAssertEqual(begun, ended, "each assertion ends when its call settles, none stays on")
-    }
-
-    func testBrowserConfigReportsTheSessionsIdlePosture() async throws {
-        let sleepDelay = AgentControl.sleepDelay
-        AgentControl.sleepDelay = 0.2
-        defer { AgentControl.sleepDelay = sleepDelay }
-        let number = try await agentTab(showing: "<title>Posture</title>")
-        let id = try tabId(of: number)
-
-        let wakeReply = await client.callTool("browser_config")
-        let awake = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(wakeReply.text.utf8)) as? [String: Any])
-        let slept = await pollUntil(timeout: 5) { self.control.sleepingTabIds.contains(id) }
-        let sleepReply = await client.callTool("browser_config")
-        let sleeping = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(sleepReply.text.utf8)) as? [String: Any])
-
-        XCTAssertEqual((awake["agent"] as? [String: Any])?["idlePosture"] as? String, "full-rate", wakeReply.text)
-        XCTAssertTrue(slept, "the parked tab slept before the second read")
-        XCTAssertEqual((sleeping["agent"] as? [String: Any])?["idlePosture"] as? String, "sleeping", sleepReply.text)
-    }
-
     func testAProfiledTabNeverSleeps() async throws {
         let sleepDelay = AgentControl.sleepDelay
         AgentControl.sleepDelay = 0.2

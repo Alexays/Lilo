@@ -47,8 +47,7 @@ final class AgentBrowserConfigTests: AgentToolTestCase {
             "features.defaultZoom": 1.25,
             "agent.profile": "Agents",
             "agent.askBeforeActions": false,
-            "agent.actionLog": false,
-            "agent.idlePosture": "full-rate"
+            "agent.actionLog": false
         ]
         XCTAssertEqual(Set(AgentBrowserConfig.allowlist), Set(expected.keys), "the test's table must cover the whole allowlist")
         for key in AgentBrowserConfig.allowlist {

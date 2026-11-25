@@ -109,7 +109,9 @@ enum AgentMCP {
             let sent = AgentCallSent()
             let work = AgentCallSent.$current.withValue(sent) {
                 Task {
+                    control.callsInFlight += 1
                     defer {
+                        control.callsInFlight -= 1
                         session.tabCalls[callId] = nil
                         control.publishActivity()
                         if let tab { control.sleepWhenIdle(tabNumber: tab) }

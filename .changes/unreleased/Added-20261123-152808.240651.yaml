@@ -1,3 +1,0 @@
-kind: Added
-body: browser_config gains agent.idlePosture, reporting whether an agent's tabs run at full rate or were put to sleep after being left idle; while a tool call runs on a tab, App Nap no longer suspends its work
-time: 2026-11-23T15:28:08.240651-08:00

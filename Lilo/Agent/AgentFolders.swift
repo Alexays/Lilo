@@ -320,12 +320,6 @@ extension AgentControl {
     /// A tab the agent left alone `sleepDelay`, parked or covered by the shown tab, stops drawing: WebKit sees it hidden, so
     /// its animation frames stop, while its scripts, timers and network keep running, throttled. Nobody sees it, and the agent mostly thinks.
     func sleepWhenIdle(tabNumber: Int) {
-        // The call settled: its App Nap assertion ends unless a sibling call on the same tab still runs.
-        if let id = tabNumbers.first(where: { $0.value == tabNumber })?.key,
-           !sessions.contains(where: { $0.tabCalls.values.contains { $0.tab == tabNumber } }),
-           let assertion = napAssertions.removeValue(forKey: id) {
-            Self.endNapAssertion(assertion)
-        }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepDelay) { [weak self] in
             guard let self, let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, !profilingTabIds.contains(id),
                   !sessions.contains(where: { $0.tabCalls.values.contains { $0.tab == tabNumber } }),
@@ -350,12 +344,8 @@ extension AgentControl {
 
     /// Back at full rate before a tool acts: WebKit hears the page is visible again before the tool reads or clicks it.
     func wake(tabNumber: Int) async {
-        guard let id = tabNumbers.first(where: { $0.value == tabNumber })?.key else { return }
-        // App Nap off for the call on this tab, allowing the system to idle-sleep still.
-        if napAssertions[id] == nil {
-            napAssertions[id] = Self.beginNapAssertion(.userInitiatedAllowingIdleSystemSleep, "An agent is working in a tab")
-        }
-        guard sleepingTabIds.remove(id) != nil, let engine = context?.browserState.liveEngine(forTab: id) else { return }
+        guard let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, sleepingTabIds.remove(id) != nil,
+              let engine = context?.browserState.liveEngine(forTab: id) else { return }
         engine.isAgentSleeping = false
         engine.setWindowOcclusionDetection(false)
         engine.view.isHidden = true
@@ -367,17 +357,6 @@ extension AgentControl {
         await withCheckedContinuation { continuation in
             unsafe unsafeBitCast(webView.method(for: selector), to: After.self)(webView, selector) { continuation.resume() }
         }
-    }
-
-    /// What `browser_config` reports for the session's tabs: `sleeping` once every tab it drives was put to
-    /// sleep, `full-rate` while any of them runs at full rate. A throttled-but-awake tab is WebKit's alone to
-    /// know, so no `throttled` shows: Lilo only observes the state it set.
-    func idlePosture(of session: AgentSession) -> String {
-        var driven = Set(isolatedTabs(of: session).map(\.id))
-        if let spaceId = agentsSpaceId(of: session) {
-            for folderId in session.folders.values { driven.formUnion(tabs(inFolder: folderId, spaceId: spaceId).map(\.id)) }
-        }
-        return !driven.isEmpty && driven.allSatisfy { sleepingTabIds.contains($0) } ? "sleeping" : "full-rate"
     }
 
     /// The name of the agent driving `tabId`, as people know it.
@@ -423,7 +402,6 @@ extension AgentControl {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
                 engine.setWindowOcclusionDetection(true)
                 sleepingTabIds.remove(id)
-                if let assertion = napAssertions.removeValue(forKey: id) { Self.endNapAssertion(assertion) }
                 engine.isAgentSleeping = false
                 profilingTabIds.remove(id)
                 AgentFrameView.remove(from: engine.wkWebView)

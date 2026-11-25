@@ -1,8 +1,8 @@
 import Foundation
 
 /// `browser_config`: a read-only snapshot of Lilo itself that an agent legitimately needs - its
-/// version, whether the content blocker is on, the default page zoom, the agent's own permission
-/// state, and the resource posture of its tabs. Read-only is a hard line: no setter exists or ever gets added to the tool surface, as a write
+/// version, whether the content blocker is on, the default page zoom, and the agent's own permission
+/// state. Read-only is a hard line: no setter exists or ever gets added to the tool surface, as a write
 /// path would let a hijacked session edit the permission store that gates it. The reply comes from
 /// `snapshot`, whose keys are named and mapped by hand: nothing else in the settings store reaches it,
 /// and private spaces are never named. Sites where actions skip the user's approval stay out: a
@@ -14,17 +14,15 @@ enum AgentBrowserConfig {
     static let allowlist = [
         "lilo",
         "features.contentBlocker", "features.defaultZoom",
-        "agent.profile", "agent.askBeforeActions", "agent.actionLog", "agent.idlePosture"
+        "agent.profile", "agent.askBeforeActions", "agent.actionLog"
     ]
 
     static let definitions: [[String: Any]] = [
         AgentTools.tool("browser_config", """
             A read-only snapshot of Lilo itself: its version, whether the content blocker is on, the \
-            default page zoom, your own permission state - the profile your tabs run in \
+            default page zoom, and your own permission state - the profile your tabs run in \
             (list_profiles describes them all), whether the user is asked before your consequential \
-            actions, and whether your calls are logged - and the resource posture of your tabs: \
-            "full-rate" while any runs awake, "sleeping" once every tab you left alone was put to \
-            sleep (a throttled-but-awake tab cannot be told apart, so no "throttled" shows). \
+            actions, and whether your calls are logged. \
             Nothing here can be set: ask the user to change it.
             """, [:])
     ]
@@ -51,8 +49,7 @@ enum AgentBrowserConfig {
             "agent": [
                 "profile": profile,
                 "askBeforeActions": store.get(AgentControl.asksBeforeActionsKey) != "false",
-                "actionLog": store.get(AgentActionLog.settingKey) != "false",
-                "idlePosture": control.idlePosture(of: session)
+                "actionLog": store.get(AgentActionLog.settingKey) != "false"
             ]
         ]
     }
