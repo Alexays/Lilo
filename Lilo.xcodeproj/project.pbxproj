@@ -114,6 +114,7 @@
 		29555149B8C5134841E9F8E0 /* ExtensionRegistryFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01838BCE08BCAEA786362E06 /* ExtensionRegistryFixture.swift */; };
 		2A6360E1C866886FC4AA63F6 /* SerialBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F55389E4BB74A48A7D401AF /* SerialBridgeTests.swift */; };
 		2B365F7BE79667D4495926B4 /* EngineHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9B73AA345818CD0EFCCBBE /* EngineHost.swift */; };
+		2B93CF084638B110FA2ACAD8 /* PluginCore in Frameworks */ = {isa = PBXBuildFile; productRef = F50887639E653F78CF09DED3 /* PluginCore */; };
 		2C69DF5F0C6887CE5DBA541F /* NotificationsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A552C76FFE45FCB22E962E2 /* NotificationsBridgeHandler.swift */; };
 		2CA4BAED18CE02C21DADD363 /* ChromeInteractionZoneStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A37478AFB6EED6CEA14186 /* ChromeInteractionZoneStoreTests.swift */; };
 		2CEB9D11DCC0160386AA8094 /* MainWindowController+TabClosing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 249217E9C1F9A274BAABFE48 /* MainWindowController+TabClosing.swift */; };
@@ -155,6 +156,7 @@
 		371E0CE3B3C05ABAA4386DEA /* TabLifecycleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 702F349D1F0ECD41319C5D30 /* TabLifecycleCoordinator.swift */; };
 		373DED11771C11DCA29160EC /* BridgeRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D60B75922411FCFFF5381318 /* BridgeRouter.swift */; };
 		374E046AE66BF335C4CE3008 /* IdleBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E95DB31AC42F9F7A49444E37 /* IdleBridgeHandler.swift */; };
+		378C2C77D120E739FCB65152 /* KeychainPluginSecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B819581BADE35791E7BFA0A /* KeychainPluginSecretStore.swift */; };
 		37CC33EAD9437ECD51F60FE4 /* RealExtensionSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3696C6B2170D6955BC08BAD /* RealExtensionSmokeTests.swift */; };
 		37E02E325E3DCFB047A86F50 /* PageSnapshotServiceFlatteningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39FF06F27008EF2D19F063DB /* PageSnapshotServiceFlatteningTests.swift */; };
 		38CBB0259F6A7628D5FCFD2C /* MainWindowController+WindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7919AA873183AC68E01F67AA /* MainWindowController+WindowChrome.swift */; };
@@ -256,6 +258,7 @@
 		5C02BBEA6238B2DDF1E1DA59 /* FolderLockKeychainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049F866B39EED80914C8F660 /* FolderLockKeychainTests.swift */; };
 		5CB4D187146AB197AFFE8116 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F12D07FCE2ECE7B72195CF0 /* Profile.swift */; };
 		5D14026F605FBC8BB721B4F1 /* Lilo.sdef in Resources */ = {isa = PBXBuildFile; fileRef = 1D39D780ED578A4A48E3E053 /* Lilo.sdef */; };
+		5D54D3C77F5F17847D6E2D6D /* TestingSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 2EE97A7BDC1EA4E894A471FD /* TestingSupport */; };
 		5DADCBAD86DC155F88C17E4A /* WindowChromeLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1AED8A7FC48C223B972A227 /* WindowChromeLayoutTests.swift */; };
 		5DD829D022FED50386FF852A /* NotificationBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A67EBCAE9F6D640CDE9F11 /* NotificationBridge.swift */; };
 		5E3BE1B877277B3AB15DBAB8 /* BrowserStateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB23A4535CD96F049DB84BE /* BrowserStateStoreTests.swift */; };
@@ -303,6 +306,7 @@
 		6D744B160B5BCC1E2828BC16 /* BuildIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FC4FD4EE6A9E10207D978B /* BuildIdentity.swift */; };
 		6D8DC297B3489646352AF932 /* DownloadsGapAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8452A9EEDFBEA6C2DD96A8 /* DownloadsGapAPITests.swift */; };
 		6E0B4BEFA122C5746A9A367C /* PagePopupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BA3D1A4F224E2732A5EE78 /* PagePopupController.swift */; };
+		6F0EB134948770B4F9428E62 /* PluginsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DEB128AE5DD0CF4CE02ADCF /* PluginsBridgeHandler.swift */; };
 		70D08C1CCA01AB0B13F6614B /* BridgeEventRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5F4AFB0C021C061B8906E5 /* BridgeEventRecorder.swift */; };
 		70F4AD3EC63069401C8691CA /* BridgeRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1DEF333D02A932AD84ED0A /* BridgeRouterTests.swift */; };
 		71393DAB603A712EF14BD52D /* PageWorldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8074AC7DF9DEC16F56B5BFB3 /* PageWorldTests.swift */; };
@@ -461,6 +465,7 @@
 		A3C5C8C390F549038B168467 /* ProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2C16B992C837464EC221E8 /* ProfileManager.swift */; };
 		A4061B705534BA0A2B0D902D /* WKWebViewTabTeardownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 960DFFCE802FDF5C7EAE7DA7 /* WKWebViewTabTeardownTests.swift */; };
 		A437754DB93A57013CF56697 /* CookieChangeTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C4913FAB70E74B607BFB04 /* CookieChangeTracker.swift */; };
+		A4885D6999BB970508D8563A /* PluginHostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDFBF4CB12458D39B458CDF /* PluginHostTests.swift */; };
 		A4DBCB00568014220103F4C2 /* SystemLidActionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A11733A5F99B14D3EBD132D /* SystemLidActionsTests.swift */; };
 		A4F5673BA322215402602109 /* ChromeUISchemeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C5C8C80B0433C7DB9EF86B /* ChromeUISchemeHandlerTests.swift */; };
 		A5026215AF0A551BC7EC597B /* PageSnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72024EFD87D3532FCF6C51C8 /* PageSnapshotService.swift */; };
@@ -688,6 +693,7 @@
 		EA7C282C59896731F4756DF3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E27A0DA12433A44408AC3DF5 /* InfoPlist.strings */; };
 		EAA2E6885829B55270E9F6BE /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7094420BC5E708364816BD /* DownloadManager.swift */; };
 		EAE2D8439E5F00188A79A185 /* content-blocker-rules.json in Resources */ = {isa = PBXBuildFile; fileRef = F516B252BF847E97BF5FE50D /* content-blocker-rules.json */; };
+		EB25878D31DF1D7E409D083B /* PluginHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2212D701341CA1BCC75DE8AF /* PluginHost.swift */; };
 		EBA73956CB336E4DA1A2FB41 /* SessionPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E28E9808F214A6501531E7 /* SessionPersistenceTests.swift */; };
 		EC16B140156702B1607FE05D /* FaviconStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CA1ABEF1B34D8C417B7BC3 /* FaviconStore.swift */; };
 		ECECE200138640A7DAAB9707 /* shell-integration in Resources */ = {isa = PBXBuildFile; fileRef = 49602D5C5808DF067D6D5562 /* shell-integration */; };
@@ -904,6 +910,7 @@
 		2142A3F2FD9FF647C3069FF7 /* password-managers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "password-managers"; path = "lilo-ui/public/password-managers"; sourceTree = SOURCE_ROOT; };
 		21CBF2CECED5FF3B333E0F12 /* OnboardingBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingBridgeHandler.swift; sourceTree = "<group>"; };
 		220FD9F59B1775527D3AEB15 /* LittleWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LittleWindowController.swift; sourceTree = "<group>"; };
+		2212D701341CA1BCC75DE8AF /* PluginHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginHost.swift; sourceTree = "<group>"; };
 		222E051DED9B5228D6260FE8 /* TabGroupsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabGroupsBridgeHandler.swift; sourceTree = "<group>"; };
 		22A11FD5FAE3C28A3988EEC3 /* HitboxDebugOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HitboxDebugOverlayView.swift; sourceTree = "<group>"; };
 		22AD4BA8211AEC8D9AB6672F /* GapCallSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GapCallSupport.swift; sourceTree = "<group>"; };
@@ -925,6 +932,7 @@
 		292F5F7373D512DF94EAB7C2 /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = ko.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		29F8A3E02FAD20294119950A /* ExtensionPageNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPageNavigationTests.swift; sourceTree = "<group>"; };
 		2B1C3FDFB052BFDCE12B8834 /* FeatureFlagsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsBridgeHandler.swift; sourceTree = "<group>"; };
+		2B819581BADE35791E7BFA0A /* KeychainPluginSecretStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPluginSecretStore.swift; sourceTree = "<group>"; };
 		2B88189CA5154455C4382892 /* WKWebViewTabNavigationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabNavigationPolicyTests.swift; sourceTree = "<group>"; };
 		2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabExtensionEventsTests.swift; sourceTree = "<group>"; };
 		2BF1B068EE38071BDC4C8801 /* MainWindowController+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Extensions.swift"; sourceTree = "<group>"; };
@@ -935,6 +943,7 @@
 		2D0A9E30F6B3FBDFADF75B3C /* release-media */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "release-media"; path = "lilo-ui/public/release-media"; sourceTree = SOURCE_ROOT; };
 		2D24BF900BE3A4131D4378A9 /* ProceduralCosmetics.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ProceduralCosmetics.js; sourceTree = "<group>"; };
 		2D8452792228C102FF9E9860 /* ExtensionLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLifecycleTests.swift; sourceTree = "<group>"; };
+		2DEB128AE5DD0CF4CE02ADCF /* PluginsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginsBridgeHandler.swift; sourceTree = "<group>"; };
 		2DFCC36C22B7A6970C465AF4 /* TerminalFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalFrameBuilderTests.swift; sourceTree = "<group>"; };
 		2E28BF7995DB783B3B5C0C4F /* EngineFreezer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineFreezer.swift; sourceTree = "<group>"; };
 		2E70FE2C002883D6C9CFCA05 /* FaviconCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaviconCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -1393,6 +1402,7 @@
 		C508838952DE4580A66DF042 /* SpaceTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceTab.swift; sourceTree = "<group>"; };
 		C52077CF07D74FCB5108BCD3 /* BookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkStore.swift; sourceTree = "<group>"; };
 		C5751F7FF4C9FE9251178B83 /* ActionColorBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionColorBridgeHandler.swift; sourceTree = "<group>"; };
+		C63AA04E1E394584FE8FFA63 /* LiloPluginKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LiloPluginKit; path = Packages/LiloPluginKit; sourceTree = SOURCE_ROOT; };
 		C63EB3EA1FFE66DB60DB0028 /* LifecyclePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecyclePolicyTests.swift; sourceTree = "<group>"; };
 		C66440537ECC07290E7880A7 /* ConversationBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationBridgeHandler.swift; sourceTree = "<group>"; };
 		C68DA653CAE7D50B16736228 /* HistoryBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryBridgeHandler.swift; sourceTree = "<group>"; };
@@ -1422,6 +1432,7 @@
 		CE0702AD85CA546A7F2F8A43 /* MeetingBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingBridgeHandler.swift; sourceTree = "<group>"; };
 		CE808064190AE0292EFCAADF /* public-suffix-list.dat */ = {isa = PBXFileReference; path = "public-suffix-list.dat"; sourceTree = "<group>"; };
 		CE82CB8210066CE791C3A7D9 /* ConversationCheckpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationCheckpoints.swift; sourceTree = "<group>"; };
+		CEDFBF4CB12458D39B458CDF /* PluginHostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginHostTests.swift; sourceTree = "<group>"; };
 		CF2F9A7280DF0D9ED172E6BE /* MainWindowController+WhatsNew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+WhatsNew.swift"; sourceTree = "<group>"; };
 		CF5C138CBF7D8E40D1C8BE41 /* ExtensionInfoBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionInfoBuilder.swift; sourceTree = "<group>"; };
 		CF609A8B52AFEC50BDA5B16C /* ThemePreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemePreference.swift; sourceTree = "<group>"; };
@@ -1547,12 +1558,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BAC46580D9AB38F357E0D371 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D54D3C77F5F17847D6E2D6D /* TestingSupport in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FF2AA0EB3147B8A50D109629 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				0686B8F23554B02148FBF17F /* GRDB in Frameworks */,
 				A7C3521F1A11BB99EC51F337 /* Sparkle in Frameworks */,
+				2B93CF084638B110FA2ACAD8 /* PluginCore in Frameworks */,
 				1F490AAACE5908EA3D543088 /* GhosttyVt.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2008,6 +2028,7 @@
 				7DED8C69A30E99E82944812B /* LittleWindow */,
 				403CC6B5F23A434205EE916F /* Meetings */,
 				44009C02F9DC0547529F0A67 /* PictureInPicture */,
+				8ECB6DFC1CDFBA13E54E1713 /* Plugins */,
 				DADCC683E35E132BE4D82CB4 /* Power */,
 				345E3026D14DF06E8A50C0A2 /* Profiles */,
 				AB3124CDD74FBFE550C42120 /* Reader */,
@@ -2095,6 +2116,7 @@
 				EEBDC6DD06EDC3C3C2918A39 /* Meetings */,
 				A1418BFDC4A523738ECA731A /* Onboarding */,
 				2557102DC92F9A12EAA514EB /* PictureInPicture */,
+				CB0BD18ECADDB936E053A7F4 /* Plugins */,
 				7D6FD0E5C92782E1B47A243F /* Power */,
 				E8A2472242259F8273F8014E /* Profiles */,
 				43847F60E7B8CBA77B8206A4 /* Reader */,
@@ -2301,6 +2323,14 @@
 				CABDDC5FC76317C0127F6041 /* TabShareSessionController.swift */,
 			);
 			path = TabShare;
+			sourceTree = "<group>";
+		};
+		8ECB6DFC1CDFBA13E54E1713 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				CEDFBF4CB12458D39B458CDF /* PluginHostTests.swift */,
+			);
+			path = Plugins;
 			sourceTree = "<group>";
 		};
 		8ECCB3569D659D1FC4474B2E /* Engine */ = {
@@ -2627,6 +2657,16 @@
 			path = Engine;
 			sourceTree = "<group>";
 		};
+		CB0BD18ECADDB936E053A7F4 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				2B819581BADE35791E7BFA0A /* KeychainPluginSecretStore.swift */,
+				2212D701341CA1BCC75DE8AF /* PluginHost.swift */,
+				2DEB128AE5DD0CF4CE02ADCF /* PluginsBridgeHandler.swift */,
+			);
+			path = Plugins;
+			sourceTree = "<group>";
+		};
 		D1B0D7228960DFE3C122F8F7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -2741,6 +2781,14 @@
 			path = Power;
 			sourceTree = "<group>";
 		};
+		E21DD5D939997E8768872D3B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				C63AA04E1E394584FE8FFA63 /* LiloPluginKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
 		E58C9A0FEDA70E61069C5800 /* Tabs */ = {
 			isa = PBXGroup;
 			children = (
@@ -2837,6 +2885,7 @@
 				D301D9281A21AA10A470D41B /* LiloMCP */,
 				A1A486096BE3D8A33016206B /* LiloPowerHelper */,
 				5BEB258D9B483850E4D6D1CB /* LiloTests */,
+				E21DD5D939997E8768872D3B /* Packages */,
 				2C82701E9EE30435D6D353BE /* Xcode */,
 				F568A0C6C56A8AF60CC4DD89 /* Frameworks */,
 				354C64B02E2E734E9164B40F /* Products */,
@@ -2947,6 +2996,7 @@
 			packageProductDependencies = (
 				B99882422E6612B227F35C07 /* GRDB */,
 				08E231B1094824DBAC0E1A79 /* Sparkle */,
+				F50887639E653F78CF09DED3 /* PluginCore */,
 			);
 			productName = Lilo;
 			productReference = 1BE31569ACECE79345B4DD13 /* Lilo.app */;
@@ -2958,6 +3008,7 @@
 			buildPhases = (
 				CE89E192C49EDF002CAC7B4D /* Sources */,
 				57982CCC729532614E27EC63 /* Resources */,
+				BAC46580D9AB38F357E0D371 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2966,6 +3017,7 @@
 			);
 			name = LiloTests;
 			packageProductDependencies = (
+				2EE97A7BDC1EA4E894A471FD /* TestingSupport */,
 			);
 			productName = LiloTests;
 			productReference = D6AFEA4B3E0284BCA2AA51D8 /* LiloTests.xctest */;
@@ -3034,6 +3086,7 @@
 			packageReferences = (
 				3AA2E79B5D91863472B59EFF /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				85BA4E7D9C600A27DD0CDAFB /* XCRemoteSwiftPackageReference "Sparkle" */,
+				8387A118EB815E60A31DF963 /* XCLocalSwiftPackageReference "Packages/LiloPluginKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 354C64B02E2E734E9164B40F /* Products */;
@@ -3311,6 +3364,7 @@
 				9461BE291A169E4B6256392C /* KeepAwakeBridgeHandler.swift in Sources */,
 				B054C26A72C30A3DFD90BC6B /* KeepAwakeStatusItem.swift in Sources */,
 				5651234AA159D260B499A5C7 /* KeyboardShortcuts.swift in Sources */,
+				378C2C77D120E739FCB65152 /* KeychainPluginSecretStore.swift in Sources */,
 				25C0A8DA80D86D9CD9758253 /* LifecyclePolicy.swift in Sources */,
 				F74D503D437E73FA67D69B66 /* LiloApplication.swift in Sources */,
 				8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */,
@@ -3384,6 +3438,8 @@
 				DFE84DF26A5EA74CC64BFFF0 /* PerfSignposts.swift in Sources */,
 				131FB963079F34383BD546A1 /* PermissionsBridgeHandler.swift in Sources */,
 				A03F4B7057F46522DB7AB633 /* PiPController.swift in Sources */,
+				EB25878D31DF1D7E409D083B /* PluginHost.swift in Sources */,
+				6F0EB134948770B4F9428E62 /* PluginsBridgeHandler.swift in Sources */,
 				C2A0D86EAD724AFDD2E45DEF /* PopupCloseScriptHandler.swift in Sources */,
 				4A95DA111D4E4775A954D9A6 /* PowerBridgeHandler.swift in Sources */,
 				2FFC247D82353835C6F12099 /* PowerHelperLink.swift in Sources */,
@@ -3694,6 +3750,7 @@
 				7D7988BEE1D150754F30CDF8 /* PermissionRequestQueueTests.swift in Sources */,
 				8E05C3D97CC6FCBF59160FE4 /* PiPControllerTests.swift in Sources */,
 				7A3BF072BEE3BDACE54D4E50 /* PiPReturnToTabTests.swift in Sources */,
+				A4885D6999BB970508D8563A /* PluginHostTests.swift in Sources */,
 				D56E2E6D89E2341C6EE235EB /* PolishLocalizationTests.swift in Sources */,
 				02362E91F2D579C8F5B3B0F1 /* PortBenchmarkTests.swift in Sources */,
 				5B5E1B557320B131D7EF126E /* PowerHelperServiceTests.swift in Sources */,
@@ -4183,6 +4240,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		8387A118EB815E60A31DF963 /* XCLocalSwiftPackageReference "Packages/LiloPluginKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/LiloPluginKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		3AA2E79B5D91863472B59EFF /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -4208,10 +4272,18 @@
 			package = 85BA4E7D9C600A27DD0CDAFB /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
+		2EE97A7BDC1EA4E894A471FD /* TestingSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TestingSupport;
+		};
 		B99882422E6612B227F35C07 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3AA2E79B5D91863472B59EFF /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
+		};
+		F50887639E653F78CF09DED3 /* PluginCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PluginCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
